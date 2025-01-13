@@ -72,7 +72,7 @@ const ROUTE_BENEFIT_PACKAGE = 'benefitPackage';
 const DEFAULT_CONFIG = {
   translations: [{ key: 'en', messages: messages_en }],
   reducers: [{ key: 'socialProtection', reducer }],
-  'core.MainMenu': [BenefitPlanMainMenu],
+  'core.MainMenu': [{ name: 'BenefitPlanMainMenu', component: BenefitPlanMainMenu }],
   'core.Router': [
     { path: ROUTE_BENEFIT_PLANS, component: BenefitPlansPage },
     { path: `${ROUTE_BENEFIT_PLAN}/:benefit_plan_uuid?`, component: BenefitPlanPage },
