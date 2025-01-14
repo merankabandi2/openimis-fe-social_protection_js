@@ -32,6 +32,7 @@ function BenefitPlanMainMenu(props) {
       {...props}
       header={formatMessage(props.intl, 'socialProtection', 'mainMenuSocialProtection')}
       entries={entries}
+      menuId="BenefitPlanMainMenu"
     />
   );
 }
