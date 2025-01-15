@@ -101,6 +101,7 @@ function BenefitPlanSearcher({
     ];
     if (rights.includes(RIGHT_BENEFIT_PLAN_UPDATE)) {
       headers.push('emptyLabel');
+      headers.push('emptyLabel');
     }
     return headers;
   };

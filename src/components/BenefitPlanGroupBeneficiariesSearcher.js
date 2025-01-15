@@ -33,6 +33,8 @@ import {
   RIGHT_BENEFICIARY_UPDATE,
   ROWS_PER_PAGE_OPTIONS,
   CLEARED_STATE_FILTER,
+  LOC_LEVELS,
+  locationAtLevel,
 } from '../constants';
 import BenefitPlanGroupBeneficiariesFilter from './BenefitPlanGroupBeneficiariesFilter';
 import BeneficiaryStatusPicker from '../pickers/BeneficiaryStatusPicker';
@@ -69,9 +71,12 @@ function BenefitPlanGroupBeneficiariesSearcher({
       'socialProtection.groupBeneficiary.status',
     ];
 
+    baseHeaders.push(...Array.from({ length: LOC_LEVELS }, (_, i) => `location.locationType.${i}`));
+
     if (status) {
       baseHeaders.push('socialProtection.beneficiary.isEligible');
     }
+    baseHeaders.push('socialProtection.groupBeneficiary.card');
 
     baseHeaders.push('');
 
@@ -124,6 +129,11 @@ function BenefitPlanGroupBeneficiariesSearcher({
       ) : groupBeneficiary.status),
     ];
 
+    const locations = Array.from({ length: LOC_LEVELS }, (_, i) => (groupBeneficiary) => (
+      locationAtLevel(groupBeneficiary.group.location, LOC_LEVELS - i - 1)
+    ));
+    result.push(...locations);
+
     if (status) {
       const yes = formatMessage(intl, 'socialProtection', 'beneficiary.isEligible.true');
       const no = formatMessage(intl, 'socialProtection', 'beneficiary.isEligible.false');
@@ -133,6 +143,8 @@ function BenefitPlanGroupBeneficiariesSearcher({
           : <Tooltip title={no} placement="right"><ErrorIcon aria-label={no} /></Tooltip>
       ));
     }
+
+    result.push((groupBeneficiary) => (<a href={`/api/merankabandi/card/${groupBeneficiary.group.code}/`}>Carte</a>));
 
     if (rights.includes(RIGHT_GROUP_SEARCH)) {
       result.push((groupBeneficiary) => (

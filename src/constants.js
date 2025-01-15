@@ -2,6 +2,7 @@ export const SOCIAL_PROTECTION_MAIN_MENU_CONTRIBUTION_KEY = 'socialProtection.Ma
 export const CONTAINS_LOOKUP = 'Icontains';
 export const DEFAULT_DEBOUNCE_TIME = 500;
 export const DEFAULT_PAGE_SIZE = 10;
+export const LOC_LEVELS = 3;
 export const EMPTY_STRING = '';
 export const ROWS_PER_PAGE_OPTIONS = [10, 20, 50, 100];
 
@@ -127,3 +128,15 @@ export const PYTHON_DEFAULT_IMPORT_WORKFLOW = 'Python Beneficiaries Upload';
 export const BENEFICIARIES_QUANTITY_LIMIT = 100;
 export const INDIVIDUAL_LABEL = 'Individual';
 export const INDIVIDUAL_MODULE_NAME = 'individual';
+
+export const locationAtLevel = (lowestLevelLoc, level) => {
+  let location = lowestLevelLoc;
+  let levelDiff = level;
+
+  while (levelDiff > 0 && location) {
+    location = location.parent;
+    levelDiff -= 1;
+  }
+
+  return location ? location.name : '';
+};
