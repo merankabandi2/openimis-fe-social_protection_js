@@ -54,7 +54,7 @@ function BenefitPackageMembersSearcher({
     + `/${individual?.id}`,
   );
 
-  const fetch = (params) => dispatch(fetchIndividualsRef(params));
+  const fetch = (params) => dispatch(fetchIndividualsRef(modulesManager, params));
 
   const downloadIndividuals = (params) => dispatch(downloadIndividualsRef(params));
 
