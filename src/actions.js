@@ -266,13 +266,13 @@ function formatBenefitPlanGQL(benefitPlan) {
     ${benefitPlan?.code ? `code: "${formatGQLString(benefitPlan.code)}"` : ''}
     ${benefitPlan?.maxBeneficiaries ? `maxBeneficiaries: ${benefitPlan.maxBeneficiaries}` : ''}
     ${benefitPlan?.ceilingPerBeneficiary ? `ceilingPerBeneficiary: "${benefitPlan.ceilingPerBeneficiary}"` : ''}
-    ${benefitPlan?.institution ? `institution: "${formatGQLString(benefitPlan.institution)}"` : ''}
+    ${benefitPlan?.institution ? `institution: "${formatGQLString(benefitPlan.institution)}"` : 'institution: ""'}
     ${benefitPlan?.type ? `type: ${benefitPlan.type}` : ''}
     ${benefitPlan?.dateValidFrom ? `dateValidFrom: "${dateTimeToDate(benefitPlan.dateValidFrom)}"` : ''}
     ${benefitPlan?.dateValidTo ? `dateValidTo: "${dateTimeToDate(benefitPlan.dateValidTo)}"` : ''}
-    ${benefitPlan?.description ? `description: "${formatGQLString(benefitPlan.description)}"` : ''}
+    ${benefitPlan?.description ? `description: "${formatGQLString(benefitPlan.description)}"` : 'description: ""'}
     ${benefitPlan?.beneficiaryDataSchema
-    ? `beneficiaryDataSchema: ${JSON.stringify(benefitPlan.beneficiaryDataSchema)}` : ''}
+    ? `beneficiaryDataSchema: ${JSON.stringify(benefitPlan.beneficiaryDataSchema)}` : 'beneficiaryDataSchema: "{}"'}
     ${benefitPlan?.jsonExt ? `jsonExt: ${JSON.stringify(benefitPlan.jsonExt)}` : ''}`;
 }
 
