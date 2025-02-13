@@ -136,7 +136,9 @@ class BenefitPlanHeadPanel extends FormPanel {
             displayZero
             module="socialProtection"
             label="benefitPlan.maxBeneficiaries"
-            onChange={(v) => this.updateAttribute('maxBeneficiaries', v)}
+            onChange={(v) => {
+              this.updateAttribute('maxBeneficiaries', v === '' ? null : v);
+            }}
             value={benefitPlan?.maxBeneficiaries ?? ''}
           />
         </Grid>
