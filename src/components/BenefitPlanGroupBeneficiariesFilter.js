@@ -2,7 +2,7 @@ import React from 'react';
 import { injectIntl } from 'react-intl';
 import { Grid } from '@material-ui/core';
 import { withTheme, withStyles } from '@material-ui/core/styles';
-import { formatMessage, TextInput, ConstantBasedPicker } from '@openimis/fe-core';
+import { formatMessage, TextInput, ConstantBasedPicker, PublishedComponent } from '@openimis/fe-core';
 import _debounce from 'lodash/debounce';
 import { defaultFilterStyles } from '../util/styles';
 import BeneficiaryStatusPicker from '../pickers/BeneficiaryStatusPicker';
@@ -74,6 +74,15 @@ function BenefitPlanGroupBeneficiariesFilter({
           />
         </Grid>
       )}
+      <Grid item xs={12}>
+        <PublishedComponent
+          pubRef="location.DetailedLocationFilter"
+          withNull
+          filters={filters}
+          onChangeFilters={onChangeFilters}
+          anchor="parentLocation"
+        />
+      </Grid>
     </Grid>
   );
 }

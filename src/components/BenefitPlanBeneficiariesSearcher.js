@@ -35,8 +35,12 @@ import {
   RIGHT_BENEFICIARY_UPDATE,
 } from '../constants';
 import BenefitPlanBeneficiariesFilter from './BenefitPlanBeneficiariesFilter';
-import { applyNumberCircle } from '../util/searcher-utils';
 import BeneficiaryStatusPicker from '../pickers/BeneficiaryStatusPicker';
+import {
+  applyNumberCircle,
+  LOC_LEVELS,
+  locationAtLevel,
+} from '../util/searcher-utils';
 
 function BenefitPlanBeneficiariesSearcher({
   rights,
@@ -60,15 +64,17 @@ function BenefitPlanBeneficiariesSearcher({
   const modulesManager = useModulesManager();
   const history = useHistory();
   const [updatedBeneficiaries, setUpdatedBeneficiaries] = useState([]);
-  const fetch = (params) => fetchBeneficiaries(params);
+  const fetch = (params) => fetchBeneficiaries(modulesManager, params);
 
   const headers = () => {
     const baseHeaders = [
       'socialProtection.beneficiary.firstName',
       'socialProtection.beneficiary.lastName',
       'socialProtection.beneficiary.dob',
-      'socialProtection.beneficiary.status',
     ];
+
+    baseHeaders.push(...Array.from({ length: LOC_LEVELS }, (_, i) => `location.locationType.${i}`));
+    baseHeaders.push('socialProtection.beneficiary.status');
 
     if (status) {
       baseHeaders.push('socialProtection.beneficiary.isEligible');
@@ -116,16 +122,24 @@ function BenefitPlanBeneficiariesSearcher({
     const result = [
       (beneficiary) => beneficiary.individual.firstName,
       (beneficiary) => beneficiary.individual.lastName,
-      (beneficiary) => beneficiary.individual.dob,
-      (beneficiary) => (rights.includes(RIGHT_BENEFICIARY_UPDATE) ? (
+      (beneficiary) => beneficiary.individual.dob
+    ];
+
+    const locations = Array.from({ length: LOC_LEVELS }, (_, i) => (beneficiary) => (
+      locationAtLevel(beneficiary?.individual?.location, LOC_LEVELS - i - 1)
+    ));
+    result.push(...locations);
+
+    if (rights.includes(RIGHT_BENEFICIARY_UPDATE)) {
+      result.push((beneficiary) => (
         <BeneficiaryStatusPicker
           withLabel={false}
           withNull={false}
           value={beneficiary.status}
           onChange={(status) => handleStatusOnChange(beneficiary, status)}
         />
-      ) : beneficiary.status),
-    ];
+      ));
+    }
 
     if (status) {
       const yes = formatMessage(intl, 'socialProtection', 'beneficiary.isEligible.true');

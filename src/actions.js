@@ -44,17 +44,17 @@ const UPLOAD_HISTORY_FULL_PROJECTION = () => [
   'dataUpload {uuid, dateCreated, dateUpdated, sourceName, sourceType, status, error, userCreated {username} }',
 ];
 
-const BENEFICIARY_FULL_PROJECTION = () => [
+const BENEFICIARY_FULL_PROJECTION = (modulesManager) => [
   'id',
   'benefitPlan {id}',
-  'individual {firstName, lastName, dob}',
+  'individual {firstName, lastName, dob, location' + modulesManager.getProjection('location.Location.FlatProjection') + '}',
   'status',
   'isEligible',
 ];
 
-const GROUP_BENEFICIARY_FULL_PROJECTION = () => [
+const GROUP_BENEFICIARY_FULL_PROJECTION = (modulesManager) => [
   'id',
-  'group {id, code, head {uuid}}',
+  'group {id, code, head {uuid}, location' + modulesManager.getProjection('location.Location.FlatProjection') + '}',
   'status',
   'isEligible',
 ];
@@ -69,13 +69,13 @@ export function fetchBenefitPlans(params) {
   return graphql(payload, ACTION_TYPE.SEARCH_BENEFIT_PLANS);
 }
 
-export function fetchBeneficiaries(params) {
-  const payload = formatPageQueryWithCount('beneficiary', params, BENEFICIARY_FULL_PROJECTION());
+export function fetchBeneficiaries(modulesManager, params) {
+  const payload = formatPageQueryWithCount('beneficiary', params, BENEFICIARY_FULL_PROJECTION(modulesManager));
   return graphql(payload, ACTION_TYPE.SEARCH_BENEFICIARIES);
 }
 
-export function fetchGroupBeneficiaries(params) {
-  const payload = formatPageQueryWithCount('groupBeneficiary', params, GROUP_BENEFICIARY_FULL_PROJECTION());
+export function fetchGroupBeneficiaries(modulesManager, params) {
+  const payload = formatPageQueryWithCount('groupBeneficiary', params, GROUP_BENEFICIARY_FULL_PROJECTION(modulesManager));
   return graphql(payload, ACTION_TYPE.SEARCH_GROUP_BENEFICIARIES);
 }
 
@@ -105,6 +105,7 @@ export function fetchBeneficiariesGroup(modulesManager, variables) {
                 uuid,
                 id,
                 head{uuid},
+                location${modulesManager.getProjection('location.Location.FlatProjection')}
               }
               status
             }
@@ -138,7 +139,8 @@ export function fetchBeneficiary(modulesManager, variables) {
                 uuid,
                 firstName
                 lastName
-                dob
+                dob,
+                location${modulesManager.getProjection('location.Location.FlatProjection')}
               }
               status
             }
@@ -343,7 +345,7 @@ export function updateGroupBeneficiary(beneficiary, clientMutationLabel) {
   );
 }
 
-export function benefitPlanCodeValidationCheck(mm, variables) {
+export function benefitPlanCodeValidationCheck(modulesManager, variables) {
   return graphqlWithVariables(
     `
       query ($bfCode: String!) {
@@ -358,7 +360,7 @@ export function benefitPlanCodeValidationCheck(mm, variables) {
   );
 }
 
-export function benefitPlanNameValidationCheck(mm, variables) {
+export function benefitPlanNameValidationCheck(modulesManager, variables) {
   return graphqlWithVariables(
     `
       query ($bfName: String!) {
@@ -373,7 +375,7 @@ export function benefitPlanNameValidationCheck(mm, variables) {
   );
 }
 
-export function benefitPlanSchemaValidationCheck(mm, variables) {
+export function benefitPlanSchemaValidationCheck(modulesManager, variables) {
   return graphqlWithVariables(
     `
       query ($bfSchema: String!) {

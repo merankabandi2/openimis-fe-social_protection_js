@@ -109,6 +109,15 @@ function BenefitPlanBeneficiariesFilter({
           />
         </Grid>
       )}
+      <Grid item xs={12}>
+        <PublishedComponent
+          pubRef="location.DetailedLocationFilter"
+          withNull
+          filters={filters}
+          onChangeFilters={onChangeFilters}
+          anchor="parentLocation"
+        />
+      </Grid>
     </Grid>
   );
 }
