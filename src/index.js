@@ -2,6 +2,7 @@
 /* eslint-disable camelcase */
 /* eslint-disable import/prefer-default-export */
 import React from 'react';
+import { Tune } from '@material-ui/icons';
 import { FormattedMessage } from '@openimis/fe-core';
 import messages_en from './translations/en.json';
 import reducer from './reducer';
@@ -62,7 +63,7 @@ import { fetchBenefitPlanSchemaFields } from './actions';
 import BenefitPlanHistorySearcher from './components/BenefitPlanHistorySearcher';
 import { BenefitPlanChangelogTabLabel, BenefitPlanChangelogTabPanel } from './components/BenefitPlanChangelogTab';
 import { BenefitPlanTaskTabLabel, BenefitPlanTaskTabPanel } from './components/BenefitPlanTaskTab';
-import { BENEFIT_PLAN_LABEL } from './constants';
+import { BENEFIT_PLAN_LABEL, RIGHT_BENEFIT_PLAN_SEARCH } from './constants';
 import BeneficiaryPicker from './pickers/BeneficiaryPicker';
 
 const ROUTE_BENEFIT_PLANS = 'benefitPlans';
@@ -72,7 +73,7 @@ const ROUTE_BENEFIT_PACKAGE = 'benefitPackage';
 const DEFAULT_CONFIG = {
   translations: [{ key: 'en', messages: messages_en }],
   reducers: [{ key: 'socialProtection', reducer }],
-  'core.MainMenu': [BenefitPlanMainMenu],
+  'core.MainMenu': [{ name: 'BenefitPlanMainMenu', component: BenefitPlanMainMenu }],
   'core.Router': [
     { path: ROUTE_BENEFIT_PLANS, component: BenefitPlansPage },
     { path: `${ROUTE_BENEFIT_PLAN}/:benefit_plan_uuid?`, component: BenefitPlanPage },
@@ -153,6 +154,15 @@ const DEFAULT_CONFIG = {
     taskSource: ['import_valid_items'],
     confirmationPanel: UploadConfirmationPanel,
   },
+  ],
+  'socialProtection.MainMenu': [
+    {
+      text: <FormattedMessage module="socialProtection" id="menu.socialProtection.benefitPlans" />,
+      icon: <Tune />,
+      route: '/benefitPlans',
+      filter: (rights) => rights.includes(RIGHT_BENEFIT_PLAN_SEARCH),
+      id: 'socialProtection.benefitPlans',
+    },
   ],
 };
 

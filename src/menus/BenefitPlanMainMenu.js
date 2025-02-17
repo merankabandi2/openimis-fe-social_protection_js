@@ -18,6 +18,7 @@ function BenefitPlanMainMenu(props) {
       icon: <Tune />,
       route: '/benefitPlans',
       filter: (rights) => rights.includes(RIGHT_BENEFIT_PLAN_SEARCH),
+      id: 'socialProtection.benefitPlans',
     },
   ];
   entries.push(
@@ -31,6 +32,7 @@ function BenefitPlanMainMenu(props) {
       {...props}
       header={formatMessage(props.intl, 'socialProtection', 'mainMenuSocialProtection')}
       entries={entries}
+      menuId="BenefitPlanMainMenu"
     />
   );
 }

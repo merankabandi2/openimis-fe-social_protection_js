@@ -110,6 +110,15 @@ class BenefitPackageIndividualPanel extends FormPanel {
               readOnly={readOnly}
             />
           </Grid>
+          <Grid item xs={12}>
+            <PublishedComponent
+              pubRef="location.DetailedLocation"
+              withNull
+              readOnly // TODO: readonly if belong to group
+              required={false}
+              value={!individual ? null : individual.location}
+            />
+          </Grid>
           {jsonExtFields?.map((jsonExtField) => (
             <Grid item xs={3} className={classes.item}>
               {renderInputComponent(SOCIAL_PROTECTION_MODULE, jsonExtField)}

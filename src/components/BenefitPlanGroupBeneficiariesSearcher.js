@@ -38,7 +38,9 @@ import {
 } from '../constants';
 import BenefitPlanGroupBeneficiariesFilter from './BenefitPlanGroupBeneficiariesFilter';
 import BeneficiaryStatusPicker from '../pickers/BeneficiaryStatusPicker';
-import { applyNumberCircle } from '../util/searcher-utils';
+import {
+  applyNumberCircle,
+} from '../util/searcher-utils';
 
 function BenefitPlanGroupBeneficiariesSearcher({
   rights,
@@ -63,15 +65,15 @@ function BenefitPlanGroupBeneficiariesSearcher({
   const history = useHistory();
   const [updatedGroupBeneficiaries, setUpdatedGroupBeneficiaries] = useState([]);
 
-  const fetch = (params) => fetchGroupBeneficiaries(params);
+  const fetch = (params) => fetchGroupBeneficiaries(modulesManager, params);
 
   const headers = () => {
     const baseHeaders = [
       'socialProtection.groupBeneficiary.code',
-      'socialProtection.groupBeneficiary.status',
     ];
 
     baseHeaders.push(...Array.from({ length: LOC_LEVELS }, (_, i) => `location.locationType.${i}`));
+    baseHeaders.push('socialProtection.groupBeneficiary.status');
 
     if (status) {
       baseHeaders.push('socialProtection.beneficiary.isEligible');
@@ -119,19 +121,24 @@ function BenefitPlanGroupBeneficiariesSearcher({
   const itemFormatters = () => {
     const result = [
       (groupBeneficiary) => groupBeneficiary.group.code,
-      (groupBeneficiary) => (rights.includes(RIGHT_BENEFICIARY_UPDATE) ? (
+    ];
+
+    const locations = Array.from({ length: LOC_LEVELS }, (_, i) => (groupBeneficiary) => (
+      locationAtLevel(groupBeneficiary?.group?.location, LOC_LEVELS - i - 1)
+    ));
+    result.push(...locations);
+
+    if (rights.includes(RIGHT_BENEFICIARY_UPDATE)) {
+      result.push((groupBeneficiary) => (
         <BeneficiaryStatusPicker
           withLabel={false}
           withNull={false}
           value={groupBeneficiary.status}
           onChange={(status) => handleStatusOnChange(groupBeneficiary, status)}
         />
-      ) : groupBeneficiary.status),
-    ];
+      ));
+    }
 
-    const locations = Array.from({ length: LOC_LEVELS }, (_, i) => (groupBeneficiary) => (
-      locationAtLevel(groupBeneficiary.group.location, LOC_LEVELS - i - 1)
-    ));
     result.push(...locations);
 
     if (status) {
