@@ -104,18 +104,14 @@ const DEFAULT_CONFIG = {
     BenefitPlanBeneficiariesListTabLabel,
     BenefitPlanBeneficiariesPotentialTabLabel,
     BenefitPlanBeneficiariesActiveTabLabel,
-    BenefitPlanBeneficiariesGraduatedTabLabel,
     BenefitPlanBeneficiariesSuspendedTabLabel,
-    BenefitPlanChangelogTabLabel,
     BenefitPlanTaskTabLabel,
   ],
   'benefitPlan.TabPanel.panel': [
     BenefitPlanBeneficiariesListTabPanel,
     BenefitPlanBeneficiariesPotentialTabPanel,
     BenefitPlanBeneficiariesActiveTabPanel,
-    BenefitPlanBeneficiariesGraduatedTabPanel,
     BenefitPlanBeneficiariesSuspendedTabPanel,
-    BenefitPlanChangelogTabPanel,
     BenefitPlanTaskTabPanel,
   ],
   'benefitPackage.TabPanel.label': [

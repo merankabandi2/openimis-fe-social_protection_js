@@ -139,8 +139,6 @@ function BenefitPlanGroupBeneficiariesSearcher({
       ));
     }
 
-    result.push(...locations);
-
     if (status) {
       const yes = formatMessage(intl, 'socialProtection', 'beneficiary.isEligible.true');
       const no = formatMessage(intl, 'socialProtection', 'beneficiary.isEligible.false');
