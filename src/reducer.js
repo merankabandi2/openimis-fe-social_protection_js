@@ -44,6 +44,7 @@ export const ACTION_TYPE = {
   GET_PENDING_BENEFICIARIES_UPLOAD: 'GET_PENDING_BENEFICIARIES_UPLOAD',
   RESOLVE_TASK: 'TASK_MANAGEMENT_RESOLVE_TASK',
   SEARCH_BENEFIT_PLANS_HISTORY: 'BENEFIT_PLAN_BENEFIT_PLANS_HISTORY',
+  SEARCH_BENEFIT_PLAN_PROVINCES: 'BENEFIT_PLAN_PROVINCES',
 };
 
 function reducer(
@@ -117,6 +118,12 @@ function reducer(
     benefitPlansHistory: [],
     benefitPlansHistoryPageInfo: {},
     benefitPlansHistoryTotalCount: 0,
+    fetchingBenefitPlanProvinces: false,
+    fetchedBenefitPlanProvinces: false,
+    benefitPlanProvinces: [],
+    benefitPlanProvincesPageInfo: {},
+    benefitPlanProvincesTotalCount: 0,
+    errorBenefitPlanProvinces: null,
   },
   action,
 ) {
@@ -694,6 +701,35 @@ function reducer(
         ...state,
         fetchingBenefitPlansHistory: false,
         errorBenefitPlansHistory: formatServerError(action.payload),
+      };
+    case REQUEST(ACTION_TYPE.SEARCH_BENEFIT_PLAN_PROVINCES):
+      return {
+        ...state,
+        fetchingBenefitPlanProvinces: true,
+        fetchedBenefitPlanProvinces: false,
+        benefitPlanProvinces: [],
+        benefitPlanProvincesPageInfo: {},
+        benefitPlanProvincesTotalCount: 0,
+        errorBenefitPlanProvinces: null,
+      };
+    case SUCCESS(ACTION_TYPE.SEARCH_BENEFIT_PLAN_PROVINCES):
+      return {
+        ...state,
+        fetchingBenefitPlanProvinces: false,
+        fetchedBenefitPlanProvinces: true,
+        benefitPlanProvinces: parseData(action.payload.data.locationByBenefitPlan)?.map((province) => ({
+          ...province,
+          id: decodeId(province.id),
+        })),
+        benefitPlanProvincesPageInfo: pageInfo(action.payload.data.locationByBenefitPlan),
+        benefitPlanProvincesTotalCount: action.payload.data.locationByBenefitPlan ? action.payload.data.locationByBenefitPlan.totalCount : null,
+        errorBenefitPlanProvinces: formatGraphQLError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.SEARCH_BENEFIT_PLAN_PROVINCES):
+      return {
+        ...state,
+        fetchingBenefitPlanProvinces: false,
+        errorBenefitPlanProvinces: formatServerError(action.payload),
       };
     case REQUEST(ACTION_TYPE.MUTATION):
       return dispatchMutationReq(state, action);

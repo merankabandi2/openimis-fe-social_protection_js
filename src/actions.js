@@ -229,6 +229,17 @@ export function fetchBenefitPlanHistory(params) {
   return graphql(payload, ACTION_TYPE.SEARCH_BENEFIT_PLANS_HISTORY);
 }
 
+export function fetchBenefitPlanProvinces(modulesManager, params) {
+  const payload = formatPageQueryWithCount('locationByBenefitPlan', params, [
+    'id, uuid, code, name, type, parent{id,uuid,code,name,type,parent{id,uuid,code,name,type}}',
+    'countSelected',
+    'countSuspended',
+    'countActive',
+  ]);
+
+  return graphql(payload, ACTION_TYPE.SEARCH_BENEFIT_PLAN_PROVINCES);
+}
+
 export function deleteBenefitPlan(benefitPlan, clientMutationLabel) {
   const benefitPlanUuids = `ids: ["${benefitPlan?.id}"]`;
   const mutation = formatMutation('deleteBenefitPlan', benefitPlanUuids, clientMutationLabel);
