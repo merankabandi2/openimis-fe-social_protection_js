@@ -1,4 +1,5 @@
 export const SOCIAL_PROTECTION_MAIN_MENU_CONTRIBUTION_KEY = 'socialProtection.MainMenu';
+export const ME_MAIN_MENU_CONTRIBUTION_KEY = 'me.MainMenu';
 export const CONTAINS_LOOKUP = 'Icontains';
 export const DEFAULT_DEBOUNCE_TIME = 500;
 export const DEFAULT_PAGE_SIZE = 10;
@@ -30,6 +31,15 @@ export const BENEFIT_PLAN_TASKS_SEARCH = 191001;
 export const BENEFIT_PLAN_TASKS_CREATE = 191002;
 export const BENEFIT_PLAN_TASKS_UPDATE = 191003;
 export const BENEFIT_PLAN_TASKS_DELETE = 191004;
+
+export const SENSITIZATION_TRAINING_ROUTE = 'socialProtection.route.sensitizationTraining';
+export const MICRO_PROJECT_ROUTE = 'socialProtection.route.microProject';
+export const BEHAVIOR_CHANGE_PROMOTION_ROUTE = 'socialProtection.route.behaviorChangePromotion';
+
+export const RIGHT_SENSITIZATION_TRAINING_SEARCH = 190901;
+export const RIGHT_MICRO_PROJECT_SEARCH = 190901;
+export const RIGHT_BEHAVIOR_CHANGE_PROMOTION_SEARCH = 190901;
+
 export const MAX_CODE_LENGTH = 8;
 export const DESCRIPTION_MAX_LENGTH = 1024;
 
@@ -52,6 +62,12 @@ export const BENEFIT_PACKAGE_TABS_LABEL_CONTRIBUTION_KEY = 'benefitPackage.TabPa
 export const BENEFIT_PACKAGE_TABS_PANEL_CONTRIBUTION_KEY = 'benefitPackage.TabPanel.panel';
 
 export const SOCIAL_PROTECTION_ROUTE_BENEFIT_PLAN = 'socialProtection.route.benefitPlan';
+
+export const MICRO_PROJECT_LIST_TAB_VALUE = 'microProjectIndicatorsListTab';
+export const SENSITIZATION_TRAINING_LIST_TAB_VALUE = 'sensitizationTrainingIndicatorsListTab';
+export const BEHAVIOR_CHANGE_PROMOTION_LIST_TAB_VALUE = 'behaviorChangePromotionIndicatorsListTab';
+export const ME_INDICATORS_TABS_LABEL_CONTRIBUTION_KEY = 'meIndicators.TabPanel.label';
+export const ME_INDICATORS_TABS_PANEL_CONTRIBUTION_KEY = 'meIndicators.TabPanel.panel';
 
 export const TASK_STATUS = {
   RECEIVED: 'RECEIVED',

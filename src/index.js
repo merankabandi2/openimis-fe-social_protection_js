@@ -66,15 +66,24 @@ import { BenefitPlanTaskTabLabel, BenefitPlanTaskTabPanel } from './components/B
 import { BenefitPlanProvincesTabLabel, BenefitPlanProvincesTabPanel } from './components/BenefitPlanProvincesTab';
 import { BENEFIT_PLAN_LABEL, RIGHT_BENEFIT_PLAN_SEARCH } from './constants';
 import BeneficiaryPicker from './pickers/BeneficiaryPicker';
+import { MicroProjectTabLabel, MicroProjectTabPanel } from './components/me/MicroProjectTabPanel';
+import { SensitizationTrainingTabLabel, SensitizationTrainingTabPanel } from './components/me/SensitizationTrainingTabPanel';
+import { BehaviorChangePromotionTabLabel, BehaviorChangePromotionTabPanel } from './components/me/BehaviorChangePromotionTabPanel';
+import MEMainMenu from './menus/MEMainMenu';
+import MEIndicatorsPage from './pages/MEIndicatorsPage';
 
 const ROUTE_BENEFIT_PLANS = 'benefitPlans';
 const ROUTE_BENEFIT_PLAN = 'benefitPlans/benefitPlan';
 const ROUTE_BENEFIT_PACKAGE = 'benefitPackage';
+const ROUTE_ME = 'me';
 
 const DEFAULT_CONFIG = {
   translations: [{ key: 'en', messages: messages_en }],
   reducers: [{ key: 'socialProtection', reducer }],
-  'core.MainMenu': [{ name: 'BenefitPlanMainMenu', component: BenefitPlanMainMenu }],
+  'core.MainMenu': [
+    { name: 'BenefitPlanMainMenu', component: BenefitPlanMainMenu },
+    { name: 'MEMainMenu', component: MEMainMenu },
+  ],
   'core.Router': [
     { path: ROUTE_BENEFIT_PLANS, component: BenefitPlansPage },
     { path: `${ROUTE_BENEFIT_PLAN}/:benefit_plan_uuid?`, component: BenefitPlanPage },
@@ -85,6 +94,10 @@ const DEFAULT_CONFIG = {
     {
       path: `${ROUTE_BENEFIT_PLAN}/:benefit_plan_uuid?/${ROUTE_BENEFIT_PACKAGE}/group/:group_beneficiaries_uuid?`,
       component: BenefitPackagePage,
+    },
+    {
+      path: `${ROUTE_ME}/indicators`,
+      component: MEIndicatorsPage,
     },
   ],
   refs: [
@@ -126,6 +139,16 @@ const DEFAULT_CONFIG = {
     BenefitPackageMembersTabPanel,
     BenefitPackageBenefitsTabPanel,
     BenefitPackageGrievancesTabPanel,
+  ],
+  'meIndicators.TabPanel.label': [
+    MicroProjectTabLabel,
+    SensitizationTrainingTabLabel,
+    BehaviorChangePromotionTabLabel,
+  ],
+  'meIndicators.TabPanel.panel': [
+    MicroProjectTabPanel,
+    SensitizationTrainingTabPanel,
+    BehaviorChangePromotionTabPanel,
   ],
   'tasksManagement.tasks': [{
     text: <FormattedMessage module="socialProtection" id="benefitPlan.tasks.update.title" />,

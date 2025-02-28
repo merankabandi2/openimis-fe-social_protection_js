@@ -63,6 +63,45 @@ const WORKFLOWS_FULL_PROJECTION = () => [
   'name',
   'group',
 ];
+const SENSITIZATION_TRAINING_FULL_PROJECTION = (modulesManager) => [
+  'id',
+  'sensitizationDate',
+  `location ${modulesManager.getProjection('location.Location.FlatProjection')}`,
+  'category',
+  'modules',
+  'facilitator',
+  'maleParticipants',
+  'femaleParticipants',
+  'twaParticipants',
+  'observations',
+];
+
+const BEHAVIOR_CHANGE_PROMOTION_FULL_PROJECTION = (modulesManager) => [
+  'id',
+  'reportDate',
+  `location ${modulesManager.getProjection('location.Location.FlatProjection')}`,
+  'maleParticipants',
+  'femaleParticipants',
+  'twaParticipants',
+  'comments',
+];
+
+const MICRO_PROJECT_FULL_PROJECTION = (modulesManager) => [
+  'id',
+  'reportDate',
+  `location ${modulesManager.getProjection('location.Location.FlatProjection')}`,
+  'maleParticipants',
+  'femaleParticipants',
+  'twaParticipants',
+  'agricultureBeneficiaries',
+  'livestockBeneficiaries',
+  'livestockGoatBeneficiaries',
+  'livestockPigBeneficiaries',
+  'livestockRabbitBeneficiaries',
+  'livestockPoultryBeneficiaries',
+  'livestockCattleBeneficiaries',
+  'commerceServicesBeneficiaries',
+];
 
 export function fetchBenefitPlans(params) {
   const payload = formatPageQueryWithCount('benefitPlan', params, BENEFIT_PLAN_FULL_PROJECTION());
@@ -238,6 +277,45 @@ export function fetchBenefitPlanProvinces(modulesManager, params) {
   ]);
 
   return graphql(payload, ACTION_TYPE.SEARCH_BENEFIT_PLAN_PROVINCES);
+}
+
+export function fetchSensitizationTrainings(modulesManager, params) {
+  const payload = formatPageQueryWithCount('sensitizationTraining', params, SENSITIZATION_TRAINING_FULL_PROJECTION(modulesManager));
+  return graphql(payload, ACTION_TYPE.SEARCH_SENSITIZATION_TRAININGS);
+}
+
+export function fetchBehaviorChangePromotions(modulesManager, params) {
+  const payload = formatPageQueryWithCount('behaviorChangePromotion', params, BEHAVIOR_CHANGE_PROMOTION_FULL_PROJECTION(modulesManager));
+  return graphql(payload, ACTION_TYPE.SEARCH_BEHAVIOR_CHANGE_PROMOTIONS);
+}
+
+export function fetchMicroProjects(modulesManager, params) {
+  const payload = formatPageQueryWithCount('microProject', params, MICRO_PROJECT_FULL_PROJECTION(modulesManager));
+  return graphql(payload, ACTION_TYPE.SEARCH_MICRO_PROJECTS);
+}
+
+export function deleteMicroProject(microProject, label) {
+  return (dispatch) => {
+    console.log(`Mock deleteMicroProject called with: ${microProject}, ${label}`);
+    // Mock implementation
+    dispatch({ type: 'DELETE_MICRO_PROJECT', payload: microProject });
+  };
+}
+
+export function deleteBehaviorChangePromotion(microProject, label) {
+  return (dispatch) => {
+    console.log(`Mock deleteMicroProject called with: ${microProject}, ${label}`);
+    // Mock implementation
+    dispatch({ type: 'DELETE_MICRO_PROJECT', payload: microProject });
+  };
+}
+
+export function deleteSensitizationTraining(microProject, label) {
+  return (dispatch) => {
+    console.log(`Mock deleteMicroProject called with: ${microProject}, ${label}`);
+    // Mock implementation
+    dispatch({ type: 'DELETE_MICRO_PROJECT', payload: microProject });
+  };
 }
 
 export function deleteBenefitPlan(benefitPlan, clientMutationLabel) {

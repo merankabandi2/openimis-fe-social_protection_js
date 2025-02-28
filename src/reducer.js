@@ -45,6 +45,9 @@ export const ACTION_TYPE = {
   RESOLVE_TASK: 'TASK_MANAGEMENT_RESOLVE_TASK',
   SEARCH_BENEFIT_PLANS_HISTORY: 'BENEFIT_PLAN_BENEFIT_PLANS_HISTORY',
   SEARCH_BENEFIT_PLAN_PROVINCES: 'BENEFIT_PLAN_PROVINCES',
+  SEARCH_SENSITIZATION_TRAININGS: 'SENSITIZATION_TRAININGS',
+  SEARCH_BEHAVIOR_CHANGE_PROMOTIONS: 'BEHAVIOR_CHANGE_PROMOTIONS',
+  SEARCH_MICRO_PROJECTS: 'MICRO_PROJECTS',
 };
 
 function reducer(
@@ -124,6 +127,24 @@ function reducer(
     benefitPlanProvincesPageInfo: {},
     benefitPlanProvincesTotalCount: 0,
     errorBenefitPlanProvinces: null,
+    fetchingSensitizationTrainings: false,
+    fetchedSensitizationTrainings: false,
+    sensitizationTrainings: [],
+    sensitizationTrainingsPageInfo: {},
+    sensitizationTrainingsTotalCount: 0,
+    errorSensitizationTrainings: null,
+    fetchingBehaviorChangePromotions: false,
+    fetchedBehaviorChangePromotions: false,
+    behaviorChangePromotions: [],
+    behaviorChangePromotionsPageInfo: {},
+    behaviorChangePromotionsTotalCount: 0,
+    errorBehaviorChangePromotions: null,
+    fetchingMicroProjects: false,
+    fetchedMicroProjects: false,
+    microProjects: [],
+    microProjectsPageInfo: {},
+    microProjectsTotalCount: 0,
+    errorMicroProjects: null,
   },
   action,
 ) {
@@ -730,6 +751,93 @@ function reducer(
         ...state,
         fetchingBenefitPlanProvinces: false,
         errorBenefitPlanProvinces: formatServerError(action.payload),
+      };
+    case REQUEST(ACTION_TYPE.SEARCH_SENSITIZATION_TRAININGS):
+      return {
+        ...state,
+        fetchingSensitizationTrainings: true,
+        fetchedSensitizationTrainings: false,
+        sensitizationTrainings: [],
+        sensitizationTrainingsPageInfo: {},
+        sensitizationTrainingsTotalCount: 0,
+        errorSensitizationTrainings: null,
+      };
+    case SUCCESS(ACTION_TYPE.SEARCH_SENSITIZATION_TRAININGS):
+      return {
+        ...state,
+        fetchingSensitizationTrainings: false,
+        fetchedSensitizationTrainings: true,
+        sensitizationTrainings: parseData(action.payload.data.sensitizationTraining)?.map((training) => ({
+          ...training,
+          id: decodeId(training.id),
+        })),
+        sensitizationTrainingsPageInfo: pageInfo(action.payload.data.sensitizationTraining),
+        sensitizationTrainingsTotalCount: action.payload.data.sensitizationTraining ? action.payload.data.sensitizationTraining.totalCount : null,
+        errorSensitizationTrainings: formatGraphQLError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.SEARCH_SENSITIZATION_TRAININGS):
+      return {
+        ...state,
+        fetchingSensitizationTrainings: false,
+        errorSensitizationTrainings: formatServerError(action.payload),
+      };
+    case REQUEST(ACTION_TYPE.SEARCH_BEHAVIOR_CHANGE_PROMOTIONS):
+      return {
+        ...state,
+        fetchingBehaviorChangePromotions: true,
+        fetchedBehaviorChangePromotions: false,
+        behaviorChangePromotions: [],
+        behaviorChangePromotionsPageInfo: {},
+        behaviorChangePromotionsTotalCount: 0,
+        errorBehaviorChangePromotions: null,
+      };
+    case SUCCESS(ACTION_TYPE.SEARCH_BEHAVIOR_CHANGE_PROMOTIONS):
+      return {
+        ...state,
+        fetchingBehaviorChangePromotions: false,
+        fetchedBehaviorChangePromotions: true,
+        behaviorChangePromotions: parseData(action.payload.data.behaviorChangePromotion)?.map((promotion) => ({
+          ...promotion,
+          id: decodeId(promotion.id),
+        })),
+        behaviorChangePromotionsPageInfo: pageInfo(action.payload.data.behaviorChangePromotion),
+        behaviorChangePromotionsTotalCount: action.payload.data.behaviorChangePromotion ? action.payload.data.behaviorChangePromotion.totalCount : null,
+        errorBehaviorChangePromotions: formatGraphQLError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.SEARCH_BEHAVIOR_CHANGE_PROMOTIONS):
+      return {
+        ...state,
+        fetchingBehaviorChangePromotions: false,
+        errorBehaviorChangePromotions: formatServerError(action.payload),
+      };
+    case REQUEST(ACTION_TYPE.SEARCH_MICRO_PROJECTS):
+      return {
+        ...state,
+        fetchingMicroProjects: true,
+        fetchedMicroProjects: false,
+        microProjects: [],
+        microProjectsPageInfo: {},
+        microProjectsTotalCount: 0,
+        errorMicroProjects: null,
+      };
+    case SUCCESS(ACTION_TYPE.SEARCH_MICRO_PROJECTS):
+      return {
+        ...state,
+        fetchingMicroProjects: false,
+        fetchedMicroProjects: true,
+        microProjects: parseData(action.payload.data.microProject)?.map((project) => ({
+          ...project,
+          id: decodeId(project.id),
+        })),
+        microProjectsPageInfo: pageInfo(action.payload.data.microProject),
+        microProjectsTotalCount: action.payload.data.microProject ? action.payload.data.microProject.totalCount : null,
+        errorMicroProjects: formatGraphQLError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.SEARCH_MICRO_PROJECTS):
+      return {
+        ...state,
+        fetchingMicroProjects: false,
+        errorMicroProjects: formatServerError(action.payload),
       };
     case REQUEST(ACTION_TYPE.MUTATION):
       return dispatchMutationReq(state, action);
