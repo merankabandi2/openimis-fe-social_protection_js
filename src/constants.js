@@ -22,6 +22,10 @@ export const RIGHT_BENEFIT_PLAN_UPDATE = 160003;
 export const RIGHT_BENEFIT_PLAN_DELETE = 160004;
 export const RIGHT_BENEFICIARY_SEARCH = 170001;
 export const RIGHT_BENEFICIARY_UPDATE = 170003;
+export const RIGHT_MONETARY_TRANSFER_SEARCH = 160001;
+export const RIGHT_MONETARY_TRANSFER_UPDATE = 160003;
+export const RIGHT_MONETARY_TRANSFER_CREATE = 160002;
+export const RIGHT_MONETARY_TRANSFER_DELETE = 160004;
 
 export const RIGHT_SCHEMA_SEARCH = 171001;
 export const RIGHT_SCHEMA_CREATE = 171002;
@@ -35,6 +39,8 @@ export const BENEFIT_PLAN_TASKS_DELETE = 191004;
 export const SENSITIZATION_TRAINING_ROUTE = 'socialProtection.route.sensitizationTraining';
 export const MICRO_PROJECT_ROUTE = 'socialProtection.route.microProject';
 export const BEHAVIOR_CHANGE_PROMOTION_ROUTE = 'socialProtection.route.behaviorChangePromotion';
+export const MONETARY_TRANSFERS_ROUTE = 'me/monetary-transfers';
+export const MONETARY_TRANSFER_ROUTE = 'socialProtection.route.monetaryTransfer';
 
 export const RIGHT_SENSITIZATION_TRAINING_SEARCH = 190901;
 export const RIGHT_MICRO_PROJECT_SEARCH = 190901;

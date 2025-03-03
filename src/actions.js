@@ -1,5 +1,6 @@
 import {
   graphql,
+  decodeId,
   formatQuery,
   formatPageQuery,
   formatPageQueryWithCount,
@@ -8,7 +9,7 @@ import {
   graphqlWithVariables,
   prepareMutation,
 } from '@openimis/fe-core';
-import { ACTION_TYPE } from './reducer';
+import { ACTION_TYPE, MUTATION_SERVICE } from './reducer';
 import {
   CLEAR, ERROR, REQUEST, SUCCESS,
 } from './util/action-type';
@@ -101,6 +102,20 @@ const MICRO_PROJECT_FULL_PROJECTION = (modulesManager) => [
   'livestockPoultryBeneficiaries',
   'livestockCattleBeneficiaries',
   'commerceServicesBeneficiaries',
+];
+
+export const MONETARY_TRANSFER_PROJECTION = (modulesManager) => [
+  'id',
+  'transferDate',
+  `location ${modulesManager.getProjection('location.Location.FlatProjection')}`,
+  'programme {id, code, name}',
+  'paymentAgency {id, name}',
+  'plannedWomen',
+  'plannedMen',
+  'plannedTwa',
+  'paidWomen',
+  'paidMen',
+  'paidTwa',
 ];
 
 export function fetchBenefitPlans(params) {
@@ -263,6 +278,22 @@ export function fetchPendingBeneficiaryUploads(variables) {
   );
 }
 
+const PERFORM_MUTATION = (mutationType, mutationInput, ACTION, clientMutationLabel) => {
+  const mutation = formatMutation(mutationType, mutationInput, clientMutationLabel);
+  const requestedDateTime = new Date();
+
+  return graphql(
+    mutation.payload,
+    [REQUEST(ACTION_TYPE.MUTATION), SUCCESS(ACTION), ERROR(ACTION_TYPE.MUTATION)],
+    {
+      actionType: ACTION,
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+    },
+  );
+};
+
 export function fetchBenefitPlanHistory(params) {
   const payload = formatPageQueryWithCount('benefitPlanHistory', params, BENEFIT_PLAN_FULL_PROJECTION());
   return graphql(payload, ACTION_TYPE.SEARCH_BENEFIT_PLANS_HISTORY);
@@ -350,9 +381,33 @@ export function closeBenefitPlan(benefitPlan, clientMutationLabel) {
   );
 }
 
+export function fetchMonetaryTransfers(modulesManager, params) {
+  const payload = formatPageQueryWithCount('monetaryTransfer', params, MONETARY_TRANSFER_PROJECTION(modulesManager));
+  return graphql(payload, ACTION_TYPE.SEARCH_MONETARY_TRANSFERS);
+}
+
+export function fetchMonetaryTransfer(modulesManager, params) {
+  const payload = formatPageQueryWithCount('monetaryTransfer', params, MONETARY_TRANSFER_PROJECTION(modulesManager));
+  return graphql(payload, ACTION_TYPE.GET_MONETARY_TRANSFER);
+}
+
 function dateTimeToDate(date) {
   return date.split('T')[0];
 }
+
+const formatMonetaryTransferGQL = (monetaryTransfer) => `
+  ${monetaryTransfer?.id ? `id: "${monetaryTransfer.id}"` : ''}
+  ${monetaryTransfer?.transferDate ? `transferDate: "${monetaryTransfer.transferDate}"` : ''}
+  ${monetaryTransfer?.location ? `locationId: ${decodeId(monetaryTransfer.location.id)}` : ''}
+  ${monetaryTransfer?.programme ? `programmeId: "${decodeId(monetaryTransfer.programme.id)}"` : ''}
+  ${monetaryTransfer?.paymentAgency ? `paymentAgencyId: "${decodeId(monetaryTransfer.paymentAgency.id)}"` : ''}
+  ${monetaryTransfer?.plannedWomen ? `plannedWomen: ${monetaryTransfer.plannedWomen}` : ''}
+  ${monetaryTransfer?.plannedMen ? `plannedMen: ${monetaryTransfer.plannedMen}` : ''}
+  ${monetaryTransfer?.plannedTwa ? `plannedTwa: ${monetaryTransfer.plannedTwa}` : ''}
+  ${monetaryTransfer?.paidWomen ? `paidWomen: ${monetaryTransfer.paidWomen}` : ''}
+  ${monetaryTransfer?.paidMen ? `paidMen: ${monetaryTransfer.paidMen}` : ''}
+  ${monetaryTransfer?.paidTwa ? `paidTwa: ${monetaryTransfer.paidTwa}` : ''}
+`;
 
 function formatBenefitPlanGQL(benefitPlan) {
   return `
@@ -435,6 +490,34 @@ export function updateGroupBeneficiary(beneficiary, clientMutationLabel) {
       clientMutationLabel,
       requestedDateTime,
     },
+  );
+}
+
+export function createMonetaryTransfer(monetaryTransfer, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.MONETARY_TRANSFER.CREATE,
+    formatMonetaryTransferGQL(monetaryTransfer),
+    ACTION_TYPE.CREATE_MONETARY_TRANSFER,
+    clientMutationLabel,
+  );
+}
+
+export function updateMonetaryTransfer(monetaryTransfer, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.MONETARY_TRANSFER.UPDATE,
+    formatMonetaryTransferGQL(monetaryTransfer),
+    ACTION_TYPE.UPDATE_MONETARY_TRANSFER,
+    clientMutationLabel,
+  );
+}
+
+export function deleteMonetaryTransfer(monetaryTransfer, clientMutationLabel) {
+  const monetaryTransferUuids = `ids: ["${monetaryTransfer?.id}"]`;
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.MONETARY_TRANSFER.DELETE,
+    monetaryTransferUuids,
+    ACTION_TYPE.DELETE_MONETARY_TRANSFER,
+    clientMutationLabel,
   );
 }
 
@@ -533,6 +616,12 @@ export const benefitPlanSchemaValidationClear = () => (dispatch) => {
 export const clearBenefitPlan = () => (dispatch) => {
   dispatch({
     type: CLEAR(ACTION_TYPE.GET_BENEFIT_PLAN),
+  });
+};
+
+export const clearMonetaryTransfer = () => (dispatch) => {
+  dispatch({
+    type: CLEAR(ACTION_TYPE.GET_MONETARY_TRANSFER),
   });
 };
 

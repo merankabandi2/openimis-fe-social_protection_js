@@ -85,10 +85,12 @@ function BehaviorChangePromotionSearcher({
 
   const headers = () => [
     'behaviorChangePromotion.report_date',
-    'behaviorChangePromotion.location',
-    'behaviorChangePromotion.male_participants',
-    'behaviorChangePromotion.female_participants',
-    'behaviorChangePromotion.twa_participants',
+    'location.locationType.0',
+    'location.locationType.1',
+    'location.locationType.2',
+    'me.male_participants',
+    'me.female_participants',
+    'me.twa_participants',
     'emptyLabel',
     'emptyLabel',
   ];
@@ -113,6 +115,8 @@ function BehaviorChangePromotionSearcher({
 
   const itemFormatters = () => [
     (behaviorChangePromotion) => behaviorChangePromotion.reportDate,
+    (behaviorChangePromotion) => behaviorChangePromotion.location.parent.parent.name,
+    (behaviorChangePromotion) => behaviorChangePromotion.location.parent.name,
     (behaviorChangePromotion) => behaviorChangePromotion.location.name,
     (behaviorChangePromotion) => behaviorChangePromotion.maleParticipants,
     (behaviorChangePromotion) => behaviorChangePromotion.femaleParticipants,

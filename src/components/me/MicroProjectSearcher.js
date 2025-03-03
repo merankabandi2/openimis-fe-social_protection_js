@@ -85,10 +85,12 @@ function MicroProjectSearcher({
 
   const headers = () => [
     'microProject.report_date',
-    'microProject.location',
-    'microProject.male_participants',
-    'microProject.female_participants',
-    'microProject.twa_participants',
+    'location.locationType.0',
+    'location.locationType.1',
+    'location.locationType.2',
+    'me.male_participants',
+    'me.female_participants',
+    'me.twa_participants',
     'emptyLabel',
     'emptyLabel',
   ];
@@ -110,6 +112,8 @@ function MicroProjectSearcher({
 
   const itemFormatters = () => [
     (microProject) => microProject.reportDate,
+    (microProject) => microProject.location.parent.parent.name,
+    (microProject) => microProject.location.parent.name,
     (microProject) => microProject.location.name,
     (microProject) => microProject.maleParticipants,
     (microProject) => microProject.femaleParticipants,

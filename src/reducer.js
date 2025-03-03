@@ -48,6 +48,19 @@ export const ACTION_TYPE = {
   SEARCH_SENSITIZATION_TRAININGS: 'SENSITIZATION_TRAININGS',
   SEARCH_BEHAVIOR_CHANGE_PROMOTIONS: 'BEHAVIOR_CHANGE_PROMOTIONS',
   SEARCH_MICRO_PROJECTS: 'MICRO_PROJECTS',
+  SEARCH_MONETARY_TRANSFERS: 'ME_MONETARY_TRANSFERS',
+  GET_MONETARY_TRANSFER: 'ME_MONETARY_TRANSFER',
+  CREATE_MONETARY_TRANSFER: 'ME_MUTATION_CREATE_MONETARY_TRANSFER',
+  UPDATE_MONETARY_TRANSFER: 'ME_MUTATION_UPDATE_MONETARY_TRANSFER',
+  DELETE_MONETARY_TRANSFER: 'ME_MUTATION_DELETE_MONETARY_TRANSFER',
+};
+
+export const MUTATION_SERVICE = {
+  MONETARY_TRANSFER: {
+    CREATE: 'createMonetaryTransfer',
+    DELETE: 'deleteMonetaryTransfer',
+    UPDATE: 'updateMonetaryTransfer',
+  },
 };
 
 function reducer(
@@ -145,6 +158,16 @@ function reducer(
     microProjectsPageInfo: {},
     microProjectsTotalCount: 0,
     errorMicroProjects: null,
+    fetchingMonetaryTransfers: false,
+    fetchedMonetaryTransfers: false,
+    monetaryTransfers: [],
+    monetaryTransfersPageInfo: {},
+    monetaryTransfersTotalCount: 0,
+    errorMonetaryTransfers: null,
+    fetchingMonetaryTransfer: false,
+    fetchedMonetaryTransfer: false,
+    monetaryTransfer: null,
+    errorMonetaryTransfer: null,
   },
   action,
 ) {
@@ -839,6 +862,68 @@ function reducer(
         fetchingMicroProjects: false,
         errorMicroProjects: formatServerError(action.payload),
       };
+    case REQUEST(ACTION_TYPE.SEARCH_MONETARY_TRANSFERS):
+      return {
+        ...state,
+        fetchingMonetaryTransfers: true,
+        fetchedMonetaryTransfers: false,
+        monetaryTransfers: [],
+        errorMonetaryTransfers: null,
+        monetaryTransfersPageInfo: {},
+        monetaryTransfersTotalCount: 0,
+      };
+    case SUCCESS(ACTION_TYPE.SEARCH_MONETARY_TRANSFERS):
+      return {
+        ...state,
+        monetaryTransfers: parseData(action.payload.data.monetaryTransfer)?.map((monetaryTransfer) => ({
+          ...monetaryTransfer,
+          id: decodeId(monetaryTransfer.id),
+        })),
+        fetchingMonetaryTransfers: false,
+        fetchedMonetaryTransfers: true,
+        errorMonetaryTransfers: formatGraphQLError(action.payload),
+        monetaryTransfersPageInfo: pageInfo(action.payload.data.monetaryTransfer),
+        monetaryTransfersTotalCount: action.payload.data.monetaryTransfer?.totalCount ?? 0,
+      };
+    case ERROR(ACTION_TYPE.SEARCH_MONETARY_TRANSFERS):
+      return {
+        ...state,
+        fetchingMonetaryTransfers: false,
+        errorMonetaryTransfers: formatServerError(action.payload),
+      };
+    case REQUEST(ACTION_TYPE.GET_MONETARY_TRANSFER):
+      return {
+        ...state,
+        fetchingMonetaryTransfer: true,
+        fetchedMonetaryTransfer: false,
+        monetaryTransfer: [],
+        errorMonetaryTransfer: null,
+      };
+    case SUCCESS(ACTION_TYPE.GET_MONETARY_TRANSFER):
+      return {
+        ...state,
+        fetchingMonetaryTransfer: false,
+        fetchedMonetaryTransfer: true,
+        monetaryTransfer: parseData(action.payload.data.monetaryTransfer)?.map((monetaryTransfer) => ({
+          ...monetaryTransfer,
+          id: decodeId(monetaryTransfer.id),
+        }))?.[0],
+        errorMonetaryTransfer: formatGraphQLError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.GET_MONETARY_TRANSFER):
+      return {
+        ...state,
+        fetchingMonetaryTransfer: false,
+        errorMonetaryTransfer: formatServerError(action.payload),
+      };
+    case CLEAR(ACTION_TYPE.GET_MONETARY_TRANSFER):
+      return {
+        ...state,
+        fetchingMonetaryTransfer: false,
+        fetchedMonetaryTransfer: false,
+        monetaryTransfer: {},
+        errorMonetaryTransfer: null,
+      };
     case REQUEST(ACTION_TYPE.MUTATION):
       return dispatchMutationReq(state, action);
     case ERROR(ACTION_TYPE.MUTATION):
@@ -859,6 +944,20 @@ function reducer(
       return dispatchMutationReq(state, action);
     case ERROR(ACTION_TYPE.TASK_MUTATION):
       return dispatchMutationErr(state, action);
+    case REQUEST(ACTION_TYPE.CREATE_MONETARY_TRANSFER):
+    case REQUEST(ACTION_TYPE.UPDATE_MONETARY_TRANSFER):
+    case REQUEST(ACTION_TYPE.DELETE_MONETARY_TRANSFER):
+      return dispatchMutationReq(state, action);
+    case ERROR(ACTION_TYPE.CREATE_MONETARY_TRANSFER):
+    case ERROR(ACTION_TYPE.UPDATE_MONETARY_TRANSFER):
+    case ERROR(ACTION_TYPE.DELETE_MONETARY_TRANSFER):
+      return dispatchMutationErr(state, action);
+    case SUCCESS(ACTION_TYPE.CREATE_MONETARY_TRANSFER):
+      return dispatchMutationResp(state, MUTATION_SERVICE.MONETARY_TRANSFER.CREATE, action);
+    case SUCCESS(ACTION_TYPE.UPDATE_MONETARY_TRANSFER):
+      return dispatchMutationResp(state, MUTATION_SERVICE.MONETARY_TRANSFER.UPDATE, action);
+    case SUCCESS(ACTION_TYPE.DELETE_MONETARY_TRANSFER):
+      return dispatchMutationResp(state, MUTATION_SERVICE.MONETARY_TRANSFER.DELETE, action);
     default:
       return state;
   }

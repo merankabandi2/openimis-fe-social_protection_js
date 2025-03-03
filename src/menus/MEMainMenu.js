@@ -9,6 +9,8 @@ import { formatMessage, MainMenuContribution, withModulesManager } from '@openim
 import {
   RIGHT_BENEFIT_PLAN_SEARCH,
   ME_MAIN_MENU_CONTRIBUTION_KEY,
+  MONETARY_TRANSFERS_ROUTE,
+  RIGHT_MONETARY_TRANSFER_SEARCH,
 } from '../constants';
 
 function MEMainMenu(props) {
@@ -19,6 +21,13 @@ function MEMainMenu(props) {
       route: '/me/indicators',
       filter: (rights) => rights.includes(RIGHT_BENEFIT_PLAN_SEARCH),
       id: 'socialProtection.me.indicators',
+    },
+    {
+      text: formatMessage(props.intl, 'socialProtection', 'menu.socialProtection.monetaryTransfer'),
+      icon: <Tune />,
+      route: `/${MONETARY_TRANSFERS_ROUTE}`,
+      filter: (rights) => rights.includes(RIGHT_MONETARY_TRANSFER_SEARCH),
+      id: 'socialProtection.me.monetaryTransfers',
     },
   ];
   entries.push(

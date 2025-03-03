@@ -71,11 +71,18 @@ import { SensitizationTrainingTabLabel, SensitizationTrainingTabPanel } from './
 import { BehaviorChangePromotionTabLabel, BehaviorChangePromotionTabPanel } from './components/me/BehaviorChangePromotionTabPanel';
 import MEMainMenu from './menus/MEMainMenu';
 import MEIndicatorsPage from './pages/MEIndicatorsPage';
+import HomePageContainer from './components/dashboard/HomePageContainer';
+import MonetaryTransferPage from './pages/MonetaryTransferPage';
+import MonetaryTransfersPage from './pages/MonetaryTransfersPage';
+
 
 const ROUTE_BENEFIT_PLANS = 'benefitPlans';
 const ROUTE_BENEFIT_PLAN = 'benefitPlans/benefitPlan';
 const ROUTE_BENEFIT_PACKAGE = 'benefitPackage';
 const ROUTE_ME = 'me';
+
+const ROUTE_MONETARY_TRANSFERS = `${ROUTE_ME}/monetary-transfers`;
+const ROUTE_MONETARY_TRANSFER = `${ROUTE_ME}/monetary-transfers/monetary-transfer`;
 
 const DEFAULT_CONFIG = {
   translations: [{ key: 'en', messages: messages_en }],
@@ -84,6 +91,7 @@ const DEFAULT_CONFIG = {
     { name: 'BenefitPlanMainMenu', component: BenefitPlanMainMenu },
     { name: 'MEMainMenu', component: MEMainMenu },
   ],
+  'home.HomePage.customDashboard': HomePageContainer,
   'core.Router': [
     { path: ROUTE_BENEFIT_PLANS, component: BenefitPlansPage },
     { path: `${ROUTE_BENEFIT_PLAN}/:benefit_plan_uuid?`, component: BenefitPlanPage },
@@ -99,6 +107,8 @@ const DEFAULT_CONFIG = {
       path: `${ROUTE_ME}/indicators`,
       component: MEIndicatorsPage,
     },
+    { path: ROUTE_MONETARY_TRANSFERS, component: MonetaryTransfersPage },
+    { path: `${ROUTE_MONETARY_TRANSFER}/:monetary_transfer_uuid?`, component: MonetaryTransferPage },
   ],
   refs: [
     { key: 'socialProtection.route.benefitPlan', ref: ROUTE_BENEFIT_PLAN },
@@ -113,6 +123,9 @@ const DEFAULT_CONFIG = {
     { key: 'socialProtection.fetchBenefitPlanSchemaFields', ref: fetchBenefitPlanSchemaFields },
     { key: 'socialProtection.BenefitPlanHistorySearcher', ref: BenefitPlanHistorySearcher },
     { key: 'socialProtection.BeneficiaryPicker', ref: BeneficiaryPicker },
+
+    { key: 'socialProtection.route.monetaryTransfers', ref: ROUTE_MONETARY_TRANSFERS },
+    { key: 'socialProtection.route.monetaryTransfer', ref: ROUTE_MONETARY_TRANSFER },
   ],
   'benefitPlan.TabPanel.label': [
     BenefitPlanBeneficiariesListTabLabel,

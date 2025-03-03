@@ -85,11 +85,13 @@ function SensitizationTrainingSearcher({
 
   const headers = () => [
     'sensitizationTraining.sensitization_date',
-    'sensitizationTraining.location',
+    'location.locationType.0',
+    'location.locationType.1',
+    'location.locationType.2',
     'sensitizationTraining.category',
-    'sensitizationTraining.male_participants',
-    'sensitizationTraining.female_participants',
-    'sensitizationTraining.twa_participants',
+    'me.male_participants',
+    'me.female_participants',
+    'me.twa_participants',
     'emptyLabel',
     'emptyLabel',
   ];
@@ -112,6 +114,8 @@ function SensitizationTrainingSearcher({
 
   const itemFormatters = () => [
     (sensitizationTraining) => sensitizationTraining.sensitizationDate,
+    (sensitizationTraining) => sensitizationTraining.location.parent.parent.name,
+    (sensitizationTraining) => sensitizationTraining.location.parent.name,
     (sensitizationTraining) => sensitizationTraining.location.name,
     (sensitizationTraining) => sensitizationTraining.category,
     (sensitizationTraining) => sensitizationTraining.maleParticipants,

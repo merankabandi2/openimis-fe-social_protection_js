@@ -43,5 +43,10 @@
   "files": [
     "dist"
   ],
-  "dependencies": {}
+  "dependencies": {
+    "leaflet": "^1.9.4",
+    "apexcharts": "^3.41.0",
+    "react-apexcharts": "1.4.1",
+    "react-leaflet": "2"
+  }
 }
