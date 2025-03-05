@@ -117,7 +117,11 @@ function BenefitPlanBeneficiariesUploadDialog({
     formData.append('file', values.file);
 
     let urlImport;
-    if (fileFormat.includes('/csv')) {
+    if (
+      fileFormat.includes('/csv')
+      || fileFormat.includes('application/vnd.ms-excel')
+      || fileFormat.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    ) {
       formData.append('benefit_plan', benefitPlan.id);
       formData.append('workflow_name', values.workflow.name);
       formData.append('workflow_group', values.workflow.group);
@@ -193,7 +197,10 @@ function BenefitPlanBeneficiariesUploadDialog({
                       required
                       id="import-button"
                       inputProps={{
-                        accept: '.csv, application/csv, text/csv',
+                        accept: '.csv, application/csv, text/csv, '
+                               + 'application/vnd.ms-excel, '
+                               + 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, '
+                               + '.xls, .xlsx',
                       }}
                       type="file"
                     />
