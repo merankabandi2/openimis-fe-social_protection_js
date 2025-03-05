@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 /* eslint-disable react/jsx-one-expression-per-line */
 /* eslint-disable react/jsx-no-useless-fragment */
 import React, { useEffect, useState } from 'react';
@@ -111,9 +112,23 @@ function BenefitPlanBeneficiariesUploadDialog({
   };
 
   const onSubmit = async (values) => {
-    const fileFormat = values.file.type;
-    const formData = new FormData();
+    const { file } = values;
+    const fileFormat = file ? file.type : undefined;
 
+    if (
+      !fileFormat
+      || (!fileFormat.includes('/csv')
+        && !fileFormat.includes('application/vnd.ms-excel')
+        && !fileFormat.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'))
+    ) {
+      coreAlert(
+        formatMessage(intl, 'socialProtection', 'benefitPlan.benefitPlanBeneficiaries.upload.alert.header.invalid_format'),
+        formatMessage(intl, 'socialProtection', 'benefitPlan.benefitPlanBeneficiaries.upload.alert.message.invalid_format'),
+      );
+      return;
+    }
+
+    const formData = new FormData();
     formData.append('file', values.file);
 
     let urlImport;
