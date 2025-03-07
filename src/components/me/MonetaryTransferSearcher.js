@@ -91,12 +91,9 @@ function MonetaryTransferSearcher({
     'location',
     'programme',
     'paymentAgency',
-    'plannedWomen',
-    'plannedMen',
-    'plannedTwa',
-    'paidWomen',
-    'paidMen',
-    'paidTwa',
+    'Women',
+    'Men',
+    'Twa',
     'emptyLabel',
     'emptyLabel',
   ];
@@ -123,12 +120,9 @@ function MonetaryTransferSearcher({
     (monetaryTransfer) => monetaryTransfer.location?.name,
     (monetaryTransfer) => monetaryTransfer.programme?.name,
     (monetaryTransfer) => monetaryTransfer.paymentAgency?.name,
-    (monetaryTransfer) => monetaryTransfer.plannedWomen,
-    (monetaryTransfer) => monetaryTransfer.plannedMen,
-    (monetaryTransfer) => monetaryTransfer.plannedTwa,
-    (monetaryTransfer) => monetaryTransfer.paidWomen,
-    (monetaryTransfer) => monetaryTransfer.paidMen,
-    (monetaryTransfer) => monetaryTransfer.paidTwa,
+    (monetaryTransfer) => `${monetaryTransfer?.paidWomen}/${monetaryTransfer.plannedWomen}`,
+    (monetaryTransfer) => `${monetaryTransfer?.paidMen}/${monetaryTransfer.plannedMen}`,
+    (monetaryTransfer) => `${monetaryTransfer?.paidTwa}/${monetaryTransfer.plannedTwa}`,
     (monetaryTransfer) => (
       <Tooltip title={formatMessage('tooltip.viewDetails')}>
         <IconButton

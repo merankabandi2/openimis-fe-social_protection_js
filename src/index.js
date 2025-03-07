@@ -64,17 +64,27 @@ import BenefitPlanHistorySearcher from './components/BenefitPlanHistorySearcher'
 import { BenefitPlanChangelogTabLabel, BenefitPlanChangelogTabPanel } from './components/BenefitPlanChangelogTab';
 import { BenefitPlanTaskTabLabel, BenefitPlanTaskTabPanel } from './components/BenefitPlanTaskTab';
 import { BenefitPlanProvincesTabLabel, BenefitPlanProvincesTabPanel } from './components/BenefitPlanProvincesTab';
-import { BENEFIT_PLAN_LABEL, RIGHT_BENEFIT_PLAN_SEARCH } from './constants';
+import {
+  BENEFIT_PLAN_LABEL,
+  RIGHT_BENEFIT_PLAN_SEARCH,
+  MONETARY_TRANSFERS_ROUTE,
+  RIGHT_MONETARY_TRANSFER_SEARCH,
+} from './constants';
 import BeneficiaryPicker from './pickers/BeneficiaryPicker';
 import { MicroProjectTabLabel, MicroProjectTabPanel } from './components/me/MicroProjectTabPanel';
-import { SensitizationTrainingTabLabel, SensitizationTrainingTabPanel } from './components/me/SensitizationTrainingTabPanel';
-import { BehaviorChangePromotionTabLabel, BehaviorChangePromotionTabPanel } from './components/me/BehaviorChangePromotionTabPanel';
+import {
+  SensitizationTrainingTabLabel,
+  SensitizationTrainingTabPanel
+} from './components/me/SensitizationTrainingTabPanel';
+import {
+  BehaviorChangePromotionTabLabel,
+  BehaviorChangePromotionTabPanel
+} from './components/me/BehaviorChangePromotionTabPanel';
 import MEMainMenu from './menus/MEMainMenu';
 import MEIndicatorsPage from './pages/MEIndicatorsPage';
 import HomePageContainer from './components/dashboard/HomePageContainer';
 import MonetaryTransferPage from './pages/MonetaryTransferPage';
 import MonetaryTransfersPage from './pages/MonetaryTransfersPage';
-
 
 const ROUTE_BENEFIT_PLANS = 'benefitPlans';
 const ROUTE_BENEFIT_PLAN = 'benefitPlans/benefitPlan';
@@ -197,6 +207,22 @@ const DEFAULT_CONFIG = {
       route: '/benefitPlans',
       filter: (rights) => rights.includes(RIGHT_BENEFIT_PLAN_SEARCH),
       id: 'socialProtection.benefitPlans',
+    },
+  ],
+  'me.MainMenu': [
+    {
+      text: <FormattedMessage module="socialProtection" id="menu.socialProtection.indicators" />,
+      icon: <Tune />,
+      route: '/me/indicators',
+      filter: (rights) => rights.includes(RIGHT_BENEFIT_PLAN_SEARCH),
+      id: 'socialProtection.me.indicators',
+    },
+    {
+      text: <FormattedMessage module="socialProtection" id="menu.socialProtection.monetaryTransfer" />,
+      icon: <Tune />,
+      route: `/${MONETARY_TRANSFERS_ROUTE}`,
+      filter: (rights) => rights.includes(RIGHT_MONETARY_TRANSFER_SEARCH),
+      id: 'socialProtection.me.monetaryTransfers',
     },
   ],
 };

@@ -1,363 +1,185 @@
-// App.js
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  Container,
   Grid,
   Box,
-  makeStyles,
-  ThemeProvider,
-  createMuiTheme,
 } from '@material-ui/core';
-import ApexCharts from 'apexcharts';
-import Chart from 'react-apexcharts';
+import {
+  Map, TileLayer, GeoJSON,
+} from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import { baseApiUrl, apiHeaders } from '@openimis/fe-core';
+import BoxTable from './BoxTable';
 
-// Create a custom theme
-const theme = createMuiTheme({
-  typography: {
-    fontFamily: '"Titillium Web", "Roboto", "Helvetica", "Arial", sans-serif',
-    fontWeightRegular: 400,
-    fontWeightMedium: 600,
-    fontWeightBold: 700,
-  },
-  palette: {
-    primary: {
-      main: '#5a8dee',
-    },
-  },
+// This is needed to fix Leaflet icon issues in React
+import L from 'leaflet';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Custom styles
-const useStyles = makeStyles((theme) => ({
-  wrapper: {
-    backgroundColor: '#f9fbfd',
-    minHeight: '100vh',
-  },
-  contentArea: {
-    padding: theme.spacing(3),
-  },
-  box: {
-    backgroundColor: '#fff',
-    padding: theme.spacing(3),
-    borderRadius: theme.shape.borderRadius,
-    boxShadow: '0 1px 20px 0 rgba(0,0,0,.1)',
-    height: '100%',
-  },
-  box1: {
-    background: 'linear-gradient(to right, #5a8dee, #2196f3)',
-    color: '#fff',
-    '& .apexcharts-series path': {
-      stroke: '#fff !important',
-    },
-  },
-  box2: {
-    background: 'linear-gradient(to right, #ff8f00, #ffb300)',
-    color: '#fff',
-    '& .apexcharts-series path': {
-      stroke: '#fff !important',
-    },
-  },
-  box3: {
-    background: 'linear-gradient(to right, #00d0bd, #00b8a9)',
-    color: '#fff',
-    '& .apexcharts-series path': {
-      stroke: '#fff !important',
-    },
-  },
-  chartContainer: {
-    height: '350px',
-  },
-}));
-
-// Mock data functions (similar to what would be in assets/data.js)
-const generateData = (count, min, max) => {
-  const data = [];
-  for (let i = 0; i < count; i++) {
-    data.push(Math.floor(Math.random() * (max - min + 1)) + min);
+const loadStats = async () => {
+  const response = await fetch(`${baseApiUrl}/graphql`, {
+    method: 'post',
+    headers: apiHeaders(),
+    body: JSON.stringify({ query: '{locationByBenefitPlan (benefitPlan_Id: \"452721c3-cc8a-49d9-81f0-a7c7a1a3bf82\") { totalCount edges{node{ id, code, name,countSelected,countSuspended,countActive}}}}' }),
+  });
+  if (!response.ok) {
+    throw response;
+  } else {
+    const { data } = await response.json();
+    return data;
   }
-  return data;
 };
 
-// Dashboard component
-function BalkanDashboard() {
-  const classes = useStyles();
+function MapComponent({ className }) {
+  // State for our data
+  const [burundiGeoJSON, setBurundiGeoJSON] = useState(null);
+  const [locationData, setLocationData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Spark Charts Options
-  const sparkOptions = {
-    chart: {
-      id: 'spark1',
-      type: 'line',
-      height: 100,
-      sparkline: {
-        enabled: true,
-      },
-      toolbar: {
-        show: false,
-      },
-    },
-    stroke: {
-      curve: 'smooth',
-      width: 3,
-    },
-    colors: ['#fff'],
-    tooltip: {
-      fixed: {
-        enabled: false,
-      },
-      x: {
-        show: false,
-      },
-      marker: {
-        show: false,
-      },
-    },
-  };
+  // Create a lookup object for easy access
+  const [locationLookup, setLocationLookup] = useState({});
 
-  // Bar Chart Options
-  const barOptions = {
-    chart: {
-      id: 'bar-chart',
-      type: 'bar',
-      height: 350,
-      toolbar: {
-        show: false,
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        // Create lookup table by name
+        fetch('/front/maps/provinces.geojson') // Adjust the path to your GeoJSON file
+          .then((response) => response.json())
+          .then((data) => setBurundiGeoJSON(data))
+          .catch((error) => console.error('Error loading GeoJSON:', error));
+
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        setError('Failed to load data. Please try again later.');
+        setLoading(false);
+      }
+    }
+
+    loadStats().then(
+      (data) => {
+        console.log([1]);
+        const locations = data.locationByBenefitPlan.edges.map((edge) => edge.node);
+        setLocationData(locations);
+        const lookup = {};
+        locations.forEach((loc) => {
+          lookup[loc.name] = loc;
+        });
+        setLocationLookup(lookup);
+        fetchData();
       },
-    },
-    plotOptions: {
-      bar: {
-        horizontal: false,
-        columnWidth: '55%',
-        endingShape: 'rounded',
-      },
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    colors: ['#5a8dee', '#ff8f00'],
-    stroke: {
-      show: true,
-      width: 2,
-      colors: ['transparent'],
-    },
-    xaxis: {
-      categories: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-    },
-    yaxis: {
-      title: {
-        text: '$ (thousands)',
-      },
-    },
-    fill: {
+    )
+      .catch((error) => console.error('Failed to load stats', error));
+  }, []);
+
+  // Calculate total count for a location
+  const getTotalCount = (location) => location.countSelected + location.countActive + location.countSuspended;
+
+  // Find the max count for color scaling
+  const maxCount = locationData.length
+    ? Math.max(...locationData.map(getTotalCount)) : 0;
+
+  // Style function for the GeoJSON layers
+  const getStyle = (feature) => {
+    const locationName = feature.properties.shapeName;
+    const locationInfo = locationLookup[locationName];
+
+    if (!locationInfo) {
+      return {
+        fillColor: '#f0f0f0', weight: 1, opacity: 1, color: '#333', fillOpacity: 0.7,
+      };
+    }
+
+    const totalCount = getTotalCount(locationInfo);
+    const colorIntensity = Math.min(1, totalCount / maxCount);
+
+    // Determine fill color based on active vs selected status
+    let fillColor = '#f0f0f0'; // Default light gray
+    let dashArray = null;
+
+    if (locationInfo.countActive > 0 && locationInfo.countSelected === 0) {
+      // Only active - use green shades
+      fillColor = `rgb(0, ${Math.floor(100 + colorIntensity * 155)}, 0)`;
+    } else if (locationInfo.countSelected > 0 && locationInfo.countActive === 0) {
+      // Only selected - use blue shades
+      fillColor = `rgb(0, 0, ${Math.floor(100 + colorIntensity * 155)})`;
+    } else if (locationInfo.countActive > 0 && locationInfo.countSelected > 0) {
+      // Mixed - use purple shades
+      fillColor = `rgb(${Math.floor(50 + colorIntensity * 150)}, 0, ${Math.floor(50 + colorIntensity * 150)})`;
+      dashArray = '3';
+    }
+
+    return {
+      fillColor,
+      dashArray,
+      weight: 2,
       opacity: 1,
-    },
-    tooltip: {
-      y: {
-        formatter: (val) => `$ ${val} thousands`,
-      },
-    },
+      color: '#333',
+      fillOpacity: 0.7,
+    };
   };
 
-  // Donut Chart Options
-  const donutOptions = {
-    chart: {
-      id: 'donut-chart',
-      type: 'donut',
-      height: 350,
-    },
-    labels: ['Team A', 'Team B', 'Team C', 'Team D', 'Team E'],
-    colors: ['#5a8dee', '#ff8f00', '#00d0bd', '#2196f3', '#ffb300'],
-    legend: {
-      position: 'bottom',
-    },
+  // Tooltip content for each region
+  const onEachFeature = (feature, layer) => {
+    console.log([2]);
+    const locationName = feature.properties.shapeName;
+    const locationInfo = locationLookup[locationName];
+    console.log([feature.properties, feature.properties.shapeName, locationLookup, locationLookup[locationName]]);
+    if (locationInfo) {
+      layer.bindTooltip(`
+        <div style="min-width: 200px;">
+          <strong>${locationInfo.name}</strong><br />
+          Sélectionnés: ${locationInfo.countSelected.toLocaleString('fr-FR')}<br />
+          Actifs: ${locationInfo.countActive.toLocaleString('fr-FR')}<br />
+          Total: ${getTotalCount(locationInfo).toLocaleString('fr-FR')}
+        </div>
+      `);
+    }
   };
 
-  // Area Chart Options
-  const areaOptions = {
-    chart: {
-      id: 'area-chart',
-      type: 'area',
-      height: 350,
-      toolbar: {
-        show: false,
-      },
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    stroke: {
-      curve: 'smooth',
-    },
-    colors: ['#5a8dee', '#00d0bd'],
-    xaxis: {
-      categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
-    },
-    tooltip: {
-      x: {
-        format: 'dd/MM/yy HH:mm',
-      },
-    },
-  };
-
-  // Line Chart Options
-  const lineOptions = {
-    chart: {
-      id: 'line-chart',
-      type: 'line',
-      height: 350,
-      toolbar: {
-        show: false,
-      },
-    },
-    stroke: {
-      width: 3,
-      curve: 'smooth',
-    },
-    colors: ['#ff8f00', '#5a8dee'],
-    xaxis: {
-      categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
-    },
-    markers: {
-      size: 4,
-    },
-  };
-
-  // Generate mock series data for each chart
-  const sparkSeries1 = [{
-    name: 'Revenue',
-    data: generateData(20, 30, 100),
-  }];
-
-  const sparkSeries2 = [{
-    name: 'Expenses',
-    data: generateData(20, 10, 80),
-  }];
-
-  const sparkSeries3 = [{
-    name: 'Profit',
-    data: generateData(20, 20, 60),
-  }];
-
-  const barSeries = [
-    {
-      name: 'Net Profit',
-      data: generateData(7, 30, 70),
-    },
-    {
-      name: 'Revenue',
-      data: generateData(7, 50, 100),
-    },
-  ];
-
-  const donutSeries = generateData(5, 10, 100);
-
-  const areaSeries = [
-    {
-      name: 'series1',
-      data: generateData(9, 20, 80),
-    },
-    {
-      name: 'series2',
-      data: generateData(9, 10, 60),
-    },
-  ];
-
-  const lineSeries = [
-    {
-      name: 'High',
-      data: generateData(9, 40, 90),
-    },
-    {
-      name: 'Low',
-      data: generateData(9, 10, 40),
-    },
-  ];
+  if (loading) return <div className="p-4 text-center">Loading map data...</div>;
+  if (error) return <div className="p-4 text-center text-red-500">{error}</div>;
 
   return (
-    <ThemeProvider theme={theme}>
-      <div className={classes.wrapper}>
-        <Container maxWidth={false} className={classes.contentArea}>
-          <div className="main">
-            <Grid container spacing={4}>
-              {/* Sparkboxes Row */}
-              <Grid item xs={12} md={4}>
-                <Box className={`${classes.box} ${classes.box1}`}>
-                  <Chart
-                    options={sparkOptions}
-                    series={sparkSeries1}
-                    type="line"
-                    height={100}
-                  />
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Box className={`${classes.box} ${classes.box2}`}>
-                  <Chart
-                    options={sparkOptions}
-                    series={sparkSeries2}
-                    type="line"
-                    height={100}
-                  />
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Box className={`${classes.box} ${classes.box3}`}>
-                  <Chart
-                    options={sparkOptions}
-                    series={sparkSeries3}
-                    type="line"
-                    height={100}
-                  />
-                </Box>
-              </Grid>
+    <>
+      <Grid item xs={12} md={6}>
+        <Box className={className}>
+          <Map
+            center={[-3.39, 29.90]} // Set the initial map center (latitude, longitude)
+            zoom={8.3} // Set the initial zoom level
+            style={{ height: '500px', width: '480px' }}
+            scrollWheelZoom={false}
+            zoomSnap={0.1}
+            zoomDelta={0.5}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
 
-              {/* Bar and Donut Row */}
-              <Grid item xs={12} md={6}>
-                <Box className={`${classes.box} ${classes.chartContainer}`}>
-                  <Chart
-                    options={barOptions}
-                    series={barSeries}
-                    type="bar"
-                    height={350}
-                  />
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Box className={`${classes.box} ${classes.chartContainer}`}>
-                  <Chart
-                    options={donutOptions}
-                    series={donutSeries}
-                    type="donut"
-                    height={350}
-                  />
-                </Box>
-              </Grid>
+            {burundiGeoJSON && locationLookup && (
+            <GeoJSON
+              data={burundiGeoJSON}
+              style={getStyle}
+              onEachFeature={onEachFeature}
+            />
+            )}
 
-              {/* Area and Line Row */}
-              <Grid item xs={12} md={6}>
-                <Box className={`${classes.box} ${classes.chartContainer}`}>
-                  <Chart
-                    options={areaOptions}
-                    series={areaSeries}
-                    type="area"
-                    height={350}
-                  />
-                </Box>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Box className={`${classes.box} ${classes.chartContainer}`}>
-                  <Chart
-                    options={lineOptions}
-                    series={lineSeries}
-                    type="line"
-                    height={350}
-                  />
-                </Box>
-              </Grid>
-            </Grid>
-          </div>
-        </Container>
-      </div>
-    </ThemeProvider>
+          </Map>
+        </Box>
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <Box className={className}>
+          <BoxTable locationData={locationData} getTotalCount={getTotalCount} />
+        </Box>
+      </Grid>
+    </>
   );
 }
 
-export default BalkanDashboard;
+export default MapComponent;
