@@ -66,6 +66,8 @@
   "socialProtection.benefitPlan.benefitPlanBeneficiariesPotential.label": "Potential",
   "socialProtection.benefitPlan.benefitPlanBeneficiaries.upload": "Upload",
   "socialProtection.benefitPlan.benefitPlanBeneficiaries.upload.label": "Upload Beneficiaries",
+  "socialProtection.benefitPlan.benefitPlanBeneficiaries.upload.alert.header.invalid_format": "Invalid file format!",
+  "socialProtection.benefitPlan.benefitPlanBeneficiaries.upload.alert.message.invalid_format": "Please upload a valid CSV or Excel file!",
   "socialProtection.benefitPlan.benefitPlanBeneficiaries.template": "Template",
   "socialProtection.mainMenuSocialProtection": "Social Protection",
   "socialProtection.menu.socialProtection.benefitPlans": "Benefit Plans",
