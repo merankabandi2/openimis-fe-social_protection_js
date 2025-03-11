@@ -27,7 +27,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function BoxCard({
-  label, value, className, icon = <ReceiptIcon fontSize="large" />,
+  label, value, valueVariant = 'h4', className, icon = <ReceiptIcon fontSize="large" />,
 }) {
   const classes = useStyles();
 
@@ -40,7 +40,7 @@ function BoxCard({
               {label}
             </Typography>
             <Box mt={1}>
-              <Typography variant="h4">{value}</Typography>
+              <Typography variant={valueVariant}>{value}</Typography>
             </Box>
           </Box>
           <Avatar className={classes.avatar}>

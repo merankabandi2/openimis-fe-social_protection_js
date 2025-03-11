@@ -40,6 +40,7 @@ export const SENSITIZATION_TRAINING_ROUTE = 'socialProtection.route.sensitizatio
 export const MICRO_PROJECT_ROUTE = 'socialProtection.route.microProject';
 export const BEHAVIOR_CHANGE_PROMOTION_ROUTE = 'socialProtection.route.behaviorChangePromotion';
 export const MONETARY_TRANSFERS_ROUTE = 'me/monetary-transfers';
+export const RESULT_FRAMEWORK_ROUTE = 'me/result-framework';
 export const MONETARY_TRANSFER_ROUTE = 'socialProtection.route.monetaryTransfer';
 
 export const RIGHT_SENSITIZATION_TRAINING_SEARCH = 190901;
@@ -74,6 +75,11 @@ export const SENSITIZATION_TRAINING_LIST_TAB_VALUE = 'sensitizationTrainingIndic
 export const BEHAVIOR_CHANGE_PROMOTION_LIST_TAB_VALUE = 'behaviorChangePromotionIndicatorsListTab';
 export const ME_INDICATORS_TABS_LABEL_CONTRIBUTION_KEY = 'meIndicators.TabPanel.label';
 export const ME_INDICATORS_TABS_PANEL_CONTRIBUTION_KEY = 'meIndicators.TabPanel.panel';
+
+export const DEVELOPMENT_INDICATORS_LIST_TAB_VALUE = 'developmentIndicatorsListTab';
+export const INTERMEDIATE_INDICATORS_LIST_TAB_VALUE = 'intermediateIndicatorsListTab';
+export const ME_RESULT_FRAMEWORK_TABS_LABEL_CONTRIBUTION_KEY = 'meResultFrameWork.TabPanel.label';
+export const ME_RESULT_FRAMEWORK_TABS_PANEL_CONTRIBUTION_KEY = 'meResultFrameWork.TabPanel.panel';
 
 export const TASK_STATUS = {
   RECEIVED: 'RECEIVED',

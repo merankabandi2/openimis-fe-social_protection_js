@@ -1,17 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Grid,
   Box,
+  makeStyles,
 } from '@material-ui/core';
 import {
   Map, TileLayer, GeoJSON,
 } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { baseApiUrl, apiHeaders } from '@openimis/fe-core';
+import L from 'leaflet';
 import BoxTable from './BoxTable';
 
 // This is needed to fix Leaflet icon issues in React
-import L from 'leaflet';
+
+const useStyles = makeStyles(() => ({
+  mapContainer: {
+    width: '100%',
+    height: '100%',
+    minHeight: '500px',
+    position: 'relative',
+  },
+  tiles: {
+    '& img.leaflet-tile.leaflet-tile-loaded': {
+      filter: 'grayscale(1)',
+    },
+  },
+}));
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -35,14 +50,49 @@ const loadStats = async () => {
 };
 
 function MapComponent({ className }) {
+  const classes = useStyles();
+  const mapContainerRef = useRef(null);
   // State for our data
   const [burundiGeoJSON, setBurundiGeoJSON] = useState(null);
   const [locationData, setLocationData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [mapDimensions, setMapDimensions] = useState({ width: '100%', height: '500px' });
 
   // Create a lookup object for easy access
   const [locationLookup, setLocationLookup] = useState({});
+
+  // Set up resize observer to update map size when container resizes
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    const updateMapDimensions = () => {
+      if (mapContainerRef.current) {
+        const { offsetWidth, offsetHeight } = mapContainerRef.current.parentElement;
+        // Ensure minimum height
+        const height = Math.max(500, offsetHeight);
+        setMapDimensions({
+          width: '100%',
+          height: `${height}px`,
+        });
+      }
+    };
+
+    // Initial update
+    updateMapDimensions();
+
+    // Set up ResizeObserver
+    const resizeObserver = new ResizeObserver(updateMapDimensions);
+    resizeObserver.observe(mapContainerRef.current.parentElement);
+
+    // Cleanup
+    return () => {
+      if (mapContainerRef.current && mapContainerRef.current.parentElement) {
+        resizeObserver.unobserve(mapContainerRef.current.parentElement);
+      }
+      resizeObserver.disconnect();
+    };
+  }, [mapContainerRef]);
 
   useEffect(() => {
     async function fetchData() {
@@ -91,7 +141,11 @@ function MapComponent({ className }) {
 
     if (!locationInfo) {
       return {
-        fillColor: '#f0f0f0', weight: 1, opacity: 1, color: '#333', fillOpacity: 0.7,
+        fillColor: '#f0f0f0',
+        weight: 1,
+        opacity: 0.9,
+        color: '#c0c0c0',
+        fillOpacity: 0.6,
       };
     }
 
@@ -101,35 +155,35 @@ function MapComponent({ className }) {
     // Determine fill color based on active vs selected status
     let fillColor = '#f0f0f0'; // Default light gray
     let dashArray = null;
+    const opacity = 0.9;
+    const fillOpacity = 0.6 + (colorIntensity * 0.25); // More data = slightly more opaque
 
     if (locationInfo.countActive > 0 && locationInfo.countSelected === 0) {
-      // Only active - use green shades
-      fillColor = `rgb(0, ${Math.floor(100 + colorIntensity * 155)}, 0)`;
+      // Only active - use muted but visible green
+      fillColor = `rgb(180, ${Math.floor(205 + colorIntensity * 50)}, 180)`;
     } else if (locationInfo.countSelected > 0 && locationInfo.countActive === 0) {
-      // Only selected - use blue shades
-      fillColor = `rgb(0, 0, ${Math.floor(100 + colorIntensity * 155)})`;
+      // Only selected - use muted but visible blue
+      fillColor = `rgb(180, 190, ${Math.floor(210 + colorIntensity * 45)})`;
     } else if (locationInfo.countActive > 0 && locationInfo.countSelected > 0) {
-      // Mixed - use purple shades
-      fillColor = `rgb(${Math.floor(50 + colorIntensity * 150)}, 0, ${Math.floor(50 + colorIntensity * 150)})`;
+      // Mixed - use muted but visible purple
+      fillColor = `rgb(${Math.floor(190 + colorIntensity * 30)}, 170, ${Math.floor(200 + colorIntensity * 55)})`;
       dashArray = '3';
     }
 
     return {
       fillColor,
+      weight: 1,
+      opacity,
+      color: '#c0c0c0', // Lighter border color
+      fillOpacity,
       dashArray,
-      weight: 2,
-      opacity: 1,
-      color: '#333',
-      fillOpacity: 0.7,
     };
   };
 
   // Tooltip content for each region
   const onEachFeature = (feature, layer) => {
-    console.log([2]);
     const locationName = feature.properties.shapeName;
     const locationInfo = locationLookup[locationName];
-    console.log([feature.properties, feature.properties.shapeName, locationLookup, locationLookup[locationName]]);
     if (locationInfo) {
       layer.bindTooltip(`
         <div style="min-width: 200px;">
@@ -148,29 +202,31 @@ function MapComponent({ className }) {
   return (
     <>
       <Grid item xs={12} md={6}>
-        <Box className={className}>
-          <Map
-            center={[-3.39, 29.90]} // Set the initial map center (latitude, longitude)
-            zoom={8.3} // Set the initial zoom level
-            style={{ height: '500px', width: '480px' }}
-            scrollWheelZoom={false}
-            zoomSnap={0.1}
-            zoomDelta={0.5}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
+        <Box className={className} ref={mapContainerRef}>
+          <div className={classes.mapContainer}>
+            <Map
+              className={classes.tiles}
+              center={[-3.39, 29.90]} // Set the initial map center (latitude, longitude)
+              zoom={8.3} // Set the initial zoom level
+              style={{ height: mapDimensions.height, width: mapDimensions.width }}
+              scrollWheelZoom={false}
+              zoomSnap={0.1}
+              zoomDelta={0.5}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              />
 
-            {burundiGeoJSON && locationLookup && (
-            <GeoJSON
-              data={burundiGeoJSON}
-              style={getStyle}
-              onEachFeature={onEachFeature}
-            />
-            )}
-
-          </Map>
+              {burundiGeoJSON && locationLookup && (
+              <GeoJSON
+                data={burundiGeoJSON}
+                style={getStyle}
+                onEachFeature={onEachFeature}
+              />
+              )}
+            </Map>
+          </div>
         </Box>
       </Grid>
       <Grid item xs={12} md={6}>

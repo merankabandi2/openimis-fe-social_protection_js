@@ -47,7 +47,7 @@ function BehaviorChangePromotionSearcher({
   const rights = useSelector((store) => store.core.user.i_user.rights ?? []);
 
   const [behaviorChangePromotionToDelete, setBehaviorChangePromotionToDelete] = useState(null);
-  const [deletedBehaviorChangePromotionUuids, setDeletedBehaviorChangePromotionUuids] = useState([]);
+  const [deletedBehaviorChangePromotionUuids, setDeletedBπehaviorChangePromotionUuids] = useState([]);
   const prevSubmittingMutationRef = useRef();
 
   const openDeleteBehaviorChangePromotionConfirmDialog = () => {

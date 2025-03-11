@@ -10,11 +10,19 @@ import {
   RIGHT_BENEFIT_PLAN_SEARCH,
   ME_MAIN_MENU_CONTRIBUTION_KEY,
   MONETARY_TRANSFERS_ROUTE,
+  RESULT_FRAMEWORK_ROUTE,
   RIGHT_MONETARY_TRANSFER_SEARCH,
 } from '../constants';
 
 function MEMainMenu(props) {
   const entries = [
+    {
+      text: formatMessage(props.intl, 'socialProtection', 'menu.socialProtection.resultFrameWork'),
+      icon: <Tune />,
+      route: `/${RESULT_FRAMEWORK_ROUTE}`,
+      filter: (rights) => rights.includes(RIGHT_MONETARY_TRANSFER_SEARCH),
+      id: 'socialProtection.me.resultFrameWork',
+    },
     {
       text: formatMessage(props.intl, 'socialProtection', 'menu.socialProtection.indicators'),
       icon: <Tune />,

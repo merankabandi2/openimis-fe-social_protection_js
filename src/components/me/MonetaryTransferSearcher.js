@@ -23,7 +23,6 @@ import {
   DEFAULT_PAGE_SIZE,
   MODULE_NAME,
   RIGHT_MONETARY_TRANSFER_SEARCH,
-  MONETARY_TRANSFER_ROUTE,
   ROWS_PER_PAGE_OPTIONS,
 } from '../../constants';
 import MonetaryTransferFilter from './MonetaryTransferFilter';

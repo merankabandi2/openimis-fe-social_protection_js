@@ -24,7 +24,39 @@ const loadStatsAll = async () => {
     headers: apiHeaders(),
     body: JSON.stringify(
       {
-        query: '{ benefitsSummary {totalAmountReceived, totalAmountDue}, paymentCycle { totalCount }, group { totalCount } individual { totalCount } groupBeneficiary { totalCount } locationByBenefitPlan (benefitPlan_Id: \"452721c3-cc8a-49d9-81f0-a7c7a1a3bf82\") { totalCount edges{node{ id, code, name,countSelected,countSuspended,countActive}}}}',
+        query: `
+          {
+            benefitsSummary {
+              totalAmountReceived,
+              totalAmountDue
+            },
+            paymentCycle {
+              totalCount
+            },
+            group {
+              totalCount
+            },
+            individual {
+              totalCount
+            },
+            groupBeneficiary {
+              totalCount
+            },
+            locationByBenefitPlan(benefitPlan_Id: "452721c3-cc8a-49d9-81f0-a7c7a1a3bf82") {
+              totalCount,
+              edges {
+                node {
+                  id,
+                  code,
+                  name,
+                  countSelected,
+                  countSuspended,
+                  countActive
+                }
+              }
+            }
+          }
+        `,
       },
     ),
   });
@@ -58,11 +90,11 @@ const useStyles = makeStyles((theme) => ({
     minHeight: '100vh',
   },
   contentArea: {
-    padding: theme.spacing(3),
+    padding: theme.spacing(1),
   },
   box: {
     backgroundColor: '#fff',
-    padding: theme.spacing(3),
+    padding: theme.spacing(1),
     borderRadius: theme.shape.borderRadius,
     boxShadow: '0 1px 20px 0 rgba(0,0,0,.1)',
     height: '100%',
@@ -111,7 +143,7 @@ function BalkanDashboard() {
       <div className={classes.wrapper}>
         <Container maxWidth={false} className={classes.contentArea}>
           <div className="main">
-            <Grid container spacing={4}>
+            <Grid container spacing={2}>
               {/* Sparkboxes Row */}
               <Grid item xs={12} md={4}>
                 <BoxCard
@@ -134,14 +166,15 @@ function BalkanDashboard() {
                   label="Montants"
                   value={`${getStat('benefitsSummary', 'totalAmountDue')} BIF`}
                   className={classes.box}
+                  valueVariant="h5"
                   icon={<AttachMoneyIcon fontSize="large" />}
                 />
               </Grid>
             </Grid>
-            <Grid container spacing={4}>
+            <Grid container spacing={2}>
               <MapComponent className={classes.box} />
             </Grid>
-            <Grid container spacing={4}>
+            <Grid container spacing={2}>
               <Grid item xs={12} md={4}>
                 <BoxCard
                   label="Individus"
@@ -174,7 +207,7 @@ function BalkanDashboard() {
   );
 }
 
-const mapStateToProps = (state) => ({});
+const mapStateToProps = () => ({});
 
 const mapDispatchToProps = (dispatch) => bindActionCreators({}, dispatch);
 

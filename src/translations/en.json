@@ -147,5 +147,7 @@
   "socialProtection.benefitPlan.schema.showSchema": "Show Schema",
   "socialProtection.benefitPlanTasks.label": "Tasks",
   "socialProtection.group.code": "Code",
-  "socialProtection.groupBeneficiary.code": "Code"
+  "socialProtection.groupBeneficiary.code": "Code",
+  "developmentIndicators.label": "Development Objectives",
+  "intermediateIndicators.label": "Intermediate Results"
 }

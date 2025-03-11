@@ -68,6 +68,7 @@ import {
   BENEFIT_PLAN_LABEL,
   RIGHT_BENEFIT_PLAN_SEARCH,
   MONETARY_TRANSFERS_ROUTE,
+  RESULT_FRAMEWORK_ROUTE,
   RIGHT_MONETARY_TRANSFER_SEARCH,
 } from './constants';
 import BeneficiaryPicker from './pickers/BeneficiaryPicker';
@@ -80,17 +81,27 @@ import {
   BehaviorChangePromotionTabLabel,
   BehaviorChangePromotionTabPanel
 } from './components/me/BehaviorChangePromotionTabPanel';
+import {
+  DevelopmentIndicatorsTabLabel,
+  DevelopmentIndicatorsTabPanel
+} from './components/me/DevelopmentIndicatorsTabPanel';
+import {
+  IntermediateIndicatorsTabLabel,
+  IntermediateIndicatorsTabPanel
+} from './components/me/IntermediateIndicatorsTabPanel';
 import MEMainMenu from './menus/MEMainMenu';
 import MEIndicatorsPage from './pages/MEIndicatorsPage';
 import HomePageContainer from './components/dashboard/HomePageContainer';
 import MonetaryTransferPage from './pages/MonetaryTransferPage';
 import MonetaryTransfersPage from './pages/MonetaryTransfersPage';
+import MEResultFrameworkPage from './pages/MEResultFrameworkPage';
 
 const ROUTE_BENEFIT_PLANS = 'benefitPlans';
 const ROUTE_BENEFIT_PLAN = 'benefitPlans/benefitPlan';
 const ROUTE_BENEFIT_PACKAGE = 'benefitPackage';
 const ROUTE_ME = 'me';
 
+const ROUTE_RESULT_FRAMEWORK = `${ROUTE_ME}/result-framework`;
 const ROUTE_MONETARY_TRANSFERS = `${ROUTE_ME}/monetary-transfers`;
 const ROUTE_MONETARY_TRANSFER = `${ROUTE_ME}/monetary-transfers/monetary-transfer`;
 
@@ -118,6 +129,7 @@ const DEFAULT_CONFIG = {
       component: MEIndicatorsPage,
     },
     { path: ROUTE_MONETARY_TRANSFERS, component: MonetaryTransfersPage },
+    { path: ROUTE_RESULT_FRAMEWORK, component: MEResultFrameworkPage },
     { path: `${ROUTE_MONETARY_TRANSFER}/:monetary_transfer_uuid?`, component: MonetaryTransferPage },
   ],
   refs: [
@@ -133,9 +145,9 @@ const DEFAULT_CONFIG = {
     { key: 'socialProtection.fetchBenefitPlanSchemaFields', ref: fetchBenefitPlanSchemaFields },
     { key: 'socialProtection.BenefitPlanHistorySearcher', ref: BenefitPlanHistorySearcher },
     { key: 'socialProtection.BeneficiaryPicker', ref: BeneficiaryPicker },
-
     { key: 'socialProtection.route.monetaryTransfers', ref: ROUTE_MONETARY_TRANSFERS },
     { key: 'socialProtection.route.monetaryTransfer', ref: ROUTE_MONETARY_TRANSFER },
+    { key: 'socialProtection.route.resultFramework"', ref: ROUTE_RESULT_FRAMEWORK },
   ],
   'benefitPlan.TabPanel.label': [
     BenefitPlanBeneficiariesListTabLabel,
@@ -172,6 +184,14 @@ const DEFAULT_CONFIG = {
     MicroProjectTabPanel,
     SensitizationTrainingTabPanel,
     BehaviorChangePromotionTabPanel,
+  ],
+  'meResultFrameWork.TabPanel.label': [
+    DevelopmentIndicatorsTabLabel,
+    IntermediateIndicatorsTabLabel,
+  ],
+  'meResultFrameWork.TabPanel.panel': [
+    DevelopmentIndicatorsTabPanel,
+    IntermediateIndicatorsTabPanel,
   ],
   'tasksManagement.tasks': [{
     text: <FormattedMessage module="socialProtection" id="benefitPlan.tasks.update.title" />,
@@ -223,6 +243,13 @@ const DEFAULT_CONFIG = {
       route: `/${MONETARY_TRANSFERS_ROUTE}`,
       filter: (rights) => rights.includes(RIGHT_MONETARY_TRANSFER_SEARCH),
       id: 'socialProtection.me.monetaryTransfers',
+    },
+    {
+      text: <FormattedMessage module="socialProtection" id="menu.socialProtection.resultsFramework" />,
+      icon: <Tune />,
+      route: `/${RESULT_FRAMEWORK_ROUTE}`,
+      filter: (rights) => rights.includes(RIGHT_MONETARY_TRANSFER_SEARCH),
+      id: 'socialProtection.me.resultsFramework',
     },
   ],
 };

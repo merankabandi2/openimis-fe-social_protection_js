@@ -69,7 +69,7 @@ class MonetaryTransferHeadPanel extends FormPanel {
             readOnly={readOnly}
             value={!!monetaryTransfer?.paymentAgency && monetaryTransfer.paymentAgency}
             onChange={(paymentAgency) => this.updateAttribute('paymentAgency', paymentAgency)}
-            label={formatMessage(intl, 'payroll', 'paymentAgency')}
+            label={formatMessage(intl, 'payroll', 'paymentPoint')}
           />
         </Grid>
         <Grid xs={3} className={classes.item}>
