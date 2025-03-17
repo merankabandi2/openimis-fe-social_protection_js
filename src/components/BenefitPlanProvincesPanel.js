@@ -96,7 +96,7 @@ function BenefitPlanProvincesPanel({
       fetchingItems={fetchingBenefitPlanProvinces}
       fetchedItems={fetchedBenefitPlanProvinces}
       errorItems={errorBenefitPlanProvinces}
-      tableTitle={formatMessageWithValues('benefitPlanProvinces.searcherResultsTitle', { provincesTotalCount })}
+      tableTitle={formatMessageWithValues('benefitPlanProvinces.searcherResultsTitle', { totalCount: provincesTotalCount })}
       headers={headers}
       itemFormatters={itemFormatters}
       sorts={sorts}
@@ -112,7 +112,7 @@ const mapStateToProps = (state) => ({
   errorBenefitPlanProvinces: state.socialProtection.errorBenefitPlanProvinces,
   benefitPlanProvinces: state.socialProtection.benefitPlanProvinces,
   benefitPlanProvincesPageInfo: state.socialProtection.benefitPlanProvincesPageInfo,
-  provincesTotalCount: state.socialProtection.provincesTotalCount,
+  provincesTotalCount: state.socialProtection.benefitPlanProvincesTotalCount,
 });
 
 const mapDispatchToProps = (dispatch) => bindActionCreators({

@@ -14,6 +14,9 @@ import {
   coreConfirm,
   clearConfirm,
   journalize,
+  baseApiUrl,
+  apiHeaders,
+  downloadExport,
 } from '@openimis/fe-core';
 import { deleteBehaviorChangePromotion, fetchBehaviorChangePromotions } from '../../actions';
 import {
@@ -47,7 +50,7 @@ function BehaviorChangePromotionSearcher({
   const rights = useSelector((store) => store.core.user.i_user.rights ?? []);
 
   const [behaviorChangePromotionToDelete, setBehaviorChangePromotionToDelete] = useState(null);
-  const [deletedBehaviorChangePromotionUuids, setDeletedBπehaviorChangePromotionUuids] = useState([]);
+  const [deletedBehaviorChangePromotionUuids, setDeletedBehaviorChangePromotionUuids] = useState([]);
   const prevSubmittingMutationRef = useRef();
 
   const openDeleteBehaviorChangePromotionConfirmDialog = () => {
@@ -103,7 +106,7 @@ function BehaviorChangePromotionSearcher({
     ['twa_participants', true],
   ];
 
-  const fetch = (params) => fetchBehaviorChangePromotions(modulesManager, params);
+  const fetchData = (params) => fetchBehaviorChangePromotions(modulesManager, params);
 
   const rowIdentifier = (behaviorChangePromotion) => behaviorChangePromotion.id;
 
@@ -152,11 +155,55 @@ function BehaviorChangePromotionSearcher({
 
   const isRowDisabled = (_, behaviorChangePromotion) => deletedBehaviorChangePromotionUuids.includes(behaviorChangePromotion.id);
 
+  const exportFields = [
+    'report_date',
+    'location',
+    'male_participants',
+    'female_participants',
+    'twa_participants',
+  ];
+
+  const exportFieldsColumns = {
+    report_date: 'report_date',
+    location: formatMessage('location'),
+    male_participants: formatMessage('me.male_participants'),
+    female_participants: formatMessage('me.female_participants'),
+    twa_participants: formatMessage('me.twa_participants'),
+  };
+
+  const [promotionsExport, setPromotionsExport] = useState();
+  useEffect(() => {
+    if (promotionsExport) {
+      downloadExport(promotionsExport, `${formatMessage('behaviorChangePromotion.page.title')}.csv`)();
+      setPromotionsExport(null);
+    }
+  }, [promotionsExport]);
+
+  const downloadBehaviorChangePromotions = async (params) => {
+    const response = await fetch(`${baseApiUrl}/graphql`, {
+      method: 'post',
+      headers: apiHeaders(),
+      body: JSON.stringify({
+        query: `
+          {
+            behaviorChangePromotionExport${!!params && params.length ? `(${params.join(',')})` : ''}
+          }`,
+      }),
+    });
+
+    if (!response.ok) {
+      throw response;
+    } else {
+      const { data } = await response.json();
+      setPromotionsExport(data.behaviorChangePromotionExport);
+    }
+  };
+
   return (
     <Searcher
       module="social_protection"
       FilterPane={behaviorChangePromotionFilter}
-      fetch={fetch}
+      fetch={fetchData}
       items={behaviorChangePromotions}
       itemsPageInfo={pageInfo}
       fetchedItems={fetchedBehaviorChangePromotions}
@@ -173,6 +220,11 @@ function BehaviorChangePromotionSearcher({
       defaultFilters={defaultFilters()}
       rowDisabled={isRowDisabled}
       rowLocked={isRowDisabled}
+      exportable
+      exportFetch={downloadBehaviorChangePromotions}
+      exportFields={exportFields}
+      exportFieldsColumns={exportFieldsColumns}
+      exportFieldLabel={formatMessage('export.label')}
     />
   );
 }

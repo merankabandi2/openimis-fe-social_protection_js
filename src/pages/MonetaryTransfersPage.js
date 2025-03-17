@@ -19,6 +19,7 @@ import {
   RIGHT_MONETARY_TRANSFER_SEARCH,
 } from '../constants';
 import MonetaryTransferSearcher from '../components/me/MonetaryTransferSearcher';
+import MonetaryTransfertDashboard from '../components/dashboard/MonetaryTransfertDashboard';
 
 const useStyles = makeStyles((theme) => ({
   page: theme.page,
@@ -39,6 +40,7 @@ function MonetaryTransfersPage() {
   return (
     <div className={classes.page}>
       <Helmet title={formatMessage('monetaryTransfer.page.title')} />
+      <MonetaryTransfertDashboard />
       {rights.includes(RIGHT_MONETARY_TRANSFER_SEARCH)
         && <MonetaryTransferSearcher />}
       {rights.includes(RIGHT_MONETARY_TRANSFER_CREATE)

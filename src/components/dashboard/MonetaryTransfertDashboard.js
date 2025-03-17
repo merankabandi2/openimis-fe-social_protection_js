@@ -17,6 +17,8 @@ import ReceiptIcon from '@material-ui/icons/Receipt';
 import PlaceIcon from '@material-ui/icons/Place';
 import MapComponent from './MapComponent';
 import BoxCard from './BoxCard';
+import MonetaryTransferChart from './MonetaryTransferChart';
+import MonetaryTransferChartBeneficiaires from './MonetaryTransferChartBeneficiaires';
 
 const loadStatsAll = async () => {
   const response = await fetch(`${baseApiUrl}/graphql`, {
@@ -123,7 +125,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 // Dashboard component
-function BalkanDashboard() {
+function MonetaryTransfertDashboard() {
   const [stats, setStats] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   useEffect(() => {
@@ -185,22 +187,10 @@ function BalkanDashboard() {
             </Grid>
             <Grid container spacing={2}>
               <Grid item xs={12} md={4}>
-                <BoxCard
-                  label="Individus"
-                  value={getStat('individual')}
-                  className={classes.box}
-                  icon={<PeopleAltIcon fontSize="large" />}
-                  isLoading={isLoading}
-                />
+                <MonetaryTransferChart />
               </Grid>
               <Grid item xs={12} md={4}>
-                <BoxCard
-                  label="Ménages"
-                  value={getStat('group')}
-                  className={classes.box}
-                  icon={<HomeIcon fontSize="large" />}
-                  isLoading={isLoading}
-                />
+                <MonetaryTransferChartBeneficiaires />
               </Grid>
               <Grid item xs={12} md={4}>
                 <BoxCard
@@ -208,7 +198,6 @@ function BalkanDashboard() {
                   value={getStat('locationByBenefitPlan')}
                   className={classes.box}
                   icon={<PlaceIcon fontSize="large" />}
-                  isLoading={isLoading}
                 />
               </Grid>
             </Grid>
@@ -223,4 +212,4 @@ const mapStateToProps = () => ({});
 
 const mapDispatchToProps = (dispatch) => bindActionCreators({}, dispatch);
 
-export default connect(mapStateToProps, mapDispatchToProps)(BalkanDashboard);
+export default connect(mapStateToProps, mapDispatchToProps)(MonetaryTransfertDashboard);

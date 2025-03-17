@@ -14,6 +14,9 @@ import {
   useHistory,
   coreConfirm,
   clearConfirm,
+  baseApiUrl,
+  apiHeaders,
+  downloadExport,
 } from '@openimis/fe-core';
 import {
   fetchMonetaryTransfers,
@@ -104,7 +107,7 @@ function MonetaryTransferSearcher({
     ['paymentAgency', true],
   ];
 
-  const fetch = (params) => fetchMonetaryTransfers(modulesManager, params);
+  const fetchData = (params) => fetchMonetaryTransfers(modulesManager, params);
 
   const rowIdentifier = (monetaryTransfer) => monetaryTransfer.id;
 
@@ -153,11 +156,65 @@ function MonetaryTransferSearcher({
 
   const isRowDisabled = (_, monetaryTransfer) => deletedMonetaryTransferUuids.includes(monetaryTransfer.id);
 
+  const exportFields = [
+    'transfer_date',
+    'location',
+    'programme',
+    'payment_agency',
+    'planned_women',
+    'paid_women',
+    'planned_men',
+    'paid_men',
+    'planned_twa',
+    'paid_twa',
+  ];
+
+  const exportFieldsColumns = {
+    transfer_date: 'transfer_date',
+    location: formatMessage('location'),
+    programme: formatMessage('programme'),
+    payment_agency: formatMessage('paymentAgency'),
+    planned_women: formatMessage('plannedWomen'),
+    paid_women: formatMessage('paidWomen'),
+    planned_men: formatMessage('plannedMen'),
+    paid_men: formatMessage('paidMen'),
+    planned_twa: formatMessage('plannedTwa'),
+    paid_twa: formatMessage('paidTwa'),
+  };
+
+  const [transfersExport, setTransfersExport] = useState();
+  useEffect(() => {
+    if (transfersExport) {
+      downloadExport(transfersExport, `${formatMessage('monetaryTransfer.page.title')}.csv`)();
+      setTransfersExport(null);
+    }
+  }, [transfersExport]);
+
+  const downloadMonetaryTransfers = async (params) => {
+    const response = await fetch(`${baseApiUrl}/graphql`, {
+      method: 'post',
+      headers: apiHeaders(),
+      body: JSON.stringify({
+        query: `
+          {
+            monetaryTransferExport${!!params && params.length ? `(${params.join(',')})` : ''}
+          }`,
+      }),
+    });
+
+    if (!response.ok) {
+      throw response;
+    } else {
+      const { data } = await response.json();
+      setTransfersExport(data.monetaryTransferExport);
+    }
+  };
+
   return (
     <Searcher
       module="social_protection"
       FilterPane={monetaryTransferFilter}
-      fetch={fetch}
+      fetch={fetchData}
       items={monetaryTransfers}
       itemsPageInfo={pageInfo}
       fetchedItems={fetchedMonetaryTransfers}
@@ -174,6 +231,11 @@ function MonetaryTransferSearcher({
       defaultFilters={defaultFilters()}
       rowDisabled={isRowDisabled}
       rowLocked={isRowDisabled}
+      exportable
+      exportFetch={downloadMonetaryTransfers}
+      exportFields={exportFields}
+      exportFieldsColumns={exportFieldsColumns}
+      exportFieldLabel={formatMessage('export.label')}
     />
   );
 }

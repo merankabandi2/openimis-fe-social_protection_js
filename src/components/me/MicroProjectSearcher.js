@@ -14,6 +14,8 @@ import {
   coreConfirm,
   clearConfirm,
   journalize,
+  baseApiUrl, apiHeaders,
+  downloadExport,
 } from '@openimis/fe-core';
 import { fetchMicroProjects, deleteMicroProject } from '../../actions';
 import {
@@ -55,6 +57,37 @@ function MicroProjectSearcher({
       formatMessageWithValues('microProject.delete.confirm.title', pageTitle(microProjectToDelete)),
       formatMessage('microProject.delete.confirm.message'),
     );
+  };
+
+  const exportFields = [
+    'report_date',
+    'location',
+    'male_participants',
+    'female_participants',
+    'twa_participants',
+    'agriculture_beneficiaries',
+    'livestock_beneficiaries',
+    'livestock_goat_beneficiaries',
+    'livestock_pig_beneficiaries',
+    'livestock_rabbit_beneficiaries',
+    'livestock_poultry_beneficiaries',
+    'livestock_cattle_beneficiaries',
+    'commerce_services_beneficiaries',
+  ];
+  const exportFieldsColumns = {
+    report_date: 'report_date',
+    location: formatMessage('location'),
+    male_participants: formatMessage('me.male_participants'),
+    female_participants: formatMessage('me.female_participants'),
+    twa_participants: formatMessage('me.twa_participants'),
+    agriculture_beneficiaries: formatMessage('me.agriculture_beneficiaries'),
+    livestock_beneficiaries: formatMessage('me.livestock_beneficiaries'),
+    livestock_goat_beneficiaries: formatMessage('me.livestock_goat_beneficiaries'),
+    livestock_pig_beneficiaries: formatMessage('me.livestock_pig_beneficiaries'),
+    livestock_rabbit_beneficiaries: formatMessage('me.livestock_rabbit_beneficiaries'),
+    livestock_poultry_beneficiaries: formatMessage('me.livestock_poultry_beneficiaries'),
+    livestock_cattle_beneficiaries: formatMessage('me.livestock_cattle_beneficiaries'),
+    commerce_services_beneficiaries: formatMessage('me.commerce_services_beneficiaries'),
   };
 
   useEffect(() => microProjectToDelete && openDeleteMicroProjectConfirmDialog(), [microProjectToDelete]);
@@ -100,7 +133,7 @@ function MicroProjectSearcher({
     ['location', true],
   ];
 
-  const fetch = (params) => fetchMicroProjects(modulesManager, params);
+  const fetchData = (params) => fetchMicroProjects(modulesManager, params);
 
   const rowIdentifier = (microProject) => microProject.id;
 
@@ -139,6 +172,34 @@ function MicroProjectSearcher({
     ),
   ];
 
+  const [indicatorsExport, setIndicatorsExport] = useState();
+  useEffect(() => {
+    if (indicatorsExport) {
+      downloadExport(indicatorsExport, `${formatMessage('microProject.page.title')}.csv`)();
+      setIndicatorsExport(null);
+    }
+  }, [indicatorsExport]);
+
+  const downloadIndicators = async (params) => {
+    const response = await fetch(`${baseApiUrl}/graphql`, {
+      method: 'post',
+      headers: apiHeaders(),
+      body: JSON.stringify({
+        query: `
+          {
+            microProjectExport${!!params && params.length ? `(${params.join(',')})` : ''}
+          }`,
+      }),
+    });
+
+    if (!response.ok) {
+      throw response;
+    } else {
+      const { data } = await response.json();
+      setIndicatorsExport(data.microProjectExport);
+    }
+  };
+
   const onDoubleClick = (microProject) => openMicroProject(microProject);
 
   const microProjectFilter = ({ filters, onChangeFilters }) => (
@@ -153,7 +214,7 @@ function MicroProjectSearcher({
     <Searcher
       module="socialProtection"
       FilterPane={microProjectFilter}
-      fetch={fetch}
+      fetch={fetchData}
       items={microProjects}
       itemsPageInfo={pageInfo}
       fetchedItems={fetchedMicroProjects}
@@ -170,6 +231,11 @@ function MicroProjectSearcher({
       defaultFilters={defaultFilters()}
       rowDisabled={isRowDisabled}
       rowLocked={isRowDisabled}
+      exportable
+      exportFetch={downloadIndicators}
+      exportFields={exportFields}
+      exportFieldsColumns={exportFieldsColumns}
+      exportFieldLabel={formatMessage('export.label')}
     />
   );
 }

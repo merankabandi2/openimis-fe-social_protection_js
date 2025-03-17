@@ -14,6 +14,9 @@ import {
   coreConfirm,
   clearConfirm,
   journalize,
+  baseApiUrl,
+  apiHeaders,
+  downloadExport,
 } from '@openimis/fe-core';
 import { deleteSensitizationTraining, fetchSensitizationTrainings } from '../../actions';
 import {
@@ -102,7 +105,7 @@ function SensitizationTrainingSearcher({
     ['category', true],
   ];
 
-  const fetch = (params) => fetchSensitizationTrainings(modulesManager, params);
+  const fetchData = (params) => fetchSensitizationTrainings(modulesManager, params);
 
   const rowIdentifier = (sensitizationTraining) => sensitizationTraining.id;
 
@@ -152,11 +155,57 @@ function SensitizationTrainingSearcher({
 
   const isRowDisabled = (_, sensitizationTraining) => deletedSensitizationTrainingUuids.includes(sensitizationTraining.id);
 
+  const exportFields = [
+    'sensitization_date',
+    'location',
+    'category',
+    'male_participants',
+    'female_participants',
+    'twa_participants',
+  ];
+
+  const exportFieldsColumns = {
+    sensitization_date: 'sensitization_date',
+    location: formatMessage('location'),
+    category: formatMessage('sensitizationTraining.category'),
+    male_participants: formatMessage('me.male_participants'),
+    female_participants: formatMessage('me.female_participants'),
+    twa_participants: formatMessage('me.twa_participants'),
+  };
+
+  const [sensitizationsExport, setSensitizationsExport] = useState();
+  useEffect(() => {
+    if (sensitizationsExport) {
+      downloadExport(sensitizationsExport, `${formatMessage('sensitizationTraining.page.title')}.csv`)();
+      setSensitizationsExport(null);
+    }
+  }, [sensitizationsExport]);
+
+  const downloadSensitizationTrainings = async (params) => {
+    const response = await fetch(`${baseApiUrl}/graphql`, {
+      method: 'post',
+      headers: apiHeaders(),
+      body: JSON.stringify({
+        query: `
+          {
+            sensitizationTrainingExport${!!params && params.length ? `(${params.join(',')})` : ''}
+          }`,
+      }),
+    });
+
+    if (!response.ok) {
+      throw response;
+    } else {
+      const { data } = await response.json();
+      setSensitizationsExport(data.sensitizationTrainingExport);
+    }
+  };
+
   return (
     <Searcher
       module="social_protection"
       FilterPane={sensitizationTrainingFilter}
-      fetch={fetch}
+      fetch={fetchData}
       items={sensitizationTrainings}
       itemsPageInfo={pageInfo}
       fetchedItems={fetchedSensitizationTrainings}
@@ -173,6 +222,11 @@ function SensitizationTrainingSearcher({
       defaultFilters={defaultFilters()}
       rowDisabled={isRowDisabled}
       rowLocked={isRowDisabled}
+      exportable
+      exportFetch={downloadSensitizationTrainings}
+      exportFields={exportFields}
+      exportFieldsColumns={exportFieldsColumns}
+      exportFieldLabel={formatMessage('export.label')}
     />
   );
 }

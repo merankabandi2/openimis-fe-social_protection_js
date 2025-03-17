@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Grid,
   Box,
-  makeStyles,
+  makeStyles, CircularProgress, Typography,
 } from '@material-ui/core';
 import {
   Map, TileLayer, GeoJSON,
@@ -49,7 +49,7 @@ const loadStats = async () => {
   }
 };
 
-function MapComponent({ className }) {
+function MapComponent({ className, isLoading }) {
   const classes = useStyles();
   const mapContainerRef = useRef(null);
   // State for our data
@@ -113,7 +113,6 @@ function MapComponent({ className }) {
 
     loadStats().then(
       (data) => {
-        console.log([1]);
         const locations = data.locationByBenefitPlan.edges.map((edge) => edge.node);
         setLocationData(locations);
         const lookup = {};
@@ -196,12 +195,25 @@ function MapComponent({ className }) {
     }
   };
 
-  if (loading) return <div className="p-4 text-center">Loading map data...</div>;
-  if (error) return <div className="p-4 text-center text-red-500">{error}</div>;
-
   return (
     <>
       <Grid item xs={12} md={6}>
+        {(loading) && (
+        <Box className={className}>
+          <div
+            className={classes.chartContainer}
+            style={{
+              height: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '30px',
+            }}
+          >
+            <div style={{ textAlign: 'center' }}>
+              <CircularProgress size={60} />
+              <Typography style={{ marginTop: 16, marginBottom: 16 }}>Chargement des données...</Typography>
+            </div>
+          </div>
+        </Box>
+        )}
+        {(!loading) && (
         <Box className={className} ref={mapContainerRef}>
           <div className={classes.mapContainer}>
             <Map
@@ -228,10 +240,26 @@ function MapComponent({ className }) {
             </Map>
           </div>
         </Box>
+        )}
       </Grid>
       <Grid item xs={12} md={6}>
         <Box className={className}>
+          {(loading) && (
+          <div
+            className={classes.chartContainer}
+            style={{
+              height: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '30px',
+            }}
+          >
+            <div style={{ textAlign: 'center' }}>
+              <CircularProgress size={60} />
+              <Typography style={{ marginTop: 16, marginBottom: 16 }}>Chargement des données...</Typography>
+            </div>
+          </div>
+          )}
+          {(!loading) && (
           <BoxTable locationData={locationData} getTotalCount={getTotalCount} />
+          )}
         </Box>
       </Grid>
     </>
