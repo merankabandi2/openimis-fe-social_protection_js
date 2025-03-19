@@ -34,15 +34,44 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const loadMonetaryTransferData = async (year) => {
-  console.log('loadMonetaryTransferData');
+const buildFilter = (filters) => {
+  const { locationId, benefitPlanId, year } = filters;
+
+  const itemFilters = {
+    year: (val) => `year: ${val}`,
+    locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
+    benefitPlanId: (val) => `benefitPlanUuid: "${decodeId(val)}"`,
+  };
+
+  // Build the filter string
+  const filterParts = [];
+
+  // Process year filter (special handling for array results)
+  if (itemFilters.year && year) {
+    const yearFilter = itemFilters.year(year);
+    if (Array.isArray(yearFilter)) {
+      filterParts.push(...yearFilter);
+    } else {
+      filterParts.push(yearFilter);
+    }
+  }
+
+  if (itemFilters.locationId && locationId) {
+    filterParts.push(itemFilters.locationId(locationId));
+  }
+
+  if (itemFilters.benefitPlanId && benefitPlanId) {
+    filterParts.push(itemFilters.benefitPlanId(benefitPlanId));
+  }
+  return filterParts.length ? `(${filterParts.join(', ')})` : '';
+};
+
+const loadMonetaryTransferData = async (filters) => {
   const response = await fetch(`${baseApiUrl}/graphql`, {
     method: 'post',
     headers: apiHeaders(),
     body: JSON.stringify({
-      query: `
-        query MonetaryTransfersByQuarter($year: Int) {
-          monetaryTransferQuarterlyData(year: $year) {
+      query: `{ monetaryTransferQuarterlyData${buildFilter(filters)}  {
             transferType
             q1Amount
             q2Amount
@@ -52,12 +81,7 @@ const loadMonetaryTransferData = async (year) => {
             q2Beneficiaries
             q3Beneficiaries
             q4Beneficiaries
-          }
-        }
-      `,
-      variables: {
-        year,
-      },
+    }}`,
     }),
   });
 
@@ -71,7 +95,7 @@ const loadMonetaryTransferData = async (year) => {
   }
 };
 
-function MonetaryTransferChart({ year = new Date().getFullYear() - 1 }) {
+function MonetaryTransferChart({ filters = {} }) {
   const classes = useStyles();
   const [chartData, setChartData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,7 +103,7 @@ function MonetaryTransferChart({ year = new Date().getFullYear() - 1 }) {
 
   useEffect(() => {
     setIsLoading(true);
-    loadMonetaryTransferData(year)
+    loadMonetaryTransferData(filters)
       .then((data) => {
         setChartData(data || []);
         setIsLoading(false);
@@ -88,7 +112,7 @@ function MonetaryTransferChart({ year = new Date().getFullYear() - 1 }) {
         console.error('Failed to load monetary transfer data', error);
         setIsLoading(false);
       });
-  }, [year]);
+  }, [filters]);
 
   // Prepare data for ApexCharts
   const series = chartData.map((item) => ({
@@ -221,9 +245,7 @@ function MonetaryTransferChart({ year = new Date().getFullYear() - 1 }) {
     <Card className={classes.card}>
       <div className={classes.cardHeader}>
         <Typography className={classes.title} variant="h6" component="h2">
-          Transferts Monétaires par Trimestre (
-          {year}
-          )
+          Transferts Monétaires par Trimestre
         </Typography>
         <FormControlLabel
           className={classes.toggleLabel}

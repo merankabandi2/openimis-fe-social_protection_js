@@ -23,8 +23,13 @@ import AttachMoneyIcon from '@material-ui/icons/AttachMoney';
 import ReceiptIcon from '@material-ui/icons/Receipt';
 import PlaceIcon from '@material-ui/icons/Place';
 import FilterListIcon from '@material-ui/icons/FilterList';
+import AssignmentIcon from '@material-ui/icons/Assignment';
+import BarChartIcon from '@material-ui/icons/BarChart';
 import MapComponent from './MapComponent';
 import BoxCard from './BoxCard';
+import TicketsPieChart from './TicketsPieChart';
+import TransfersChart from './TransfersChart';
+import ActivitiesBarChart from './ActivitiesBarChart';
 
 const buildFilter = (itemName, filters) => {
   const { locationId, benefitPlanId, year } = filters;
@@ -65,6 +70,11 @@ const buildFilter = (itemName, filters) => {
       year: (val) => createYearDateRange(val),
     },
     locationByBenefitPlan: {
+      benefitPlanId: (val) => `benefitPlan_Id: "${decodeId(val)}"`,
+    },
+    ticketsByResolution: {
+      locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
+      year: (val) => `year: ${val}`,
       benefitPlanId: (val) => `benefitPlan_Id: "${decodeId(val)}"`,
     },
   };
@@ -119,6 +129,10 @@ const loadStatsAll = async (filters = {}) => {
             },
             groupBeneficiaryFiltered ${buildFilter('groupBeneficiary', filters)} {
               totalCount
+            },
+            ticketsByResolution ${buildFilter('ticketsByResolution', filters)} {
+              status,
+              count
             },
             locationByBenefitPlan ${buildFilter('locationByBenefitPlan', filters)} {
               totalCount,
@@ -251,7 +265,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 // Dashboard component
-function BalkanDashboard() {
+function Dashboard() {
   const [stats, setStats] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [locations, setLocations] = useState([]);
@@ -265,7 +279,7 @@ function BalkanDashboard() {
 
   useEffect(() => {
     loadFilteredData();
-  }, []);
+  }, [filters]);
 
   const loadFilteredData = () => {
     setIsLoading(true);
@@ -435,33 +449,66 @@ function BalkanDashboard() {
             <Grid container spacing={2}>
               <MapComponent className={classes.box} isLoading={isLoading} />
             </Grid>
-            <Grid container spacing={2}>
+            <Grid container spacing={2} style={{ marginTop: '16px' }}>
               <Grid item xs={12} md={4}>
-                <BoxCard
-                  label="Individus"
-                  value={getStat('individualFiltered')}
-                  className={classes.box}
-                  icon={<PeopleAltIcon fontSize="large" />}
-                  isLoading={isLoading}
-                />
+                <Paper className={classes.box}>
+                  <Typography variant="h6" gutterBottom style={{ display: 'flex', alignItems: 'center' }}>
+                    <AssignmentIcon style={{ marginRight: '8px' }} />
+                    Plaintes par statut
+                  </Typography>
+                  <TicketsPieChart
+                    data={stats?.ticketsByResolution || []}
+                    isLoading={isLoading}
+                  />
+                </Paper>
               </Grid>
               <Grid item xs={12} md={4}>
-                <BoxCard
-                  label="Ménages"
-                  value={getStat('groupFiltered')}
-                  className={classes.box}
-                  icon={<HomeIcon fontSize="large" />}
-                  isLoading={isLoading}
-                />
+                <TransfersChart filters={filters} />
               </Grid>
               <Grid item xs={12} md={4}>
-                <BoxCard
-                  label="Provinces"
-                  value={getStat('locationByBenefitPlan')}
-                  className={classes.box}
-                  icon={<PlaceIcon fontSize="large" />}
-                  isLoading={isLoading}
-                />
+                <Paper className={classes.box}>
+                  <Typography variant="h6" gutterBottom style={{ display: 'flex', alignItems: 'center' }}>
+                    <BarChartIcon style={{ marginRight: '8px' }} />
+                    Activités
+                  </Typography>
+                  <ActivitiesBarChart
+                    filters={filters}
+                    isLoading={isLoading}
+                  />
+                </Paper>
+              </Grid>
+            </Grid>
+            <Grid container spacing={2} style={{ marginTop: '16px' }}>
+              <Grid item xs={12}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={4}>
+                    <BoxCard
+                      label="Individus"
+                      value={getStat('individualFiltered')}
+                      className={classes.box}
+                      icon={<PeopleAltIcon fontSize="large" />}
+                      isLoading={isLoading}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <BoxCard
+                      label="Ménages"
+                      value={getStat('groupFiltered')}
+                      className={classes.box}
+                      icon={<HomeIcon fontSize="large" />}
+                      isLoading={isLoading}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <BoxCard
+                      label="Provinces"
+                      value={getStat('locationByBenefitPlan')}
+                      className={classes.box}
+                      icon={<PlaceIcon fontSize="large" />}
+                      isLoading={isLoading}
+                    />
+                  </Grid>
+                </Grid>
               </Grid>
             </Grid>
           </div>
@@ -475,4 +522,4 @@ const mapStateToProps = () => ({});
 
 const mapDispatchToProps = (dispatch) => bindActionCreators({}, dispatch);
 
-export default connect(mapStateToProps, mapDispatchToProps)(BalkanDashboard);
+export default connect(mapStateToProps, mapDispatchToProps)(Dashboard);

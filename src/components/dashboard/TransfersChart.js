@@ -68,7 +68,7 @@ const buildFilter = (filters) => {
   return filterParts.length ? `(${filterParts.join(', ')})` : '';
 };
 
-function MonetaryTransferChartBeneficiaires({ classes, theme, filters = {} }) {
+function TransfersChart({ classes, theme, filters = {} }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -289,4 +289,4 @@ function MonetaryTransferChartBeneficiaires({ classes, theme, filters = {} }) {
   );
 }
 
-export default withTheme(withStyles(styles)(MonetaryTransferChartBeneficiaires));
+export default withTheme(withStyles(styles)(TransfersChart));
