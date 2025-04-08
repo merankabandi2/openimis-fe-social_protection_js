@@ -14,6 +14,8 @@ import BoxTable from './BoxTable';
 
 // This is needed to fix Leaflet icon issues in React
 
+const REQUESTED_WITH = 'webapp';
+
 const useStyles = makeStyles(() => ({
   mapContainer: {
     width: '100%',
@@ -36,9 +38,11 @@ L.Icon.Default.mergeOptions({
 });
 
 const loadStats = async () => {
+  const csrfToken = localStorage.getItem('csrfToken');
+  const baseHeaders = apiHeaders();
   const response = await fetch(`${baseApiUrl}/graphql`, {
     method: 'post',
-    headers: apiHeaders(),
+    headers: { ...baseHeaders, 'X-Requested-With': REQUESTED_WITH, 'X-CSRFToken': csrfToken },
     body: JSON.stringify({ query: '{locationByBenefitPlan (benefitPlan_Id: \"452721c3-cc8a-49d9-81f0-a7c7a1a3bf82\") { totalCount edges{node{ id, code, name,countSelected,countSuspended,countActive}}}}' }),
   });
   if (!response.ok) {

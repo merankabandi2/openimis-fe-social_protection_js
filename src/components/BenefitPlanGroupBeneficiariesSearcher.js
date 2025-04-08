@@ -35,6 +35,7 @@ import {
   CLEARED_STATE_FILTER,
   LOC_LEVELS,
   locationAtLevel,
+  BENEFICIARY_STATUS,
 } from '../constants';
 import BenefitPlanGroupBeneficiariesFilter from './BenefitPlanGroupBeneficiariesFilter';
 import BeneficiaryStatusPicker from '../pickers/BeneficiaryStatusPicker';
@@ -149,7 +150,7 @@ function BenefitPlanGroupBeneficiariesSearcher({
       ));
     }
 
-    result.push((groupBeneficiary) => (<a href={`/api/merankabandi/card/${groupBeneficiary.group.code}/`}>Carte</a>));
+    result.push((groupBeneficiary) =>  (groupBeneficiary.status === BENEFICIARY_STATUS.ACTIVE ? <a href={`/api/merankabandi/card/${groupBeneficiary.group.code}/`}>Carte</a> : ''));
 
     if (rights.includes(RIGHT_GROUP_SEARCH)) {
       result.push((groupBeneficiary) => (

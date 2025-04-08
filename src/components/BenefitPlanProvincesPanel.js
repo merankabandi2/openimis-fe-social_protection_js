@@ -30,6 +30,17 @@ function BenefitPlanProvincesPanel({
   const modulesManager = useModulesManager();
   const { formatMessage, formatMessageWithValues } = useTranslations('socialProtection', modulesManager);
 
+  const defaultFilters = () => {
+    const filters = {
+      type: {
+        value: 'D',
+        filter:
+        'type: "D"',
+      },
+    };
+    return filters;
+  };
+
   const fetch = (params) => {
     if (benefitPlan?.id) {
       params.push(`benefitPlan_Id: "${benefitPlan.id}"`);
@@ -57,11 +68,11 @@ function BenefitPlanProvincesPanel({
   const itemFormatters = (params) => {
     const values = [];
     if (['W'].includes(params?.type?.value)) {
-      values.push((location) => location.parent.name);
+      values.push((location) => location?.parent?.name);
     }
     if (['V'].includes(params?.type?.value)) {
-      values.push((location) => location.parent.parent.name);
-      values.push((location) => location.parent.name);
+      values.push((location) => location?.parent?.parent?.name);
+      values.push((location) => location?.parent?.name);
     }
     values.push((location) => location.name);
     values.push((location) => location.code);
@@ -99,6 +110,7 @@ function BenefitPlanProvincesPanel({
       tableTitle={formatMessageWithValues('benefitPlanProvinces.searcherResultsTitle', { totalCount: provincesTotalCount })}
       headers={headers}
       itemFormatters={itemFormatters}
+      defaultFilters={defaultFilters()}
       sorts={sorts}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
       defaultPageSize={DEFAULT_PAGE_SIZE}

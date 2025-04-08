@@ -31,6 +31,8 @@ import TicketsPieChart from './TicketsPieChart';
 import TransfersChart from './TransfersChart';
 import ActivitiesBarChart from './ActivitiesBarChart';
 
+const REQUESTED_WITH = 'webapp';
+
 const buildFilter = (itemName, filters) => {
   const { locationId, benefitPlanId, year } = filters;
 
@@ -107,9 +109,12 @@ const buildFilter = (itemName, filters) => {
 };
 
 const loadStatsAll = async (filters = {}) => {
+  const csrfToken = localStorage.getItem('csrfToken');
+  const baseHeaders = apiHeaders();
+
   const response = await fetch(`${baseApiUrl}/graphql`, {
     method: 'post',
-    headers: apiHeaders(),
+    headers: { ...baseHeaders, 'X-Requested-With': REQUESTED_WITH, 'X-CSRFToken': csrfToken },
     body: JSON.stringify(
       {
         query: `

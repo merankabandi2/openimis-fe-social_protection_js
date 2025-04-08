@@ -22,7 +22,7 @@ export const applyNumberCircle = (number) => (
   </div>
 );
 
-export const LOC_LEVELS = 4;
+export const LOC_LEVELS = 3;
 export const locationAtLevel = (lowestLevelLoc, level) => {
   let location = lowestLevelLoc;
   let levelDiff = level;

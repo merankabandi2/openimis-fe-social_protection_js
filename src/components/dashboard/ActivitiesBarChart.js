@@ -3,6 +3,8 @@ import ReactApexChart from 'react-apexcharts';
 import { baseApiUrl, apiHeaders } from '@openimis/fe-core';
 import { CircularProgress, Typography } from '@material-ui/core';
 
+const REQUESTED_WITH = 'webapp';
+
 function ActivitiesBarChart({ filters = {} }) {
   const [chartData, setChartData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -10,9 +12,11 @@ function ActivitiesBarChart({ filters = {} }) {
   const loadActivitiesData = async () => {
     setIsLoading(true);
     try {
+      const csrfToken = localStorage.getItem('csrfToken');
+      const baseHeaders = apiHeaders();
       const response = await fetch(`${baseApiUrl}/graphql`, {
         method: 'post',
-        headers: apiHeaders(),
+        headers: { ...baseHeaders, 'X-Requested-With': REQUESTED_WITH, 'X-CSRFToken': csrfToken },
         body: JSON.stringify({
           query: `
             {

@@ -17,11 +17,11 @@ function BenefitPlanLocationsFilter({
       <Grid item xs={2} className={classes.item}>
         <SelectInput
           module="socialProtection"
-          label="location.LocationFilter"
+          label="location.locationType.label"
           options={[
-            { value: 'D', label: formatMessage(intl, 'location', 'location0') },
-            { value: 'W', label: formatMessage(intl, 'location', 'location1') },
-            { value: 'V', label: formatMessage(intl, 'location', 'location2') },
+            { value: 'D', label: formatMessage(intl, 'location', 'locationType.0') },
+            { value: 'W', label: formatMessage(intl, 'location', 'locationType.1') },
+            { value: 'V', label: formatMessage(intl, 'location', 'locationType.2') },
           ]}
           value={filterValue('type')}
           onChange={(value) => onChangeFilters([
