@@ -130,3 +130,4 @@ export const PYTHON_DEFAULT_IMPORT_WORKFLOW = 'Python Beneficiaries Upload';
 export const BENEFICIARIES_QUANTITY_LIMIT = 100;
 export const INDIVIDUAL_LABEL = 'Individual';
 export const INDIVIDUAL_MODULE_NAME = 'individual';
+export const BENEFIT_PLAN_PROJECTS_TAB_VALUE = 'BenefitPlanProjectsTab';

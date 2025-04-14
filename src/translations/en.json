@@ -149,5 +149,11 @@
   "socialProtection.benefitPlan.schema.showSchema": "Show Schema",
   "socialProtection.benefitPlanTasks.label": "Tasks",
   "socialProtection.group.code": "Code",
-  "socialProtection.groupBeneficiary.code": "Code"
+  "socialProtection.groupBeneficiary.code": "Code",
+  "socialProtection.projects.label": "Projects",
+  "socialProtection.projects.searcherResultsTitle": "{projectsTotalCount} Projects",
+  "socialProtection.project.name": "Name",
+  "socialProtection.project.status": "Status",
+  "socialProtection.project.activity": "Activity",
+  "socialProtection.project.targetBeneficiaries": "Target Beneficiaries"
 }

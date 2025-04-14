@@ -44,6 +44,7 @@ export const ACTION_TYPE = {
   GET_PENDING_BENEFICIARIES_UPLOAD: 'GET_PENDING_BENEFICIARIES_UPLOAD',
   RESOLVE_TASK: 'TASK_MANAGEMENT_RESOLVE_TASK',
   SEARCH_BENEFIT_PLANS_HISTORY: 'BENEFIT_PLAN_BENEFIT_PLANS_HISTORY',
+  SEARCH_PROJECTS: 'BENEFIT_PLAN_PROJECTS',
 };
 
 function reducer(
@@ -117,6 +118,12 @@ function reducer(
     benefitPlansHistory: [],
     benefitPlansHistoryPageInfo: {},
     benefitPlansHistoryTotalCount: 0,
+    fetchingProjects: false,
+    errorProjects: null,
+    fetchedProjects: false,
+    projects: [],
+    projectsPageInfo: {},
+    projectsTotalCount: 0,
   },
   action,
 ) {
@@ -182,6 +189,16 @@ function reducer(
         workflows: [],
         workflowsPageInfo: {},
         errorWorkflows: null,
+      };
+    case REQUEST(ACTION_TYPE.SEARCH_PROJECTS):
+      return {
+        ...state,
+        fetchingProjects: true,
+        fetchedProjects: false,
+        projects: [],
+        projectsPageInfo: {},
+        projectsTotalCount: 0,
+        errorProjects: null,
       };
     case SUCCESS(ACTION_TYPE.SEARCH_BENEFIT_PLANS):
       return {
@@ -273,6 +290,20 @@ function reducer(
         workflowsPageInfo: pageInfo(action.payload.data.benefitPlan),
         errorWorkflows: formatGraphQLError(action.payload),
       };
+    case SUCCESS(ACTION_TYPE.SEARCH_PROJECTS):
+      return {
+        ...state,
+        fetchingProjects: false,
+        fetchedProjects: true,
+        projects: parseData(action.payload.data.project)?.map((project) => ({
+          ...project,
+          benefitPlan: { id: project?.benefitPlan?.id ? decodeId(project.benefitPlan.id) : null },
+          id: decodeId(project.id),
+        })),
+        projectsPageInfo: pageInfo(action.payload.data.project),
+        projectsTotalCount: action.payload.data.project ? action.payload.data.project.totalCount : null,
+        errorProjects: formatGraphQLError(action.payload),
+      };
     case ERROR(ACTION_TYPE.GET_FIELDS_FROM_BF_SCHEMA):
       return {
         ...state,
@@ -314,6 +345,12 @@ function reducer(
         ...state,
         fetchingWorkflows: false,
         errorWorkflows: formatServerError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.SEARCH_PROJECTS):
+      return {
+        ...state,
+        fetchingProjects: false,
+        errorProjects: formatServerError(action.payload),
       };
     case REQUEST(ACTION_TYPE.BENEFIT_PLAN_CODE_FIELDS_VALIDATION):
       return {

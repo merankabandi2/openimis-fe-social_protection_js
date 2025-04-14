@@ -64,6 +64,16 @@ const WORKFLOWS_FULL_PROJECTION = () => [
   'group',
 ];
 
+const PROJECT_FULL_PROJECTION = (modulesManager) => [
+  'id',
+  'benefitPlan {id}',
+  'name',
+  'status',
+  'targetBeneficiaries',
+  'activity {id, name}',
+  'location' + modulesManager.getProjection('location.Location.FlatProjection'),
+];
+
 export function fetchBenefitPlans(params) {
   const payload = formatPageQueryWithCount('benefitPlan', params, BENEFIT_PLAN_FULL_PROJECTION());
   return graphql(payload, ACTION_TYPE.SEARCH_BENEFIT_PLANS);
@@ -223,6 +233,11 @@ export function fetchPendingBeneficiaryUploads(variables) {
 export function fetchBenefitPlanHistory(params) {
   const payload = formatPageQueryWithCount('benefitPlanHistory', params, BENEFIT_PLAN_FULL_PROJECTION());
   return graphql(payload, ACTION_TYPE.SEARCH_BENEFIT_PLANS_HISTORY);
+}
+
+export function fetchBenefitPlanProjects(modulesManager, params) {
+  const payload = formatPageQueryWithCount('project', params, PROJECT_FULL_PROJECTION(modulesManager));
+  return graphql(payload, ACTION_TYPE.SEARCH_PROJECTS);
 }
 
 export function deleteBenefitPlan(benefitPlan, clientMutationLabel) {

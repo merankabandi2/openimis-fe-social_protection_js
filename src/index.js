@@ -65,10 +65,15 @@ import {
 } from './components/tasks/BeneficiaryUploadApprovalTask';
 import { fetchBenefitPlanSchemaFields } from './actions';
 import BenefitPlanHistorySearcher from './components/BenefitPlanHistorySearcher';
+import {
+  BenefitPlanProjectsTabLabel,
+  BenefitPlanProjectsTabPanel,
+} from './components/BenefitPlanProjectsTab';
 import { BenefitPlanChangelogTabLabel, BenefitPlanChangelogTabPanel } from './components/BenefitPlanChangelogTab';
 import { BenefitPlanTaskTabLabel, BenefitPlanTaskTabPanel } from './components/BenefitPlanTaskTab';
 import { BENEFIT_PLAN_LABEL, RIGHT_BENEFIT_PLAN_SEARCH } from './constants';
 import BeneficiaryPicker from './pickers/BeneficiaryPicker';
+import BenefitPlanProjectsSearcher from './components/BenefitPlanProjectsSearcher';
 
 const ROUTE_BENEFIT_PLANS = 'benefitPlans';
 const ROUTE_BENEFIT_PLAN = 'benefitPlans/benefitPlan';
@@ -103,14 +108,17 @@ const DEFAULT_CONFIG = {
     { key: 'socialProtection.fetchBenefitPlanSchemaFields', ref: fetchBenefitPlanSchemaFields },
     { key: 'socialProtection.BenefitPlanHistorySearcher', ref: BenefitPlanHistorySearcher },
     { key: 'socialProtection.BeneficiaryPicker', ref: BeneficiaryPicker },
+    { key: 'socialProtection.BenefitPlanProjectsSearcher', ref: BenefitPlanProjectsSearcher },
   ],
   'benefitPlan.TabPanel.label': [
     BenefitPlanBeneficiariesTabLabel,
+    BenefitPlanProjectsTabLabel,
     BenefitPlanChangelogTabLabel,
     BenefitPlanTaskTabLabel,
   ],
   'benefitPlan.TabPanel.panel': [
     BenefitPlanBeneficiariesTabPanel,
+    BenefitPlanProjectsTabPanel,
     BenefitPlanChangelogTabPanel,
     BenefitPlanTaskTabPanel,
   ],
