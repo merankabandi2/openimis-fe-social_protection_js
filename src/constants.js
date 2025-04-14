@@ -39,8 +39,11 @@ export const BENEFIT_PLAN_BENEFICIARIES_ACTIVE_TAB_VALUE = 'benefitPlanBeneficia
 export const BENEFIT_PLAN_BENEFICIARIES_POTENTIAL_TAB_VALUE = 'benefitPlanBeneficiariesPotentialTab';
 export const BENEFIT_PLAN_BENEFICIARIES_GRADUATED_TAB_VALUE = 'benefitPlanBeneficiariesGraduatedTab';
 export const BENEFIT_PLAN_BENEFICIARIES_SUSPENDED_TAB_VALUE = 'benefitPlanBeneficiariesSuspendedTab';
+export const BENEFIT_PLAN_BENEFICIARIES_TAB_WRAPPER_VALUE = 'benefitPlanBeneficiariesTabWrapper';
 export const BENEFIT_PLAN_TABS_LABEL_CONTRIBUTION_KEY = 'benefitPlan.TabPanel.label';
 export const BENEFIT_PLAN_TABS_PANEL_CONTRIBUTION_KEY = 'benefitPlan.TabPanel.panel';
+export const BENEFIT_PLAN_BENEFICIARY_TABS_LABEL_CONTRIBUTION_KEY = 'benefitPlan.BeneficiaryTabPanel.label';
+export const BENEFIT_PLAN_BENEFICIARY_TABS_PANEL_CONTRIBUTION_KEY = 'benefitPlan.BeneficiaryTabPanel.panel';
 export const DEDUPLICATION_SELECT_FIELD_DIALOG_CONTRIBUTION_KEY = 'deduplication.deduplicationFieldSelectionDialog';
 
 export const BENEFIT_PACKAGE_MEMBERS_TAB_VALUE = 'benefitPackageMembersTab';

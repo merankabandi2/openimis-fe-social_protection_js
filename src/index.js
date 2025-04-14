@@ -12,6 +12,10 @@ import BenefitPlanPage from './pages/BenefitPlanPage';
 import BenefitPackagePage from './pages/BenefitPackagePage';
 import BeneficiaryStatusPicker from './pickers/BeneficiaryStatusPicker';
 import {
+  BenefitPlanBeneficiariesTabPanel,
+  BenefitPlanBeneficiariesTabLabel,
+} from './components/BenefitPlanBeneficiariesTabPanel';
+import {
   BenefitPlanBeneficiariesListTabPanel,
   BenefitPlanBeneficiariesListTabLabel,
 } from './components/BenefitPlanBeneficiariesListTab';
@@ -101,22 +105,28 @@ const DEFAULT_CONFIG = {
     { key: 'socialProtection.BeneficiaryPicker', ref: BeneficiaryPicker },
   ],
   'benefitPlan.TabPanel.label': [
+    BenefitPlanBeneficiariesTabLabel,
+    BenefitPlanChangelogTabLabel,
+    BenefitPlanTaskTabLabel,
+  ],
+  'benefitPlan.TabPanel.panel': [
+    BenefitPlanBeneficiariesTabPanel,
+    BenefitPlanChangelogTabPanel,
+    BenefitPlanTaskTabPanel,
+  ],
+  'benefitPlan.BeneficiaryTabPanel.label': [
     BenefitPlanBeneficiariesListTabLabel,
     BenefitPlanBeneficiariesPotentialTabLabel,
     BenefitPlanBeneficiariesActiveTabLabel,
     BenefitPlanBeneficiariesGraduatedTabLabel,
     BenefitPlanBeneficiariesSuspendedTabLabel,
-    BenefitPlanChangelogTabLabel,
-    BenefitPlanTaskTabLabel,
   ],
-  'benefitPlan.TabPanel.panel': [
+  'benefitPlan.BeneficiaryTabPanel.panel': [
     BenefitPlanBeneficiariesListTabPanel,
     BenefitPlanBeneficiariesPotentialTabPanel,
     BenefitPlanBeneficiariesActiveTabPanel,
     BenefitPlanBeneficiariesGraduatedTabPanel,
     BenefitPlanBeneficiariesSuspendedTabPanel,
-    BenefitPlanChangelogTabPanel,
-    BenefitPlanTaskTabPanel,
   ],
   'benefitPackage.TabPanel.label': [
     BenefitPackageMembersTabLabel,

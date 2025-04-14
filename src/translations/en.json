@@ -64,6 +64,7 @@
   "socialProtection.benefitPlan.benefitPlanBeneficiariesSuspended.label": "Suspended",
   "socialProtection.benefitPlan.benefitPlanBeneficiariesGraduated.label": "Graduated",
   "socialProtection.benefitPlan.benefitPlanBeneficiariesPotential.label": "Potential",
+  "socialProtection.benefitPlan.beneficiaries.tabGroup.label": "Beneficiaries",
   "socialProtection.benefitPlan.benefitPlanBeneficiaries.upload": "Upload",
   "socialProtection.benefitPlan.benefitPlanBeneficiaries.upload.label": "Upload Beneficiaries",
   "socialProtection.benefitPlan.benefitPlanBeneficiaries.upload.alert.header.invalid_format": "Invalid file format!",

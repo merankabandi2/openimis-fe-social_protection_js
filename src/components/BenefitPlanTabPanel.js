@@ -8,10 +8,13 @@ import {
 } from '@openimis/fe-core';
 import { makeStyles } from '@material-ui/core/styles';
 import {
-  BENEFIT_PLAN_BENEFICIARIES_LIST_TAB_VALUE,
+  BENEFIT_PLAN_BENEFICIARIES_TAB_WRAPPER_VALUE,
   BENEFIT_PLAN_TABS_LABEL_CONTRIBUTION_KEY,
   BENEFIT_PLAN_TABS_PANEL_CONTRIBUTION_KEY,
-  DEDUPLICATION_SELECT_FIELD_DIALOG_CONTRIBUTION_KEY, MODULE_NAME, PAYROLL_CREATE_RIGHTS_PUB_REF, PAYROLL_PAYROLL_ROUTE,
+  DEDUPLICATION_SELECT_FIELD_DIALOG_CONTRIBUTION_KEY,
+  MODULE_NAME,
+  PAYROLL_CREATE_RIGHTS_PUB_REF,
+  PAYROLL_PAYROLL_ROUTE,
 } from '../constants';
 import BenefitPlanBeneficiariesUploadDialog from '../dialogs/BenefitPlanBeneficiariesUploadDialog';
 import BenefitPlanBeneficiariesUploadHistoryDialog from '../dialogs/BenefitPlanBeneficiariesUploadHistoryDialog';
@@ -44,7 +47,7 @@ function BenefitPlanTabPanel({
   const modulesManager = useModulesManager();
   const { formatMessage } = useTranslations(MODULE_NAME, modulesManager);
   const history = useHistory();
-  const [activeTab, setActiveTab] = useState(BENEFIT_PLAN_BENEFICIARIES_LIST_TAB_VALUE);
+  const [activeTab, setActiveTab] = useState(BENEFIT_PLAN_BENEFICIARIES_TAB_WRAPPER_VALUE);
 
   const isSelected = (tab) => tab === activeTab;
 
@@ -118,10 +121,12 @@ function BenefitPlanTabPanel({
       </Grid>
       <Contributions
         contributionKey={BENEFIT_PLAN_TABS_PANEL_CONTRIBUTION_KEY}
+        intl={intl}
         rights={rights}
         value={activeTab}
         benefitPlan={benefitPlan}
         setConfirmedAction={setConfirmedAction}
+        classes={classes}
       />
     </Paper>
   );
