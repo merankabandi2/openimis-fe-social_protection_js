@@ -20,6 +20,11 @@ export const RIGHT_BENEFIT_PLAN_UPDATE = 160003;
 export const RIGHT_BENEFIT_PLAN_DELETE = 160004;
 export const RIGHT_BENEFICIARY_SEARCH = 170001;
 export const RIGHT_BENEFICIARY_UPDATE = 170003;
+// TODO: update project rights values
+export const RIGHT_PROJECT_SEARCH = 160001;
+export const RIGHT_PROJECT_CREATE = 160002;
+export const RIGHT_PROJECT_UPDATE = 160003;
+export const RIGHT_PROJECT_DELETE = 160004;
 
 export const RIGHT_SCHEMA_SEARCH = 171001;
 export const RIGHT_SCHEMA_CREATE = 171002;
@@ -131,3 +136,4 @@ export const BENEFICIARIES_QUANTITY_LIMIT = 100;
 export const INDIVIDUAL_LABEL = 'Individual';
 export const INDIVIDUAL_MODULE_NAME = 'individual';
 export const BENEFIT_PLAN_PROJECTS_TAB_VALUE = 'BenefitPlanProjectsTab';
+export const PROJECT_STATUS_LIST = ['PREPARATION', 'IN PROGRESS', 'COMPLETED'];

@@ -18,7 +18,7 @@ function BenefitPlanProjectsTabLabel({
 }
 
 function BenefitPlanProjectsTabPanel({
-  value, benefitPlan,
+  value, benefitPlan, rights,
 }) {
   return (
     <PublishedComponent
@@ -30,6 +30,8 @@ function BenefitPlanProjectsTabPanel({
       <PublishedComponent
         pubRef="socialProtection.BenefitPlanProjectsSearcher"
         benefitPlanId={benefitPlan?.id}
+        benefitPlanName={benefitPlan?.name}
+        rights={rights}
       />
     </PublishedComponent>
   );

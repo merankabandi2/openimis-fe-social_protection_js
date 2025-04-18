@@ -1,15 +1,21 @@
 import React from 'react';
 import { injectIntl } from 'react-intl';
 import {
+  formatMessage,
   formatMessageWithValues,
   Searcher,
-  withHistory,
   withModulesManager,
   useModulesManager,
+  useHistory,
 } from '@openimis/fe-core';
+import AddIcon from '@material-ui/icons/Add';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
-import { DEFAULT_PAGE_SIZE, ROWS_PER_PAGE_OPTIONS } from '../constants';
+import {
+  DEFAULT_PAGE_SIZE,
+  ROWS_PER_PAGE_OPTIONS,
+  RIGHT_PROJECT_CREATE,
+} from '../constants';
 import { fetchBenefitPlanProjects } from '../actions';
 import BenefitPlanProjectsFilter from './BenefitPlanProjectsFilter';
 import {
@@ -27,7 +33,10 @@ function BenefitPlanProjectsSearcher({
   projectsPageInfo,
   projectsTotalCount,
   benefitPlanId,
+  benefitPlanName,
+  rights,
 }) {
+  const history = useHistory();
   const modulesManager = useModulesManager();
   const fetch = (params) => fetchBenefitPlanProjects(modulesManager, params);
 
@@ -88,6 +97,26 @@ function BenefitPlanProjectsSearcher({
     />
   );
 
+  const onAdd = () => {
+    history.push({
+      pathname: `/${modulesManager.getRef('socialProtection.route.benefitPlan')}/${benefitPlanId}/`
+        + `${modulesManager.getRef('socialProtection.route.project')}`,
+      state: {
+        benefitPlanId,
+        benefitPlanName,
+      },
+    });
+  };
+
+  const searcherActions = [
+    {
+      label: formatMessage(intl, 'socialProtection', 'projects.searcherAddAction'),
+      icon: <AddIcon />,
+      authorized: rights.includes(RIGHT_PROJECT_CREATE),
+      onClick: onAdd,
+    },
+  ];
+
   return (
     <Searcher
       module="socialProtection"
@@ -109,6 +138,8 @@ function BenefitPlanProjectsSearcher({
       defaultOrderBy="-name"
       rowIdentifier={rowIdentifier}
       defaultFilters={defaultFilters()}
+      searcherActions={searcherActions}
+      enableActionButtons
     />
   );
 }
@@ -126,7 +157,7 @@ const mapDispatchToProps = (dispatch) => bindActionCreators({
   fetchBenefitPlanProjects,
 }, dispatch);
 
-const ConnectedBenefitPlanProjectsSearcher = withHistory(
-  withModulesManager(injectIntl(connect(mapStateToProps, mapDispatchToProps)(BenefitPlanProjectsSearcher))),
+const ConnectedBenefitPlanProjectsSearcher = withModulesManager(
+  injectIntl(connect(mapStateToProps, mapDispatchToProps)(BenefitPlanProjectsSearcher)),
 );
 export default ConnectedBenefitPlanProjectsSearcher;

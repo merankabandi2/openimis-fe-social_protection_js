@@ -66,7 +66,7 @@ const WORKFLOWS_FULL_PROJECTION = () => [
 
 const PROJECT_FULL_PROJECTION = (modulesManager) => [
   'id',
-  'benefitPlan {id}',
+  'benefitPlan {id, name}',
   'name',
   'status',
   'targetBeneficiaries',
@@ -235,11 +235,6 @@ export function fetchBenefitPlanHistory(params) {
   return graphql(payload, ACTION_TYPE.SEARCH_BENEFIT_PLANS_HISTORY);
 }
 
-export function fetchBenefitPlanProjects(modulesManager, params) {
-  const payload = formatPageQueryWithCount('project', params, PROJECT_FULL_PROJECTION(modulesManager));
-  return graphql(payload, ACTION_TYPE.SEARCH_PROJECTS);
-}
-
 export function deleteBenefitPlan(benefitPlan, clientMutationLabel) {
   const benefitPlanUuids = `ids: ["${benefitPlan?.id}"]`;
   const mutation = formatMutation('deleteBenefitPlan', benefitPlanUuids, clientMutationLabel);
@@ -300,6 +295,17 @@ function formatBeneficiaryGQL(beneficiary) {
     ${beneficiary?.status ? `status: ${beneficiary.status}` : ''}`;
 }
 
+function formatProjectGQL(project) {
+  return `
+    ${project?.id ? `id: "${project.id}"` : ''}
+    ${project?.name ? `name: "${formatGQLString(project.name)}"` : ''}
+    ${project?.targetBeneficiaries ? `targetBeneficiaries: ${project.targetBeneficiaries}` : ''}
+    ${project?.status ? `status: "${project.status}"` : ''}
+    ${project?.activity?.id ? `activityId: "${project.activity.id}"` : ''}
+    ${project?.location?.uuid ? `locationId: "${project.location.uuid}"` : ''}
+    ${project?.benefitPlan?.id ? `benefitPlanId: "${project.benefitPlan.id}"` : ''}`;
+}
+
 export function createBenefitPlan(benefitPlan, clientMutationLabel) {
   const mutation = formatMutation('createBenefitPlan', formatBenefitPlanGQL(benefitPlan), clientMutationLabel);
   const requestedDateTime = new Date();
@@ -353,6 +359,26 @@ export function updateGroupBeneficiary(beneficiary, clientMutationLabel) {
     [REQUEST(ACTION_TYPE.MUTATION), SUCCESS(ACTION_TYPE.UPDATE_GROUP_BENEFICIARY), ERROR(ACTION_TYPE.MUTATION)],
     {
       actionType: ACTION_TYPE.UPDATE_BENEFIT_PLAN,
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+    },
+  );
+}
+
+export function fetchBenefitPlanProjects(modulesManager, params) {
+  const payload = formatPageQueryWithCount('project', params, PROJECT_FULL_PROJECTION(modulesManager));
+  return graphql(payload, ACTION_TYPE.SEARCH_PROJECTS);
+}
+
+export function createProject(project, clientMutationLabel) {
+  const mutation = formatMutation('createProject', formatProjectGQL(project), clientMutationLabel);
+  const requestedDateTime = new Date();
+  return graphql(
+    mutation.payload,
+    [REQUEST(ACTION_TYPE.MUTATION), SUCCESS(ACTION_TYPE.CREATE_PROJECT), ERROR(ACTION_TYPE.MUTATION)],
+    {
+      actionType: ACTION_TYPE.CREATE_PROJECT,
       clientMutationId: mutation.clientMutationId,
       clientMutationLabel,
       requestedDateTime,
@@ -560,3 +586,27 @@ export function resolveTask(task, clientMutationLabel, user, approveOrFail, addi
     },
   );
 }
+
+export function projectNameValidationCheck(modulesManager, variables) {
+  return graphqlWithVariables(
+    `
+      query ($projectName: String!, $benefitPlanId: String!) {
+        isValid: projectNameValidity(projectName: $projectName, benefitPlanId: $benefitPlanId) {
+          isValid
+        }
+      }
+    `,
+    variables,
+    ACTION_TYPE.PROJECT_NAME_FIELDS_VALIDATION,
+  );
+}
+
+export const projectNameSetValid = () => (dispatch) => {
+  dispatch({ type: ACTION_TYPE.PROJECT_NAME_SET_VALID });
+};
+
+export const projectNameValidationClear = () => (dispatch) => {
+  dispatch({
+    type: CLEAR(ACTION_TYPE.PROJECT_NAME_FIELDS_VALIDATION),
+  });
+};
