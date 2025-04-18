@@ -12,6 +12,10 @@ import { connect } from 'react-redux';
 import { DEFAULT_PAGE_SIZE, ROWS_PER_PAGE_OPTIONS } from '../constants';
 import { fetchBenefitPlanProjects } from '../actions';
 import BenefitPlanProjectsFilter from './BenefitPlanProjectsFilter';
+import {
+  LOC_LEVELS,
+  locationAtLevel,
+} from '../util/searcher-utils';
 
 function BenefitPlanProjectsSearcher({
   intl,
@@ -27,21 +31,31 @@ function BenefitPlanProjectsSearcher({
   const modulesManager = useModulesManager();
   const fetch = (params) => fetchBenefitPlanProjects(modulesManager, params);
 
-  const headers = () => [
-    'project.name',
-    'project.status',
-    'project.activity',
-    // 'project.location',
-    'project.targetBeneficiaries',
-  ];
+  const headers = () => {
+    const baseHeaders = [
+      'project.name',
+      'project.status',
+      'project.activity',
+      'project.targetBeneficiaries',
+    ];
+    baseHeaders.push(...Array.from({ length: LOC_LEVELS }, (_, i) => `location.locationType.${i}`));
 
-  const itemFormatters = () => [
-    (project) => project.name,
-    (project) => project.status,
-    (project) => project.activity?.name ?? '',
-    // (project) => project.location?.name ?? '',
-    (project) => project.target_beneficiaries,
-  ];
+    return baseHeaders;
+  };
+
+  const itemFormatters = () => {
+    const results = [
+      (project) => project.name,
+      (project) => project.status,
+      (project) => project.activity?.name ?? '',
+      (project) => project.target_beneficiaries,
+    ];
+    const locations = Array.from({ length: LOC_LEVELS }, (_, i) => (project) => (
+      locationAtLevel(project?.location, LOC_LEVELS - i - 1)
+    ));
+    results.push(...locations);
+    return results;
+  };
 
   const rowIdentifier = (project) => project.id;
 
@@ -49,7 +63,6 @@ function BenefitPlanProjectsSearcher({
     ['name', true],
     ['status', true],
     ['activity', true],
-    // ['location', true],
     ['target_beneficiaries', true],
   ];
 
