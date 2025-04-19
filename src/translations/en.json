@@ -160,7 +160,7 @@
   "socialProtection.project.targetBeneficiaries": "Target Beneficiaries",
   "socialProtection.project.pageTitle": "Project details",
   "socialProtection.project.saveButton.tooltip": "Save",
-  "socialProtection.project.activityPicker.placeholder": "Activity",
+  "socialProtection.project.activityPicker.label": "Activity",
   "socialProtection.project.location": "Location",
   "socialProtection.project.statusPicker": "Status",
   "socialProtection.project.statusPicker.PREPARATION": "Preparation",

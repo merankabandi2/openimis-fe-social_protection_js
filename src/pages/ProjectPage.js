@@ -110,8 +110,6 @@ function ProjectPage({
 
   const back = () => history.goBack();
 
-  const titleParams = (project) => ({ name: project?.name });
-
   const isMandatoryFieldsEmpty = () => (
     !editedProject?.name
     || !editedProject?.activity
@@ -126,7 +124,12 @@ function ProjectPage({
   const handleSave = () => {
     createProject(
       editedProject,
-      formatMessageWithValues(intl, 'socialProtection', 'project.create.mutationLabel', titleParams(project)),
+      formatMessageWithValues(
+        intl,
+        'socialProtection',
+        'project.create.mutationLabel',
+        editedProject,
+      ),
     );
   };
 
@@ -136,9 +139,8 @@ function ProjectPage({
         module="socialProtection"
         classes={classes.form}
         title={
-          formatMessageWithValues(intl, 'socialProtection', 'project.pageTitle', titleParams(project))
+          formatMessage(intl, 'socialProtection', 'project.pageTitle')
         }
-        titleParams={titleParams(project)}
         openDirty
         edited={editedProject}
         onEditedChanged={setEditedProject}

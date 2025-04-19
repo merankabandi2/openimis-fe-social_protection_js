@@ -67,8 +67,8 @@ function ActivityPicker({
             /* eslint-disable-next-line react/jsx-props-no-spreading */
             {...inputProps}
             required={required}
-            label={(withLabel && (label || nullLabel)) || formatMessage('Activity')}
-            placeholder={(withPlaceholder && placeholder) || formatMessage('project.activityPicker.placeholder')}
+            label={(withLabel && (label || nullLabel)) || formatMessage('project.activityPicker.label')}
+            placeholder={(withPlaceholder && placeholder) || formatMessage('project.activityPicker.label')}
           />
         </Tooltip>
       )}
