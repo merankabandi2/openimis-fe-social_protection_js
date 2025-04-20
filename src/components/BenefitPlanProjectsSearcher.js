@@ -57,7 +57,7 @@ function BenefitPlanProjectsSearcher({
       (project) => project.name,
       (project) => project.status,
       (project) => project.activity?.name ?? '',
-      (project) => project.target_beneficiaries,
+      (project) => project.targetBeneficiaries,
     ];
 
     return [
@@ -72,7 +72,7 @@ function BenefitPlanProjectsSearcher({
     ['name', true],
     ['status', true],
     ['activity', true],
-    ['target_beneficiaries', true],
+    ['targetBeneficiaries', true],
   ];
 
   const defaultFilters = () => ({
