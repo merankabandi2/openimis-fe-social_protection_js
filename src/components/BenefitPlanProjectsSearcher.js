@@ -20,7 +20,7 @@ import { fetchBenefitPlanProjects } from '../actions';
 import BenefitPlanProjectsFilter from './BenefitPlanProjectsFilter';
 import {
   LOC_LEVELS,
-  locationAtLevel,
+  locationFormatter,
 } from '../util/searcher-utils';
 
 function BenefitPlanProjectsSearcher({
@@ -53,17 +53,17 @@ function BenefitPlanProjectsSearcher({
   };
 
   const itemFormatters = () => {
-    const results = [
+    const baseFormatters = [
       (project) => project.name,
       (project) => project.status,
       (project) => project.activity?.name ?? '',
       (project) => project.target_beneficiaries,
     ];
-    const locations = Array.from({ length: LOC_LEVELS }, (_, i) => (project) => (
-      locationAtLevel(project?.location, LOC_LEVELS - i - 1)
-    ));
-    results.push(...locations);
-    return results;
+
+    return [
+      ...baseFormatters,
+      ...Array.from({ length: LOC_LEVELS }, (_, i) => (project) => locationFormatter(project?.location)[i]),
+    ];
   };
 
   const rowIdentifier = (project) => project.id;
@@ -140,6 +140,9 @@ function BenefitPlanProjectsSearcher({
       defaultFilters={defaultFilters()}
       searcherActions={searcherActions}
       enableActionButtons
+      searcherActionsPosition="header-right"
+      exportable
+      exportFieldLabel={formatMessage(intl, 'socialProtection', 'export.label')}
     />
   );
 }

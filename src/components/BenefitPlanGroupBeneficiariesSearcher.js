@@ -39,7 +39,7 @@ import BeneficiaryStatusPicker from '../pickers/BeneficiaryStatusPicker';
 import {
   applyNumberCircle,
   LOC_LEVELS,
-  locationAtLevel,
+  locationFormatter,
 } from '../util/searcher-utils';
 
 function BenefitPlanGroupBeneficiariesSearcher({
@@ -118,14 +118,17 @@ function BenefitPlanGroupBeneficiariesSearcher({
   };
 
   const itemFormatters = () => {
-    const result = [
+    const baseFormatters = [
       (groupBeneficiary) => groupBeneficiary.group.code,
     ];
 
-    const locations = Array.from({ length: LOC_LEVELS }, (_, i) => (groupBeneficiary) => (
-      locationAtLevel(groupBeneficiary?.group?.location, LOC_LEVELS - i - 1)
-    ));
-    result.push(...locations);
+    const result = [
+      ...baseFormatters,
+      ...Array.from(
+        { length: LOC_LEVELS },
+        (_, i) => (groupBeneficiary) => locationFormatter(groupBeneficiary?.group?.location)[i],
+      ),
+    ];
 
     if (rights.includes(RIGHT_BENEFICIARY_UPDATE)) {
       result.push((groupBeneficiary) => (
