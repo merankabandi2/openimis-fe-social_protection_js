@@ -105,6 +105,18 @@ class ProjectHeadPanel extends FormPanel {
         </Grid>
 
         <Grid item xs={4} className={classes.item}>
+          <NumberInput
+            module="socialProtection"
+            label="project.workingDays"
+            required
+            readOnly={readOnly}
+            min={1}
+            value={project?.workingDays}
+            onChange={(v) => this.updateAttribute('workingDays', v)}
+          />
+        </Grid>
+
+        <Grid item xs={4} className={classes.item}>
           <ProjectStatusPicker
             label="project.status"
             required

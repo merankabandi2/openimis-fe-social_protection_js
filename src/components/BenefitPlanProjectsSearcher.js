@@ -46,6 +46,7 @@ function BenefitPlanProjectsSearcher({
       'project.status',
       'project.activity',
       'project.targetBeneficiaries',
+      'project.workingDays',
     ];
     baseHeaders.push(...Array.from({ length: LOC_LEVELS }, (_, i) => `location.locationType.${i}`));
 
@@ -58,6 +59,7 @@ function BenefitPlanProjectsSearcher({
       (project) => project.status,
       (project) => project.activity?.name ?? '',
       (project) => project.targetBeneficiaries,
+      (project) => project.workingDays,
     ];
 
     return [
@@ -73,6 +75,7 @@ function BenefitPlanProjectsSearcher({
     ['status', true],
     ['activity', true],
     ['targetBeneficiaries', true],
+    ['workingDays', true],
   ];
 
   const defaultFilters = () => ({

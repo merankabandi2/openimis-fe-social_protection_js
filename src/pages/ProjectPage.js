@@ -115,6 +115,7 @@ function ProjectPage({
     || !editedProject?.activity
     || !editedProject?.location
     || !editedProject?.targetBeneficiaries
+    || !editedProject?.workingDays
   );
 
   const isValid = () => (project?.name ? isProjectNameValid : true);

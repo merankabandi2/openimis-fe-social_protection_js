@@ -158,6 +158,7 @@
   "socialProtection.project.status": "Status",
   "socialProtection.project.activity": "Activity",
   "socialProtection.project.targetBeneficiaries": "Target Beneficiaries",
+  "socialProtection.project.workingDays": "Working Days",
   "socialProtection.project.pageTitle": "Project details",
   "socialProtection.project.saveButton.tooltip": "Save",
   "socialProtection.project.activityPicker.label": "Activity",

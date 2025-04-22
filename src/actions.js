@@ -70,6 +70,7 @@ const PROJECT_FULL_PROJECTION = (modulesManager) => [
   'name',
   'status',
   'targetBeneficiaries',
+  'workingDays',
   'activity {id, name}',
   'location' + modulesManager.getProjection('location.Location.FlatProjection'),
 ];
@@ -300,6 +301,7 @@ function formatProjectGQL(project) {
     ${project?.id ? `id: "${project.id}"` : ''}
     ${project?.name ? `name: "${formatGQLString(project.name)}"` : ''}
     ${project?.targetBeneficiaries ? `targetBeneficiaries: ${project.targetBeneficiaries}` : ''}
+    ${project?.workingDays ? `workingDays: ${project.workingDays}` : ''}
     ${project?.status ? `status: "${project.status}"` : ''}
     ${project?.activity?.id ? `activityId: "${project.activity.id}"` : ''}
     ${project?.location?.uuid ? `locationId: "${project.location.uuid}"` : ''}
