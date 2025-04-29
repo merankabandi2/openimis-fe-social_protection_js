@@ -204,7 +204,6 @@ function SensitizationTrainingSearcher({
   return (
     <Searcher
       module="social_protection"
-      FilterPane={sensitizationTrainingFilter}
       fetch={fetchData}
       items={sensitizationTrainings}
       itemsPageInfo={pageInfo}

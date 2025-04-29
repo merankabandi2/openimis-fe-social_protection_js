@@ -11,6 +11,7 @@ import { makeStyles } from '@material-ui/styles';
 import { fetchBenefitPlanProvinces } from '../actions';
 import { DEFAULT_PAGE_SIZE, ROWS_PER_PAGE_OPTIONS } from '../constants';
 import BenefitPlanLocationsFilter from './BenefitPlanLocationsFilter';
+import GeneratePayrollDialog from './dialogs/GeneratePayrollDialog';
 
 const useStyles = makeStyles((theme) => ({
   paper: theme.paper.paper,
@@ -62,6 +63,8 @@ function BenefitPlanProvincesPanel({
     heads.push('province.beneficiary.count.selected');
     heads.push('province.beneficiary.count.active');
     heads.push('province.beneficiary.count.suspended');
+    heads.push('province.benefitPlan.cards');
+    heads.push('province.benefitPlan.payroll');
     return heads;
   };
 
@@ -79,6 +82,9 @@ function BenefitPlanProvincesPanel({
     values.push((location) => location.countSelected);
     values.push((location) => location.countActive);
     values.push((location) => location.countSuspended);
+    values.push((location) => <a href={`/api/merankabandi/card/${location.id}/`}>Creer</a>);
+    values.push((location) => location.countActive > 0 ? <GeneratePayrollDialog location={{...location, benefitPlanId: benefitPlan.id}} buttonLabel="Generer" /> : null);
+
     return values;
   };
 

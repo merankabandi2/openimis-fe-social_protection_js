@@ -254,7 +254,7 @@ function MonetaryTransfertDashboard() {
   const [filters, setFilters] = useState({
     locationId: '',
     benefitPlanId: '',
-    year: new Date().getFullYear().toString() - 1,
+    year: '',
   });
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
@@ -316,86 +316,7 @@ function MonetaryTransfertDashboard() {
       <div className={classes.wrapper}>
         <Container maxWidth={false} className={classes.contentArea}>
           <div className="main">
-            <Paper className={classes.filterContainer}>
-              <Grid container spacing={1}>
-                <Grid item xs={6} sm={3}>
-                  <FormControl variant="outlined" className={classes.filterFormControl} fullWidth>
-                    <InputLabel id="location-label">Province</InputLabel>
-                    <Select
-                      labelId="location-label"
-                      name="locationId"
-                      value={filters.locationId}
-                      onChange={handleFilterChange}
-                      label="Localisation"
-                    >
-                      <MenuItem value="">
-                        <em>Toutes</em>
-                      </MenuItem>
-                      {locations.map(loc => (
-                        <MenuItem key={loc.uuid} value={loc.uuid}>{loc.name}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={6} sm={4}>
-                  <FormControl variant="outlined" className={classes.filterFormControl} fullWidth>
-                    <InputLabel id="benefit-plan-label">Intervention</InputLabel>
-                    <Select
-                      labelId="benefit-plan-label"
-                      name="benefitPlanId"
-                      value={filters.benefitPlanId}
-                      onChange={handleFilterChange}
-                      label="Plan de bénéfice"
-                    >
-                      <MenuItem value="">
-                        <em>Tous</em>
-                      </MenuItem>
-                      {benefitPlans.map(plan => (
-                        <MenuItem key={plan.id} value={plan.id}>{plan.name}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={2} sm={1}>
-                  <FormControl variant="outlined" className={classes.filterFormControl} fullWidth>
-                    <InputLabel id="year-label">Année</InputLabel>
-                    <Select
-                      labelId="year-label"
-                      name="year"
-                      value={filters.year}
-                      onChange={handleFilterChange}
-                      label="Année"
-                    >
-                      <MenuItem value="">
-                        <em>Tous</em>
-                      </MenuItem>
-                      {years.map(year => (
-                        <MenuItem key={year} value={year}>{year}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <div className={classes.filterActions}>
-                    <Button 
-                      variant="outlined" 
-                      color="secondary" 
-                      onClick={handleResetFilters}
-                      style={{ marginRight: 4 }}
-                    >
-                      Effacer
-                    </Button>
-                    <Button 
-                      variant="contained" 
-                      color="primary" 
-                      onClick={handleApplyFilters}
-                    >
-                      Filtrer
-                    </Button>
-                  </div>
-                </Grid>
-              </Grid>
-            </Paper>
+
             <Grid container spacing={2}>
               {/* Sparkboxes Row */}
               <Grid item xs={12} md={4}>
@@ -426,9 +347,6 @@ function MonetaryTransfertDashboard() {
                   isLoading={isLoading}
                 />
               </Grid>
-            </Grid>
-            <Grid container spacing={2}>
-              <MapComponent className={classes.box} isLoading={isLoading} filters={filters} />
             </Grid>
             <Grid container spacing={2}>
               <Grid item xs={12} md={4}>

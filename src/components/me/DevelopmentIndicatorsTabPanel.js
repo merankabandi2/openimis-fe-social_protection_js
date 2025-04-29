@@ -85,7 +85,7 @@ const developmentIndicatorsData = [
     pbc: '',
     baseline: '0.00',
     target: '250,000.00',
-    achieved: '103,829',
+    achieved: '127 350',
     observation: 'Ménages appuyés de la s/c 1.1, 1.2, compo 4 et 6',
   },
   {
@@ -302,7 +302,6 @@ function DevelopmentIndicatorsTabPanel({
         <h3>Indicateurs des objectifs de développement du projet par objectifs/résultats</h3>
         <Searcher
           module="social_protection"
-          FilterPane={filterPane}
           fetch={fetch}
           items={filteredIndicators}
           itemsPageInfo={{ totalCount: filteredIndicators.length }}

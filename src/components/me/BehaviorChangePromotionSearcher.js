@@ -202,7 +202,6 @@ function BehaviorChangePromotionSearcher({
   return (
     <Searcher
       module="social_protection"
-      FilterPane={behaviorChangePromotionFilter}
       fetch={fetchData}
       items={behaviorChangePromotions}
       itemsPageInfo={pageInfo}

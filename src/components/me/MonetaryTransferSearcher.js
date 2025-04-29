@@ -213,7 +213,6 @@ function MonetaryTransferSearcher({
   return (
     <Searcher
       module="social_protection"
-      FilterPane={monetaryTransferFilter}
       fetch={fetchData}
       items={monetaryTransfers}
       itemsPageInfo={pageInfo}

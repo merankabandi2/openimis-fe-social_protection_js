@@ -53,6 +53,7 @@ export const ACTION_TYPE = {
   CREATE_MONETARY_TRANSFER: 'ME_MUTATION_CREATE_MONETARY_TRANSFER',
   UPDATE_MONETARY_TRANSFER: 'ME_MUTATION_UPDATE_MONETARY_TRANSFER',
   DELETE_MONETARY_TRANSFER: 'ME_MUTATION_DELETE_MONETARY_TRANSFER',
+  GENERATE_PROVINCE_PAYROLL: 'GENERATE_PROVINCE_PAYROLL',
 };
 
 export const MUTATION_SERVICE = {
@@ -60,6 +61,9 @@ export const MUTATION_SERVICE = {
     CREATE: 'createMonetaryTransfer',
     DELETE: 'deleteMonetaryTransfer',
     UPDATE: 'updateMonetaryTransfer',
+  },
+  PAYROLL: {
+    GENERATE_PROVINCE: 'generateProvincePayroll',
   },
 };
 
@@ -940,6 +944,8 @@ function reducer(
       return dispatchMutationResp(state, 'updateGroupBeneficiary', action);
     case SUCCESS(ACTION_TYPE.RESOLVE_TASK):
       return dispatchMutationResp(state, 'resolveTask', action);
+    case SUCCESS(ACTION_TYPE.GENERATE_PROVINCE_PAYROLL):
+      return dispatchMutationResp(state, 'generateProvincePayroll', action);
     case REQUEST(ACTION_TYPE.TASK_MUTATION):
       return dispatchMutationReq(state, action);
     case ERROR(ACTION_TYPE.TASK_MUTATION):

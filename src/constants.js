@@ -158,6 +158,24 @@ export const BENEFICIARIES_QUANTITY_LIMIT = 100;
 export const INDIVIDUAL_LABEL = 'Individual';
 export const INDIVIDUAL_MODULE_NAME = 'individual';
 
+export const RIGHT_SECTION_SEARCH = 160005;
+export const RIGHT_SECTION_CREATE = 160006;
+export const RIGHT_SECTION_UPDATE = 160007;
+export const RIGHT_SECTION_DELETE = 160008;
+export const RIGHT_INDICATOR_SEARCH = 160009;
+export const RIGHT_INDICATOR_CREATE = 160010;
+export const RIGHT_INDICATOR_UPDATE = 160011;
+export const RIGHT_INDICATOR_DELETE = 160012;
+export const RIGHT_INDICATOR_ACHIEVEMENT_SEARCH = 160013;
+export const RIGHT_INDICATOR_ACHIEVEMENT_CREATE = 160014;
+export const RIGHT_INDICATOR_ACHIEVEMENT_UPDATE = 160015;
+export const RIGHT_INDICATOR_ACHIEVEMENT_DELETE = 160016;
+
+export const SECTION_ROUTE = 'socialProtection.route.section';
+export const SECTION_LIST_ROUTE = 'socialProtection.route.sectionList';
+export const INDICATOR_ROUTE = 'socialProtection.route.indicator';
+export const INDICATOR_LIST_ROUTE = 'socialProtection.route.indicatorList';
+
 export const locationAtLevel = (lowestLevelLoc, level) => {
   let location = lowestLevelLoc;
   let levelDiff = level;

@@ -278,7 +278,7 @@ function Dashboard() {
   const [filters, setFilters] = useState({
     locationId: '',
     benefitPlanId: '',
-    year: new Date().getFullYear().toString() - 1,
+    year: '',
   });
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 

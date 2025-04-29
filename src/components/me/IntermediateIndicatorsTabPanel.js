@@ -278,7 +278,6 @@ function IntermediateIndicatorsTabPanel({
         <h3>Indicateurs intermédiaires des résultats</h3>
         <Searcher
           module="social_protection"
-          FilterPane={filterPane}
           fetch={fetch}
           items={filteredIndicators}
           itemsPageInfo={{ totalCount: filteredIndicators.length }}

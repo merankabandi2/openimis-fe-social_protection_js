@@ -433,6 +433,12 @@ function formatBeneficiaryGQL(beneficiary) {
     ${beneficiary?.status ? `status: ${beneficiary.status}` : ''}`;
 }
 
+const formatProvincePayrollGQL = (params) => `
+  ${params?.provinceId ? `provinceId: "${params.provinceId}"` : ''}
+  ${params?.paymentDate ? `paymentDate: "${params.paymentDate}"` : ''}
+  ${params?.paymentPlanId ? `paymentPlanId: "${decodeId(params.paymentPlanId)}"` : ''}
+`;
+
 export function createBenefitPlan(benefitPlan, clientMutationLabel) {
   const mutation = formatMutation('createBenefitPlan', formatBenefitPlanGQL(benefitPlan), clientMutationLabel);
   const requestedDateTime = new Date();
@@ -725,5 +731,14 @@ export function resolveTask(task, clientMutationLabel, user, approveOrFail, addi
     {
       requestedDateTime, clientMutationId: mutation.clientMutationId, clientMutationLabel, userId: user.id,
     },
+  );
+}
+
+export function generateProvincePayroll(params, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.PAYROLL.GENERATE_PROVINCE,
+    formatProvincePayrollGQL(params),
+    ACTION_TYPE.GENERATE_PROVINCE_PAYROLL,
+    clientMutationLabel,
   );
 }

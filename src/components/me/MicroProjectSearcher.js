@@ -213,7 +213,6 @@ function MicroProjectSearcher({
   return (
     <Searcher
       module="socialProtection"
-      FilterPane={microProjectFilter}
       fetch={fetchData}
       items={microProjects}
       itemsPageInfo={pageInfo}
