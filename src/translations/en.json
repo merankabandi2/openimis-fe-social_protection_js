@@ -149,5 +149,22 @@
   "socialProtection.group.code": "Code",
   "socialProtection.groupBeneficiary.code": "Code",
   "developmentIndicators.label": "Development Objectives",
-  "intermediateIndicators.label": "Intermediate Results"
+  "intermediateIndicators.label": "Intermediate Results",
+  
+  "provincePaymentPoint.add": "Add",
+  "provincePaymentPoint.noPaymentPoints": "No payment points assigned",
+  "provincePaymentPoint.fetchError": "Error loading payment points",
+  "provincePaymentPoint.allPlans": "All Plans",
+  "provincePaymentPoint.currentAssignments": "Current Payment Point Assignments",
+  
+  "provincePaymentPoint.dialog.add.title": "Add Payment Point to Province",
+  "provincePaymentPoint.dialog.add.message": "Select a payment point to assign to this province. You can optionally restrict it to a specific plan.",
+  "provincePaymentPoint.dialog.paymentPoint": "Payment Point",
+  "provincePaymentPoint.dialog.paymentPlan": "Payment Plan (Optional)",
+  
+  "provincePaymentPoint.dialog.delete.title": "Delete Payment Point Assignment",
+  "provincePaymentPoint.dialog.delete.message": "Are you sure you want to remove payment point '{paymentPointName}' from province '{provinceName}'{planName, select, null {} other { for plan '{planName}'}}?",
+  "provincePaymentPoint.dialog.delete.error": "An error occurred while deleting the payment point assignment.",
+  
+  "provincePaymentPoint.mutation.add": "Adding payment point to province"
 }

@@ -439,6 +439,12 @@ const formatProvincePayrollGQL = (params) => `
   ${params?.paymentPlanId ? `paymentPlanId: "${decodeId(params.paymentPlanId)}"` : ''}
 `;
 
+const formatProvincePaymentPointGQL = (params) => `
+  ${params?.provinceId ? `provinceId: "${params.provinceId}"` : ''}
+  ${params?.paymentPointId ? `paymentPointId: "${decodeId(params.paymentPointId)}"` : ''}
+  ${params?.paymentPlanId ? `paymentPlanId: "${decodeId(params.paymentPlanId)}"` : ''}
+`;
+
 export function createBenefitPlan(benefitPlan, clientMutationLabel) {
   const mutation = formatMutation('createBenefitPlan', formatBenefitPlanGQL(benefitPlan), clientMutationLabel);
   const requestedDateTime = new Date();
@@ -739,6 +745,15 @@ export function generateProvincePayroll(params, clientMutationLabel) {
     MUTATION_SERVICE.PAYROLL.GENERATE_PROVINCE,
     formatProvincePayrollGQL(params),
     ACTION_TYPE.GENERATE_PROVINCE_PAYROLL,
+    clientMutationLabel,
+  );
+}
+
+export function addProvincePaymentPoint(params, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.PAYROLL.ADD_PROVINCE_PAYMENT_POINT,
+    formatProvincePaymentPointGQL(params),
+    ACTION_TYPE.ADD_PROVINCE_PAYMENT_POINT,
     clientMutationLabel,
   );
 }

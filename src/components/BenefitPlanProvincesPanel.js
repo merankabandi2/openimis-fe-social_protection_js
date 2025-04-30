@@ -12,6 +12,8 @@ import { fetchBenefitPlanProvinces } from '../actions';
 import { DEFAULT_PAGE_SIZE, ROWS_PER_PAGE_OPTIONS } from '../constants';
 import BenefitPlanLocationsFilter from './BenefitPlanLocationsFilter';
 import GeneratePayrollDialog from './dialogs/GeneratePayrollDialog';
+import AddProvincePaymentPointDialog from './dialogs/AddProvincePaymentPointDialog';
+import ProvincePaymentPointChips from './ProvincePaymentPointChips';
 
 const useStyles = makeStyles((theme) => ({
   paper: theme.paper.paper,
@@ -62,7 +64,8 @@ function BenefitPlanProvincesPanel({
     heads.push('location.code');
     heads.push('province.beneficiary.count.selected');
     heads.push('province.beneficiary.count.active');
-    heads.push('province.beneficiary.count.suspended');
+    heads.push('payroll.paymentPoint.page.title');
+    // heads.push('province.beneficiary.count.suspended');
     heads.push('province.benefitPlan.cards');
     heads.push('province.benefitPlan.payroll');
     return heads;
@@ -79,11 +82,27 @@ function BenefitPlanProvincesPanel({
     }
     values.push((location) => location.name);
     values.push((location) => location.code);
-    values.push((location) => location.countSelected);
-    values.push((location) => location.countActive);
-    values.push((location) => location.countSuspended);
-    values.push((location) => <a href={`/api/merankabandi/card/${location.id}/`}>Creer</a>);
-    values.push((location) => location.countActive > 0 ? <GeneratePayrollDialog location={{...location, benefitPlanId: benefitPlan.id}} buttonLabel="Generer" /> : null);
+    values.push((location) => Number(location.countSelected)?.toLocaleString('fr-FR'));
+    values.push((location) => Number(location.countActive)?.toLocaleString('fr-FR'));
+    // Payment point column - show chips and add button
+    values.push((location) => (
+      <Grid container spacing={1}>
+        <Grid item>
+          <ProvincePaymentPointChips 
+            location={{...location}} 
+            benefitPlan={benefitPlan.id} 
+          />
+        </Grid>
+        <Grid item>
+          <AddProvincePaymentPointDialog 
+            location={{...location, benefitPlanId: benefitPlan.id}} 
+            buttonLabel={formatMessage('provincePaymentPoint.add')} 
+          />
+        </Grid>
+      </Grid>
+    ));
+    values.push((location) => location.countActive > 0 ? <a href={`/api/merankabandi/card/${location.id}/`}>Générer</a> : null);
+    values.push((location) => location.countActive > 0 ? <GeneratePayrollDialog location={{...location, benefitPlanId: benefitPlan.id}} buttonLabel="Générer" /> : null);
 
     return values;
   };
