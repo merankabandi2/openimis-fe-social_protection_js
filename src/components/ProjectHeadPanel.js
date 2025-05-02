@@ -81,7 +81,7 @@ class ProjectHeadPanel extends FormPanel {
 
         <Grid item xs={4} className={classes.item}>
           <PublishedComponent
-            pubRef="location.LocationPicker"
+            pubRef="location.LocationCascader"
             module="socialProtection"
             label="Location"
             required
