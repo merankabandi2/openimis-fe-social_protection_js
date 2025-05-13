@@ -23,14 +23,14 @@ export const applyNumberCircle = (number) => (
 );
 
 export const LOC_LEVELS = 4;
-export const locationAtLevel = (lowestLevelLoc, level) => {
-  let location = lowestLevelLoc;
-  let levelDiff = level;
-
-  while (levelDiff > 0 && location) {
-    location = location.parent;
-    levelDiff -= 1;
-  }
-
-  return location ? location.name : '';
-};
+export const locationFormatter = (location) => (
+  Array.from({ length: LOC_LEVELS }, (_, i) => {
+    let loc = location;
+    const levels = [];
+    while (loc) {
+      levels.unshift(loc.name); // top level first
+      loc = loc.parent;
+    }
+    return levels[i] || '';
+  })
+);

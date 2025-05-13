@@ -44,6 +44,10 @@ export const ACTION_TYPE = {
   GET_PENDING_BENEFICIARIES_UPLOAD: 'GET_PENDING_BENEFICIARIES_UPLOAD',
   RESOLVE_TASK: 'TASK_MANAGEMENT_RESOLVE_TASK',
   SEARCH_BENEFIT_PLANS_HISTORY: 'BENEFIT_PLAN_BENEFIT_PLANS_HISTORY',
+  SEARCH_PROJECTS: 'BENEFIT_PLAN_PROJECTS',
+  CREATE_PROJECT: 'BENEFIT_PLAN_CREATE_PROJECT',
+  PROJECT_NAME_FIELDS_VALIDATION: 'PROJECT_NAME_FIELDS_VALIDATION',
+  PROJECT_NAME_SET_VALID: 'PROJECT_NAME_SET_VALID',
 };
 
 function reducer(
@@ -117,6 +121,12 @@ function reducer(
     benefitPlansHistory: [],
     benefitPlansHistoryPageInfo: {},
     benefitPlansHistoryTotalCount: 0,
+    fetchingProjects: false,
+    errorProjects: null,
+    fetchedProjects: false,
+    projects: [],
+    projectsPageInfo: {},
+    projectsTotalCount: 0,
   },
   action,
 ) {
@@ -182,6 +192,16 @@ function reducer(
         workflows: [],
         workflowsPageInfo: {},
         errorWorkflows: null,
+      };
+    case REQUEST(ACTION_TYPE.SEARCH_PROJECTS):
+      return {
+        ...state,
+        fetchingProjects: true,
+        fetchedProjects: false,
+        projects: [],
+        projectsPageInfo: {},
+        projectsTotalCount: 0,
+        errorProjects: null,
       };
     case SUCCESS(ACTION_TYPE.SEARCH_BENEFIT_PLANS):
       return {
@@ -273,6 +293,20 @@ function reducer(
         workflowsPageInfo: pageInfo(action.payload.data.benefitPlan),
         errorWorkflows: formatGraphQLError(action.payload),
       };
+    case SUCCESS(ACTION_TYPE.SEARCH_PROJECTS):
+      return {
+        ...state,
+        fetchingProjects: false,
+        fetchedProjects: true,
+        projects: parseData(action.payload.data.project)?.map((project) => ({
+          ...project,
+          benefitPlan: { id: project?.benefitPlan?.id ? decodeId(project.benefitPlan.id) : null },
+          id: decodeId(project.id),
+        })),
+        projectsPageInfo: pageInfo(action.payload.data.project),
+        projectsTotalCount: action.payload.data.project ? action.payload.data.project.totalCount : null,
+        errorProjects: formatGraphQLError(action.payload),
+      };
     case ERROR(ACTION_TYPE.GET_FIELDS_FROM_BF_SCHEMA):
       return {
         ...state,
@@ -314,6 +348,12 @@ function reducer(
         ...state,
         fetchingWorkflows: false,
         errorWorkflows: formatServerError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.SEARCH_PROJECTS):
+      return {
+        ...state,
+        fetchingProjects: false,
+        errorProjects: formatServerError(action.payload),
       };
     case REQUEST(ACTION_TYPE.BENEFIT_PLAN_CODE_FIELDS_VALIDATION):
       return {
@@ -695,6 +735,66 @@ function reducer(
         fetchingBenefitPlansHistory: false,
         errorBenefitPlansHistory: formatServerError(action.payload),
       };
+    case REQUEST(ACTION_TYPE.PROJECT_NAME_FIELDS_VALIDATION):
+      return {
+        ...state,
+        validationFields: {
+          ...state.validationFields,
+          projectName: {
+            isValidating: true,
+            isValid: false,
+            validationError: null,
+          },
+        },
+      };
+    case SUCCESS(ACTION_TYPE.PROJECT_NAME_FIELDS_VALIDATION):
+      return {
+        ...state,
+        validationFields: {
+          ...state.validationFields,
+          projectName: {
+            isValidating: false,
+            isValid: action.payload?.data.isValid.isValid,
+            validationError: formatGraphQLError(action.payload),
+          },
+        },
+      };
+    case ERROR(ACTION_TYPE.PROJECT_NAME_FIELDS_VALIDATION):
+      return {
+        ...state,
+        validationFields: {
+          ...state.validationFields,
+          projectName: {
+            isValidating: false,
+            isValid: false,
+            validationError: formatServerError(action.payload),
+          },
+        },
+      };
+    case CLEAR(ACTION_TYPE.PROJECT_NAME_FIELDS_VALIDATION):
+      return {
+        ...state,
+        validationFields: {
+          ...state.validationFields,
+          projectName: {
+            isValidating: false,
+            isValid: false,
+            validationError: null,
+          },
+        },
+      };
+    case ACTION_TYPE.PROJECT_NAME_SET_VALID:
+      return {
+        ...state,
+        validationFields: {
+          ...state.validationFields,
+          projectName: {
+            isValidating: false,
+            isValid: true,
+            validationError: null,
+          },
+        },
+      };
     case REQUEST(ACTION_TYPE.MUTATION):
       return dispatchMutationReq(state, action);
     case ERROR(ACTION_TYPE.MUTATION):
@@ -709,6 +809,8 @@ function reducer(
       return dispatchMutationResp(state, 'updateBeneficiary', action);
     case SUCCESS(ACTION_TYPE.UPDATE_GROUP_BENEFICIARY):
       return dispatchMutationResp(state, 'updateGroupBeneficiary', action);
+    case SUCCESS(ACTION_TYPE.CREATE_PROJECT):
+      return dispatchMutationResp(state, 'createProject', action);
     case SUCCESS(ACTION_TYPE.RESOLVE_TASK):
       return dispatchMutationResp(state, 'resolveTask', action);
     case REQUEST(ACTION_TYPE.TASK_MUTATION):

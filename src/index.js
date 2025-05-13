@@ -10,7 +10,12 @@ import BenefitPlanMainMenu from './menus/BenefitPlanMainMenu';
 import BenefitPlansPage from './pages/BenefitPlansPage';
 import BenefitPlanPage from './pages/BenefitPlanPage';
 import BenefitPackagePage from './pages/BenefitPackagePage';
+import ProjectPage from './pages/ProjectPage';
 import BeneficiaryStatusPicker from './pickers/BeneficiaryStatusPicker';
+import {
+  BenefitPlanBeneficiariesTabPanel,
+  BenefitPlanBeneficiariesTabLabel,
+} from './components/BenefitPlanBeneficiariesTabPanel';
 import {
   BenefitPlanBeneficiariesListTabPanel,
   BenefitPlanBeneficiariesListTabLabel,
@@ -61,14 +66,20 @@ import {
 } from './components/tasks/BeneficiaryUploadApprovalTask';
 import { fetchBenefitPlanSchemaFields } from './actions';
 import BenefitPlanHistorySearcher from './components/BenefitPlanHistorySearcher';
+import {
+  BenefitPlanProjectsTabLabel,
+  BenefitPlanProjectsTabPanel,
+} from './components/BenefitPlanProjectsTab';
 import { BenefitPlanChangelogTabLabel, BenefitPlanChangelogTabPanel } from './components/BenefitPlanChangelogTab';
 import { BenefitPlanTaskTabLabel, BenefitPlanTaskTabPanel } from './components/BenefitPlanTaskTab';
 import { BENEFIT_PLAN_LABEL, RIGHT_BENEFIT_PLAN_SEARCH } from './constants';
 import BeneficiaryPicker from './pickers/BeneficiaryPicker';
+import BenefitPlanProjectsSearcher from './components/BenefitPlanProjectsSearcher';
 
 const ROUTE_BENEFIT_PLANS = 'benefitPlans';
 const ROUTE_BENEFIT_PLAN = 'benefitPlans/benefitPlan';
 const ROUTE_BENEFIT_PACKAGE = 'benefitPackage';
+const ROUTE_PROJECT = 'project';
 
 const DEFAULT_CONFIG = {
   translations: [{ key: 'en', messages: messages_en }],
@@ -85,10 +96,12 @@ const DEFAULT_CONFIG = {
       path: `${ROUTE_BENEFIT_PLAN}/:benefit_plan_uuid?/${ROUTE_BENEFIT_PACKAGE}/group/:group_beneficiaries_uuid?`,
       component: BenefitPackagePage,
     },
+    { path: `${ROUTE_BENEFIT_PLAN}/:benefit_plan_uuid?/${ROUTE_PROJECT}/:project_uuid?`, component: ProjectPage },
   ],
   refs: [
     { key: 'socialProtection.route.benefitPlan', ref: ROUTE_BENEFIT_PLAN },
     { key: 'socialProtection.route.benefitPackage', ref: ROUTE_BENEFIT_PACKAGE },
+    { key: 'socialProtection.route.project', ref: ROUTE_PROJECT },
     { key: 'socialProtection.BeneficiaryStatusPicker', ref: BeneficiaryStatusPicker },
     { key: 'socialProtection.BenefitPlanSearcher', ref: BenefitPlanSearcher },
     { key: 'socialProtection.BenefitPlanSearcherForEntities', ref: BenefitPlanSearcherForEntities },
@@ -99,24 +112,33 @@ const DEFAULT_CONFIG = {
     { key: 'socialProtection.fetchBenefitPlanSchemaFields', ref: fetchBenefitPlanSchemaFields },
     { key: 'socialProtection.BenefitPlanHistorySearcher', ref: BenefitPlanHistorySearcher },
     { key: 'socialProtection.BeneficiaryPicker', ref: BeneficiaryPicker },
+    { key: 'socialProtection.BenefitPlanProjectsSearcher', ref: BenefitPlanProjectsSearcher },
   ],
   'benefitPlan.TabPanel.label': [
+    BenefitPlanBeneficiariesTabLabel,
+    BenefitPlanProjectsTabLabel,
+    BenefitPlanChangelogTabLabel,
+    BenefitPlanTaskTabLabel,
+  ],
+  'benefitPlan.TabPanel.panel': [
+    BenefitPlanBeneficiariesTabPanel,
+    BenefitPlanProjectsTabPanel,
+    BenefitPlanChangelogTabPanel,
+    BenefitPlanTaskTabPanel,
+  ],
+  'benefitPlan.BeneficiaryTabPanel.label': [
     BenefitPlanBeneficiariesListTabLabel,
     BenefitPlanBeneficiariesPotentialTabLabel,
     BenefitPlanBeneficiariesActiveTabLabel,
     BenefitPlanBeneficiariesGraduatedTabLabel,
     BenefitPlanBeneficiariesSuspendedTabLabel,
-    BenefitPlanChangelogTabLabel,
-    BenefitPlanTaskTabLabel,
   ],
-  'benefitPlan.TabPanel.panel': [
+  'benefitPlan.BeneficiaryTabPanel.panel': [
     BenefitPlanBeneficiariesListTabPanel,
     BenefitPlanBeneficiariesPotentialTabPanel,
     BenefitPlanBeneficiariesActiveTabPanel,
     BenefitPlanBeneficiariesGraduatedTabPanel,
     BenefitPlanBeneficiariesSuspendedTabPanel,
-    BenefitPlanChangelogTabPanel,
-    BenefitPlanTaskTabPanel,
   ],
   'benefitPackage.TabPanel.label': [
     BenefitPackageMembersTabLabel,

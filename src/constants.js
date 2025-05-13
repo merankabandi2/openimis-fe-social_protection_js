@@ -21,6 +21,11 @@ export const RIGHT_BENEFIT_PLAN_DELETE = 160004;
 export const RIGHT_BENEFICIARY_SEARCH = 170001;
 export const RIGHT_BENEFICIARY_UPDATE = 170003;
 
+export const RIGHT_PROJECT_SEARCH = 209001;
+export const RIGHT_PROJECT_CREATE = 209002;
+export const RIGHT_PROJECT_UPDATE = 209003;
+export const RIGHT_PROJECT_DELETE = 209004;
+
 export const RIGHT_SCHEMA_SEARCH = 171001;
 export const RIGHT_SCHEMA_CREATE = 171002;
 export const RIGHT_SCHEMA_UPDATE = 171003;
@@ -39,8 +44,11 @@ export const BENEFIT_PLAN_BENEFICIARIES_ACTIVE_TAB_VALUE = 'benefitPlanBeneficia
 export const BENEFIT_PLAN_BENEFICIARIES_POTENTIAL_TAB_VALUE = 'benefitPlanBeneficiariesPotentialTab';
 export const BENEFIT_PLAN_BENEFICIARIES_GRADUATED_TAB_VALUE = 'benefitPlanBeneficiariesGraduatedTab';
 export const BENEFIT_PLAN_BENEFICIARIES_SUSPENDED_TAB_VALUE = 'benefitPlanBeneficiariesSuspendedTab';
+export const BENEFIT_PLAN_BENEFICIARIES_TAB_WRAPPER_VALUE = 'benefitPlanBeneficiariesTabWrapper';
 export const BENEFIT_PLAN_TABS_LABEL_CONTRIBUTION_KEY = 'benefitPlan.TabPanel.label';
 export const BENEFIT_PLAN_TABS_PANEL_CONTRIBUTION_KEY = 'benefitPlan.TabPanel.panel';
+export const BENEFIT_PLAN_BENEFICIARY_TABS_LABEL_CONTRIBUTION_KEY = 'benefitPlan.BeneficiaryTabPanel.label';
+export const BENEFIT_PLAN_BENEFICIARY_TABS_PANEL_CONTRIBUTION_KEY = 'benefitPlan.BeneficiaryTabPanel.panel';
 export const DEDUPLICATION_SELECT_FIELD_DIALOG_CONTRIBUTION_KEY = 'deduplication.deduplicationFieldSelectionDialog';
 
 export const BENEFIT_PACKAGE_MEMBERS_TAB_VALUE = 'benefitPackageMembersTab';
@@ -127,3 +135,5 @@ export const PYTHON_DEFAULT_IMPORT_WORKFLOW = 'Python Beneficiaries Upload';
 export const BENEFICIARIES_QUANTITY_LIMIT = 100;
 export const INDIVIDUAL_LABEL = 'Individual';
 export const INDIVIDUAL_MODULE_NAME = 'individual';
+export const BENEFIT_PLAN_PROJECTS_TAB_VALUE = 'BenefitPlanProjectsTab';
+export const PROJECT_STATUS_LIST = ['PREPARATION', 'IN PROGRESS', 'COMPLETED'];
