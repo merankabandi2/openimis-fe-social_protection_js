@@ -39,10 +39,8 @@ function IndicatorsPage() {
   return (
     <div className={classes.page}>
       <Helmet title={formatMessage('indicator.page.title')} />
-      {rights.includes(RIGHT_INDICATOR_SEARCH)
-        && <IndicatorSearcher />}
-      {rights.includes(RIGHT_INDICATOR_CREATE)
-        && withTooltip(
+      <IndicatorSearcher />
+      {withTooltip(
           <div className={classes.fab}>
             <Fab color="primary" onClick={onCreate}>
               <AddIcon />

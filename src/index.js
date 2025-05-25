@@ -72,6 +72,7 @@ import {
   RIGHT_MONETARY_TRANSFER_SEARCH,
 } from './constants';
 import BeneficiaryPicker from './pickers/BeneficiaryPicker';
+import SectionPicker from './pickers/SectionPicker';
 import { MicroProjectTabLabel, MicroProjectTabPanel } from './components/me/MicroProjectTabPanel';
 import {
   SensitizationTrainingTabLabel,
@@ -89,8 +90,14 @@ import {
   IntermediateIndicatorsTabLabel,
   IntermediateIndicatorsTabPanel
 } from './components/me/IntermediateIndicatorsTabPanel';
+import {
+  ResultsFrameworkTabLabel,
+  ResultsFrameworkTabPanel
+} from './components/me/ResultsFrameworkTabPanel';
 import MEMainMenu from './menus/MEMainMenu';
 import MEIndicatorsPage from './pages/MEIndicatorsPage';
+import IndicatorsPage from './pages/IndicatorsPage';
+import SectionsPage from './pages/SectionsPage';
 import HomePageContainer from './components/dashboard/HomePageContainer';
 import MonetaryTransferPage from './pages/MonetaryTransferPage';
 import MonetaryTransfersPage from './pages/MonetaryTransfersPage';
@@ -128,6 +135,18 @@ const DEFAULT_CONFIG = {
       path: `${ROUTE_ME}/indicators`,
       component: MEIndicatorsPage,
     },
+    {
+      path: `${ROUTE_ME}/rf/indicators`,
+      component: IndicatorsPage,
+    },
+    {
+      path: 'socialProtection/indicators',
+      component: IndicatorsPage,
+    },
+    {
+      path: 'socialProtection/sections',
+      component: SectionsPage,
+    },
     { path: ROUTE_MONETARY_TRANSFERS, component: MonetaryTransfersPage },
     { path: ROUTE_RESULT_FRAMEWORK, component: MEResultFrameworkPage },
     { path: `${ROUTE_MONETARY_TRANSFER}/:monetary_transfer_uuid?`, component: MonetaryTransferPage },
@@ -145,9 +164,12 @@ const DEFAULT_CONFIG = {
     { key: 'socialProtection.fetchBenefitPlanSchemaFields', ref: fetchBenefitPlanSchemaFields },
     { key: 'socialProtection.BenefitPlanHistorySearcher', ref: BenefitPlanHistorySearcher },
     { key: 'socialProtection.BeneficiaryPicker', ref: BeneficiaryPicker },
+    { key: 'socialProtection.SectionPicker', ref: SectionPicker },
     { key: 'socialProtection.route.monetaryTransfers', ref: ROUTE_MONETARY_TRANSFERS },
     { key: 'socialProtection.route.monetaryTransfer', ref: ROUTE_MONETARY_TRANSFER },
     { key: 'socialProtection.route.resultFramework"', ref: ROUTE_RESULT_FRAMEWORK },
+    { key: 'socialProtection.route.indicators', ref: 'socialProtection/indicators' },
+    { key: 'socialProtection.route.sections', ref: 'socialProtection/sections' },
   ],
   'benefitPlan.TabPanel.label': [
     BenefitPlanBeneficiariesListTabLabel,
@@ -188,10 +210,12 @@ const DEFAULT_CONFIG = {
   'meResultFrameWork.TabPanel.label': [
     DevelopmentIndicatorsTabLabel,
     IntermediateIndicatorsTabLabel,
+    ResultsFrameworkTabLabel,
   ],
   'meResultFrameWork.TabPanel.panel': [
     DevelopmentIndicatorsTabPanel,
     IntermediateIndicatorsTabPanel,
+    ResultsFrameworkTabPanel,
   ],
   'tasksManagement.tasks': [{
     text: <FormattedMessage module="socialProtection" id="benefitPlan.tasks.update.title" />,

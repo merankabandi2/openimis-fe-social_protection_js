@@ -78,6 +78,7 @@ export const ME_INDICATORS_TABS_PANEL_CONTRIBUTION_KEY = 'meIndicators.TabPanel.
 
 export const DEVELOPMENT_INDICATORS_LIST_TAB_VALUE = 'developmentIndicatorsListTab';
 export const INTERMEDIATE_INDICATORS_LIST_TAB_VALUE = 'intermediateIndicatorsListTab';
+export const RESULTS_FRAMEWORK_TAB_VALUE = 'resultsFrameworkTab';
 export const ME_RESULT_FRAMEWORK_TABS_LABEL_CONTRIBUTION_KEY = 'meResultFrameWork.TabPanel.label';
 export const ME_RESULT_FRAMEWORK_TABS_PANEL_CONTRIBUTION_KEY = 'meResultFrameWork.TabPanel.panel';
 

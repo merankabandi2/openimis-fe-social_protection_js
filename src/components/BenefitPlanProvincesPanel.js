@@ -101,7 +101,28 @@ function BenefitPlanProvincesPanel({
         </Grid>
       </Grid>
     ));
-    values.push((location) => location.countActive > 0 ? <a href={`/api/merankabandi/card/${location.id}/`}>Générer</a> : null);
+    values.push((location) => location.countActive > 0 ? (
+      <a 
+        href={`/api/merankabandi/location/${location.id}/generate-cards-background/`} 
+        onClick={(e) => {
+          e.preventDefault();
+          fetch(`/api/merankabandi/location/${location.id}/generate-cards-background/`)
+            .then(response => response.json())
+            .then(data => {
+              if (data.success) {
+                alert(formatMessage('cards.generationStarted'));
+              } else {
+                alert(formatMessage('cards.generationError') + ': ' + data.message);
+              }
+            })
+            .catch(error => {
+              alert(formatMessage('cards.generationError') + ': ' + error.message);
+            });
+        }}
+      >
+        Générer
+      </a>
+    ) : null);
     values.push((location) => location.countActive > 0 ? <GeneratePayrollDialog location={{...location, benefitPlanId: benefitPlan.id}} buttonLabel="Générer" /> : null);
 
     return values;

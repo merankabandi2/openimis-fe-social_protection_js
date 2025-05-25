@@ -53,6 +53,17 @@ const BENEFICIARY_FULL_PROJECTION = (modulesManager) => [
   'isEligible',
 ];
 
+const INDICATOR_FULL_PROJECTION = () => [
+  'id',
+  'section {id, name}',
+  'name',
+  'pbc',
+  'baseline',
+  'target',
+  'observation',
+];
+
+
 const GROUP_BENEFICIARY_FULL_PROJECTION = (modulesManager) => [
   'id',
   `group {id, code, head {uuid}, location ${modulesManager.getProjection('location.Location.FlatProjection')}}`,
@@ -126,6 +137,34 @@ export function fetchBenefitPlans(params) {
 export function fetchBeneficiaries(modulesManager, params) {
   const payload = formatPageQueryWithCount('beneficiary', params, BENEFICIARY_FULL_PROJECTION(modulesManager));
   return graphql(payload, ACTION_TYPE.SEARCH_BENEFICIARIES);
+}
+
+const SECTION_FULL_PROJECTION = () => [
+  'id',
+  'name',
+];
+
+const INDICATOR_ACHIEVEMENT_FULL_PROJECTION = () => [
+  'id',
+  'indicator {id, name}',
+  'achieved',
+  'date',
+  'comment',
+];
+
+export function fetchIndicators(modulesManager, params) {
+  const payload = formatPageQueryWithCount('indicator', params, INDICATOR_FULL_PROJECTION(modulesManager));
+  return graphql(payload, ACTION_TYPE.SEARCH_INDICATORS);
+}
+
+export function fetchSections(params) {
+  const payload = formatPageQueryWithCount('section', params, SECTION_FULL_PROJECTION());
+  return graphql(payload, ACTION_TYPE.SEARCH_SECTIONS);
+}
+
+export function fetchIndicatorAchievements(params) {
+  const payload = formatPageQueryWithCount('indicatorAchievement', params, INDICATOR_ACHIEVEMENT_FULL_PROJECTION());
+  return graphql(payload, ACTION_TYPE.SEARCH_INDICATOR_ACHIEVEMENTS);
 }
 
 export function fetchGroupBeneficiaries(modulesManager, params) {
@@ -754,6 +793,116 @@ export function addProvincePaymentPoint(params, clientMutationLabel) {
     MUTATION_SERVICE.PAYROLL.ADD_PROVINCE_PAYMENT_POINT,
     formatProvincePaymentPointGQL(params),
     ACTION_TYPE.ADD_PROVINCE_PAYMENT_POINT,
+    clientMutationLabel,
+  );
+}
+
+// Section CRUD operations
+const formatSectionGQL = (section) => `
+  ${section?.id ? `id: "${section.id}"` : ''}
+  ${section?.name ? `name: "${formatGQLString(section.name)}"` : ''}
+`;
+
+export function createSection(section, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.SECTION.CREATE,
+    formatSectionGQL(section),
+    ACTION_TYPE.CREATE_SECTION,
+    clientMutationLabel,
+  );
+}
+
+export function updateSection(section, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.SECTION.UPDATE,
+    formatSectionGQL(section),
+    ACTION_TYPE.UPDATE_SECTION,
+    clientMutationLabel,
+  );
+}
+
+export function deleteSection(section, clientMutationLabel) {
+  const sectionUuids = `ids: ["${section?.id}"]`;
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.SECTION.DELETE,
+    sectionUuids,
+    ACTION_TYPE.DELETE_SECTION,
+    clientMutationLabel,
+  );
+}
+
+// Indicator CRUD operations
+const formatIndicatorGQL = (indicator) => `
+  ${indicator?.id ? `id: "${indicator.id}"` : ''}
+  ${indicator?.name ? `name: "${formatGQLString(indicator.name)}"` : ''}
+  ${indicator?.section?.id ? `sectionId: "${indicator.section.id}"` : ''}
+  ${indicator?.pbc ? `pbc: "${formatGQLString(indicator.pbc)}"` : ''}
+  ${indicator?.baseline !== undefined ? `baseline: "${indicator.baseline}"` : ''}
+  ${indicator?.target !== undefined ? `target: "${indicator.target}"` : ''}
+  ${indicator?.observation ? `observation: "${formatGQLString(indicator.observation)}"` : ''}
+`;
+
+export function createIndicator(indicator, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.INDICATOR.CREATE,
+    formatIndicatorGQL(indicator),
+    ACTION_TYPE.CREATE_INDICATOR,
+    clientMutationLabel,
+  );
+}
+
+export function updateIndicator(indicator, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.INDICATOR.UPDATE,
+    formatIndicatorGQL(indicator),
+    ACTION_TYPE.UPDATE_INDICATOR,
+    clientMutationLabel,
+  );
+}
+
+export function deleteIndicator(indicator, clientMutationLabel) {
+  const indicatorUuids = `ids: ["${indicator?.id}"]`;
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.INDICATOR.DELETE,
+    indicatorUuids,
+    ACTION_TYPE.DELETE_INDICATOR,
+    clientMutationLabel,
+  );
+}
+
+// Indicator Achievement CRUD operations
+const formatIndicatorAchievementGQL = (achievement) => `
+  ${achievement?.id ? `id: "${achievement.id}"` : ''}
+  ${achievement?.indicator?.id ? `indicatorId: "${achievement.indicator.id}"` : ''}
+  ${achievement?.achieved !== undefined ? `achieved: "${achievement.achieved}"` : ''}
+  ${achievement?.date ? `date: "${achievement.date}"` : ''}
+  ${achievement?.notes ? `comment: "${formatGQLString(achievement.notes)}"` : ''}
+`;
+
+export function createIndicatorAchievement(achievement, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.INDICATOR_ACHIEVEMENT.CREATE,
+    formatIndicatorAchievementGQL(achievement),
+    ACTION_TYPE.CREATE_INDICATOR_ACHIEVEMENT,
+    clientMutationLabel,
+  );
+}
+
+export function updateIndicatorAchievement(achievement, clientMutationLabel) {
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.INDICATOR_ACHIEVEMENT.UPDATE,
+    formatIndicatorAchievementGQL(achievement),
+    ACTION_TYPE.UPDATE_INDICATOR_ACHIEVEMENT,
+    clientMutationLabel,
+  );
+}
+
+export function deleteIndicatorAchievement(achievement, clientMutationLabel) {
+  const achievementUuids = `ids: ["${achievement?.id}"]`;
+  return PERFORM_MUTATION(
+    MUTATION_SERVICE.INDICATOR_ACHIEVEMENT.DELETE,
+    achievementUuids,
+    ACTION_TYPE.DELETE_INDICATOR_ACHIEVEMENT,
     clientMutationLabel,
   );
 }

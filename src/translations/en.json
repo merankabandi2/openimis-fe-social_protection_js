@@ -150,6 +150,55 @@
   "socialProtection.groupBeneficiary.code": "Code",
   "developmentIndicators.label": "Development Objectives",
   "intermediateIndicators.label": "Intermediate Results",
+  "resultsFramework.label": "Results Framework",
+  
+  "indicator.name": "Indicator Name",
+  "indicator.section": "Section",
+  "indicator.pbc": "PBC",
+  "indicator.baseline": "Baseline",
+  "indicator.target": "Target",
+  "indicator.observation": "Observation",
+  "indicator.achieved": "Achieved",
+  "indicator.searchFilter.title": "Indicator Filters",
+  "indicator.searcherResultsTitle": "{count} indicators found",
+  "indicator.deleteConfirm.title": "Delete Indicator",
+  "indicator.deleteConfirm.message": "Are you sure you want to delete indicator '{name}'?",
+  "indicator.deleteConfirm.mutationLabel": "Delete indicator",
+  
+  "section.name": "Section Name",
+  "section.searcherResultsTitle": "{count} sections found",
+  "section.deleteConfirm.title": "Delete Section",
+  "section.deleteConfirm.message": "Are you sure you want to delete section '{name}'?",
+  "section.deleteConfirm.mutationLabel": "Delete section",
+  
+  "indicatorAchievement.achieved": "Achieved Value",
+  "indicatorAchievement.date": "Date",
+  "indicatorAchievement.notes": "Notes",
+  "indicatorAchievement.searcherResultsTitle": "{count} achievements found",
+  
+  "resultFrameworkIndicators.name": "Indicator",
+  "resultFrameworkIndicators.pbc": "PBC",
+  "resultFrameworkIndicators.baseline": "Baseline", 
+  "resultFrameworkIndicators.target": "Target",
+  "resultFrameworkIndicators.achieved": "Progress",
+  "resultFrameworkIndicators.observation": "Observation",
+  "resultFrameworkIndicators.actions": "Actions",
+  
+  "ResultsFrameworkSearcher.results": "{totalCount} indicators in framework",
+  "DevelopmentIndicatorsSearcher.results": "{totalCount} development indicators",
+  "IntermediateIndicatorsSearcher.results": "{totalCount} intermediate indicators",
+  
+  "tooltip.edit": "Edit",
+  "tooltip.delete": "Delete",
+  "emptyLabel": "",
+  
+  "section.label": "Section",
+  "section.picker.none": "None",
+  "section.page.title": "Sections",
+  
+  "indicator.page.title": "Indicators",
+  
+  "tooltip.createButton": "Create",
   
   "provincePaymentPoint.add": "Add",
   "provincePaymentPoint.noPaymentPoints": "No payment points assigned",

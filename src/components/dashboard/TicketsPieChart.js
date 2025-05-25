@@ -41,7 +41,7 @@ function TicketsPieChart({ data, isLoading }) {
 
   useEffect(() => {
     if (data && data.length) {
-      const labels = data.map((item) => item.status);
+      const labels = data.map((item) => item.status == 'Resolved' ? 'Fermée' : 'Ouverte');
       const values = data.map((item) => parseInt(item.count, 10));
       setChartOptions((prevOptions) => ({
         ...prevOptions,

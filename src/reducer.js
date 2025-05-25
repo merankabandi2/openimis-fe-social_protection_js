@@ -30,6 +30,18 @@ export const ACTION_TYPE = {
   BENEFIT_PLAN_CODE_SET_VALID: 'BENEFIT_PLAN_CODE_SET_VALID',
   BENEFIT_PLAN_NAME_SET_VALID: 'BENEFIT_PLAN_NAME_SET_VALID',
   BENEFIT_PLAN_SCHEMA_SET_VALID: 'BENEFIT_PLAN_NAME_SET_VALID',
+  SEARCH_INDICATORS: 'SEARCH_INDICATORS',
+  SEARCH_SECTIONS: 'SEARCH_SECTIONS',
+  SEARCH_INDICATOR_ACHIEVEMENTS: 'SEARCH_INDICATOR_ACHIEVEMENTS',
+  CREATE_SECTION: 'CREATE_SECTION',
+  UPDATE_SECTION: 'UPDATE_SECTION',
+  DELETE_SECTION: 'DELETE_SECTION',
+  CREATE_INDICATOR: 'CREATE_INDICATOR',
+  UPDATE_INDICATOR: 'UPDATE_INDICATOR',
+  DELETE_INDICATOR: 'DELETE_INDICATOR',
+  CREATE_INDICATOR_ACHIEVEMENT: 'CREATE_INDICATOR_ACHIEVEMENT',
+  UPDATE_INDICATOR_ACHIEVEMENT: 'UPDATE_INDICATOR_ACHIEVEMENT',
+  DELETE_INDICATOR_ACHIEVEMENT: 'DELETE_INDICATOR_ACHIEVEMENT',
   SEARCH_BENEFICIARIES: 'BENEFICIARY_BENEFICIARIES',
   SEARCH_GROUP_BENEFICIARIES: 'GROUP_BENEFICIARY_GROUP_BENEFICIARIES',
   UPDATE_GROUP_BENEFICIARY: 'GROUP_BENEFICIARY_UPDATE_GROUP_BENEFICIARY',
@@ -68,6 +80,21 @@ export const MUTATION_SERVICE = {
     GENERATE_PROVINCE: 'generateProvincePayroll',
     ADD_PROVINCE_PAYMENT_POINT: 'addProvincePaymentPoint',
     DELETE_PROVINCE_PAYMENT_POINT: 'deleteProvincePaymentPoint',
+  },
+  SECTION: {
+    CREATE: 'create_section',
+    UPDATE: 'update_section',
+    DELETE: 'delete_section',
+  },
+  INDICATOR: {
+    CREATE: 'create_indicator',
+    UPDATE: 'update_indicator',
+    DELETE: 'delete_indicator',
+  },
+  INDICATOR_ACHIEVEMENT: {
+    CREATE: 'create_indicator_achievement',
+    UPDATE: 'update_indicator_achievement',
+    DELETE: 'delete_indicator_achievement',
   },
 };
 
@@ -182,6 +209,24 @@ function reducer(
     deletingProvincePaymentPoint: false,
     deletedProvincePaymentPoint: null,
     errorDeleteProvincePaymentPoint: null,
+    fetchingIndicators: false,
+    fetchedIndicators: false,
+    indicators: [],
+    indicatorsPageInfo: {},
+    indicatorsTotalCount: 0,
+    errorIndicators: null,
+    fetchingSections: false,
+    fetchedSections: false,
+    sections: [],
+    sectionsPageInfo: {},
+    sectionsTotalCount: 0,
+    errorSections: null,
+    fetchingIndicatorAchievements: false,
+    fetchedIndicatorAchievements: false,
+    indicatorAchievements: [],
+    indicatorAchievementsPageInfo: {},
+    indicatorAchievementsTotalCount: 0,
+    errorIndicatorAchievements: null,
   },
   action,
 ) {
@@ -211,6 +256,16 @@ function reducer(
         benefitPlansPageInfo: {},
         benefitPlansTotalCount: 0,
         errorBenefitPlans: null,
+      };
+    case REQUEST(ACTION_TYPE.SEARCH_INDICATORS):
+      return {
+        ...state,
+        fetchingIndicators: true,
+        fetchedIndicators: false,
+        indicators: [],
+        indicatorsPageInfo: {},
+        indicatorsTotalCount: 0,
+        errorIndicators: null,
       };
     case REQUEST(ACTION_TYPE.GET_BENEFIT_PLAN):
       return {
@@ -976,6 +1031,121 @@ function reducer(
       return dispatchMutationResp(state, MUTATION_SERVICE.MONETARY_TRANSFER.UPDATE, action);
     case SUCCESS(ACTION_TYPE.DELETE_MONETARY_TRANSFER):
       return dispatchMutationResp(state, MUTATION_SERVICE.MONETARY_TRANSFER.DELETE, action);
+    case SUCCESS(ACTION_TYPE.SEARCH_INDICATORS):
+      return {
+        ...state,
+        fetchingIndicators: false,
+        fetchedIndicators: true,
+        indicators: parseData(action.payload.data.indicator)?.map((indicator) => ({
+          ...indicator,
+          id: decodeId(indicator.id),
+        })),
+        indicatorsPageInfo: pageInfo(action.payload.data.indicator),
+        indicatorsTotalCount: action.payload.data.indicator ? action.payload.data.indicator.totalCount : null,
+        errorIndicators: formatGraphQLError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.SEARCH_INDICATORS):
+      return {
+        ...state,
+        fetchingIndicators: false,
+        errorIndicators: formatServerError(action.payload),
+      };
+    case REQUEST(ACTION_TYPE.SEARCH_SECTIONS):
+      return {
+        ...state,
+        fetchingSections: true,
+        fetchedSections: false,
+        sections: [],
+        sectionsPageInfo: {},
+        sectionsTotalCount: 0,
+        errorSections: null,
+      };
+    case SUCCESS(ACTION_TYPE.SEARCH_SECTIONS):
+      return {
+        ...state,
+        fetchingSections: false,
+        fetchedSections: true,
+        sections: parseData(action.payload.data.section)?.map((section) => ({
+          ...section,
+          id: decodeId(section.id),
+        })),
+        sectionsPageInfo: pageInfo(action.payload.data.section),
+        sectionsTotalCount: action.payload.data.section ? action.payload.data.section.totalCount : null,
+        errorSections: formatGraphQLError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.SEARCH_SECTIONS):
+      return {
+        ...state,
+        fetchingSections: false,
+        errorSections: formatServerError(action.payload),
+      };
+    case REQUEST(ACTION_TYPE.SEARCH_INDICATOR_ACHIEVEMENTS):
+      return {
+        ...state,
+        fetchingIndicatorAchievements: true,
+        fetchedIndicatorAchievements: false,
+        indicatorAchievements: [],
+        indicatorAchievementsPageInfo: {},
+        indicatorAchievementsTotalCount: 0,
+        errorIndicatorAchievements: null,
+      };
+    case SUCCESS(ACTION_TYPE.SEARCH_INDICATOR_ACHIEVEMENTS):
+      return {
+        ...state,
+        fetchingIndicatorAchievements: false,
+        fetchedIndicatorAchievements: true,
+        indicatorAchievements: parseData(action.payload.data.indicator_achievement)?.map((achievement) => ({
+          ...achievement,
+          id: decodeId(achievement.id),
+        })),
+        indicatorAchievementsPageInfo: pageInfo(action.payload.data.indicator_achievement),
+        indicatorAchievementsTotalCount: action.payload.data.indicator_achievement ? action.payload.data.indicator_achievement.totalCount : null,
+        errorIndicatorAchievements: formatGraphQLError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.SEARCH_INDICATOR_ACHIEVEMENTS):
+      return {
+        ...state,
+        fetchingIndicatorAchievements: false,
+        errorIndicatorAchievements: formatServerError(action.payload),
+      };
+    case REQUEST(ACTION_TYPE.CREATE_SECTION):
+    case REQUEST(ACTION_TYPE.UPDATE_SECTION):
+    case REQUEST(ACTION_TYPE.DELETE_SECTION):
+    case REQUEST(ACTION_TYPE.CREATE_INDICATOR):
+    case REQUEST(ACTION_TYPE.UPDATE_INDICATOR):
+    case REQUEST(ACTION_TYPE.DELETE_INDICATOR):
+    case REQUEST(ACTION_TYPE.CREATE_INDICATOR_ACHIEVEMENT):
+    case REQUEST(ACTION_TYPE.UPDATE_INDICATOR_ACHIEVEMENT):
+    case REQUEST(ACTION_TYPE.DELETE_INDICATOR_ACHIEVEMENT):
+      return dispatchMutationReq(state, action);
+    case ERROR(ACTION_TYPE.CREATE_SECTION):
+    case ERROR(ACTION_TYPE.UPDATE_SECTION):
+    case ERROR(ACTION_TYPE.DELETE_SECTION):
+    case ERROR(ACTION_TYPE.CREATE_INDICATOR):
+    case ERROR(ACTION_TYPE.UPDATE_INDICATOR):
+    case ERROR(ACTION_TYPE.DELETE_INDICATOR):
+    case ERROR(ACTION_TYPE.CREATE_INDICATOR_ACHIEVEMENT):
+    case ERROR(ACTION_TYPE.UPDATE_INDICATOR_ACHIEVEMENT):
+    case ERROR(ACTION_TYPE.DELETE_INDICATOR_ACHIEVEMENT):
+      return dispatchMutationErr(state, action);
+    case SUCCESS(ACTION_TYPE.CREATE_SECTION):
+      return dispatchMutationResp(state, MUTATION_SERVICE.SECTION.CREATE, action);
+    case SUCCESS(ACTION_TYPE.UPDATE_SECTION):
+      return dispatchMutationResp(state, MUTATION_SERVICE.SECTION.UPDATE, action);
+    case SUCCESS(ACTION_TYPE.DELETE_SECTION):
+      return dispatchMutationResp(state, MUTATION_SERVICE.SECTION.DELETE, action);
+    case SUCCESS(ACTION_TYPE.CREATE_INDICATOR):
+      return dispatchMutationResp(state, MUTATION_SERVICE.INDICATOR.CREATE, action);
+    case SUCCESS(ACTION_TYPE.UPDATE_INDICATOR):
+      return dispatchMutationResp(state, MUTATION_SERVICE.INDICATOR.UPDATE, action);
+    case SUCCESS(ACTION_TYPE.DELETE_INDICATOR):
+      return dispatchMutationResp(state, MUTATION_SERVICE.INDICATOR.DELETE, action);
+    case SUCCESS(ACTION_TYPE.CREATE_INDICATOR_ACHIEVEMENT):
+      return dispatchMutationResp(state, MUTATION_SERVICE.INDICATOR_ACHIEVEMENT.CREATE, action);
+    case SUCCESS(ACTION_TYPE.UPDATE_INDICATOR_ACHIEVEMENT):
+      return dispatchMutationResp(state, MUTATION_SERVICE.INDICATOR_ACHIEVEMENT.UPDATE, action);
+    case SUCCESS(ACTION_TYPE.DELETE_INDICATOR_ACHIEVEMENT):
+      return dispatchMutationResp(state, MUTATION_SERVICE.INDICATOR_ACHIEVEMENT.DELETE, action);
     default:
       return state;
   }

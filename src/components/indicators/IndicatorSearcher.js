@@ -1,207 +1,191 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { bindActionCreators } from 'redux';
-import { connect } from 'react-redux';
-import { injectIntl } from 'react-intl';
-import { withTheme, withStyles } from '@material-ui/core/styles';
+import { connect, useSelector } from 'react-redux';
+
+import { IconButton, Tooltip } from '@material-ui/core';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 
 import {
   Searcher,
   useHistory,
-  withModulesManager,
-  formatMessage,
-  formatMessageWithValues,
+  useModulesManager,
+  useTranslations,
   clearConfirm,
   coreConfirm,
   journalize,
   PublishedComponent,
 } from '@openimis/fe-core';
 import { fetchIndicators, deleteIndicator } from '../../actions';
-import { RIGHT_INDICATOR_SEARCH, INDICATOR_ROUTE } from '../../constants';
+import { INDICATOR_ROUTE, RIGHT_INDICATOR_UPDATE } from '../../constants';
 import { ACTION_TYPE } from '../../reducer';
 
-const styles = (theme) => ({
-  tableTitle: theme.table.title,
-  item: theme.paper.item,
-  fullHeight: {
-    height: '100%',
-  },
-});
+function IndicatorSearcher({
+  fetchIndicators,
+  fetchingIndicators,
+  fetchedIndicators,
+  errorIndicators,
+  deleteIndicator,
+  indicators,
+  coreConfirm,
+  clearConfirm,
+  indicatorsPageInfo,
+  indicatorsTotalCount,
+  confirmed,
+  submittingMutation,
+  mutation,
+}) {
+  const history = useHistory();
+  const modulesManager = useModulesManager();
+  const { formatMessage, formatMessageWithValues } = useTranslations('socialProtection', modulesManager);
+  const rights = useSelector((store) => store.core.user.i_user.rights ?? []);
 
-class IndicatorSearcher extends React.Component {
-  state = {
-    toDelete: null,
-    deleted: [],
-    filters: {
-      name: null,
-      section: null,
-    },
+  const [indicatorToDelete, setIndicatorToDelete] = useState(null);
+  const [deletedIndicatorIds, setDeletedIndicatorIds] = useState([]);
+  const [filters, setFilters] = useState({
+    name: null,
+    section: null,
+  });
+  const prevSubmittingMutationRef = useRef();
+
+  const openDeleteIndicatorConfirmDialog = () => {
+    coreConfirm(
+      formatMessage('indicator.deleteConfirm.title'),
+      formatMessageWithValues('indicator.deleteConfirm.message', { name: indicatorToDelete.name }),
+    );
   };
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.confirmed !== this.props.confirmed && this.props.confirmed) {
-      this.confirmedAction();
+  useEffect(() => indicatorToDelete && openDeleteIndicatorConfirmDialog(), [indicatorToDelete]);
+
+  useEffect(() => {
+    if (indicatorToDelete && confirmed) {
+      deleteIndicator(
+        indicatorToDelete,
+        formatMessage('indicator.deleteConfirm.mutationLabel'),
+      );
+      setDeletedIndicatorIds([...deletedIndicatorIds, indicatorToDelete.id]);
     }
-
-    if (prevProps.submittingMutation && !this.props.submittingMutation) {
-      this.props.journalize(this.props.mutation);
-      if (this.props.mutation?.actionType === ACTION_TYPE.DELETE_INDICATOR) {
-        this.setState((state) => ({
-          deleted: [...state.deleted, state.toDelete.id],
-          toDelete: null,
-        }));
-      }
+    if (indicatorToDelete && confirmed !== null) {
+      setIndicatorToDelete(null);
     }
-  }
+    return () => confirmed && clearConfirm(false);
+  }, [confirmed]);
 
-  fetch = (params) => {
-    this.props.fetchIndicators(this.props.modulesManager, params);
-  }
+  useEffect(() => {
+    if (prevSubmittingMutationRef.current && !submittingMutation) {
+      journalize(mutation);
+    }
+  }, [submittingMutation]);
 
-  headers = () => [
-    {
-      id: 'name',
-      label: formatMessage(this.props.intl, 'socialProtection', 'indicator.name'),
-      sortable: true,
-    },
-    {
-      id: 'section',
-      label: formatMessage(this.props.intl, 'socialProtection', 'indicator.section'),
-      sortable: true,
-    },
-    {
-      id: 'baseline',
-      label: formatMessage(this.props.intl, 'socialProtection', 'indicator.baseline'),
-      sortable: true,
-    },
-    {
-      id: 'target',
-      label: formatMessage(this.props.intl, 'socialProtection', 'indicator.target'),
-      sortable: true,
-    },
-    {
-      id: 'actions',
-      label: formatMessage(this.props.intl, 'socialProtection', 'emptyLabel'),
-      sortable: false,
-    },
-  ]
+  useEffect(() => {
+    prevSubmittingMutationRef.current = submittingMutation;
+  });
 
-  openDeleteIndicatorConfirmDialog = (indicator) => {
-    this.setState({ toDelete: indicator });
-    this.confirmedAction = this.deleteIndicator;
-    this.props.coreConfirm(
-      formatMessage(this.props.intl, 'socialProtection', 'indicator.delete.confirm.title'),
-      formatMessageWithValues(this.props.intl, 'socialProtection', 'indicator.delete.confirm.message', { name: indicator.name }),
-    );
-  }
+  const headers = () => [
+    'indicator.name',
+    'indicator.section',
+    'indicator.baseline',
+    'indicator.target',
+    'emptyLabel',
+  ];
 
-  deleteIndicator = () => {
-    this.props.deleteIndicator(
-      this.state.toDelete,
-      formatMessageWithValues(this.props.intl, 'socialProtection', 'indicator.mutation.deleteLabel', { name: this.state.toDelete.name }),
-    );
-    this.props.clearConfirm();
-  }
+  const sorts = () => [
+    ['name', true],
+    ['section', true],
+  ];
 
-  rowIdentifier = (r) => r.id
+  const fetchData = (params) => fetchIndicators(modulesManager, params);
 
-  rowDisabled = (row) => this.state.deleted.includes(row.id)
+  const rowIdentifier = (indicator) => indicator.id;
 
-  onDoubleClick = (indicator, newTab = false) => {
-    const { history, modulesManager } = this.props;
-    history.push(`/${modulesManager.getRef(INDICATOR_ROUTE)}/${indicator.id}`, newTab);
-  }
+  const openIndicator = (indicator) => history.push(
+    `/${modulesManager.getRef(INDICATOR_ROUTE)}/${indicator?.id}`,
+  );
 
-  onClickDelete = (indicator) => this.openDeleteIndicatorConfirmDialog(indicator)
+  const onDelete = (indicator) => setIndicatorToDelete(indicator);
 
-  onChangeFilters = (filters) => {
-    this.setState({ filters });
-  };
+  const itemFormatters = () => [
+    (indicator) => indicator.name,
+    (indicator) => indicator.section?.name || '',
+    (indicator) => indicator.baseline,
+    (indicator) => indicator.target,
+    (indicator) => (
+      <div style={{ display: 'flex', flexDirection: 'row' }}>
+        <Tooltip title={formatMessage('tooltip.edit')}>
+          <IconButton
+            onClick={() => openIndicator(indicator)}
+          >
+            <EditIcon />
+          </IconButton>
+        </Tooltip>
+        {rights.includes(RIGHT_INDICATOR_UPDATE) && (
+          <Tooltip title={formatMessage('tooltip.delete')}>
+            <IconButton
+              onClick={() => onDelete(indicator)}
+              disabled={deletedIndicatorIds.includes(indicator.id)}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+      </div>
+    ),
+  ];
 
-  indicatorFilter = () => {
-    const { intl } = this.props;
-    const { filters } = this.state;
-    return {
-      title: formatMessage(intl, 'socialProtection', 'indicator.searchFilter.title'),
-      items: [
-        {
-          id: 'name',
-          value: filters.name,
-          filter: 'name_Icontains',
-          display: formatMessage(intl, 'socialProtection', 'indicator.name'),
-        },
-        {
-          id: 'section',
-          value: filters.section,
-          filter: 'section_Id',
-          display: formatMessage(intl, 'socialProtection', 'indicator.section'),
-          format: (v) => v?.id,
-          filter: (c) => c?.id,
-          component: (props) => (
+  const onDoubleClick = (indicator) => openIndicator(indicator);
+
+  const indicatorFilter = ({ filters, onChangeFilters }) => {
+    return (
+      <div style={{ padding: '16px' }}>
+        <div style={{ marginBottom: '8px' }}>
+          <label>{formatMessage('indicator.name')}</label>
+          <input 
+            type="text" 
+            value={filters.name || ''} 
+            onChange={(e) => onChangeFilters({ ...filters, name: e.target.value })}
+            style={{ marginLeft: '8px' }}
+          />
+        </div>
+        <div>
+          <label>{formatMessage('indicator.section')}</label>
+          <div style={{ display: 'inline-block', marginLeft: '8px' }}>
             <PublishedComponent
               pubRef="socialProtection.SectionPicker"
               withNull
               value={filters.section}
-              onChange={(v) => this.onChangeFilters({ ...filters, section: v })}
+              onChange={(v) => onChangeFilters({ ...filters, section: v })}
             />
-          ),
-        },
-      ],
-    };
-  }
-
-  formatResult = (indicator) => {
-    const { rights } = this.props;
-    return {
-      id: indicator.id,
-      name: indicator.name,
-      section: indicator.section?.name || '',
-      baseline: indicator.baseline,
-      target: indicator.target,
-      actions: [
-        {
-          icon: <EditIcon />,
-          tooltip: formatMessage(this.props.intl, 'socialProtection', 'tooltip.edit'),
-          onClick: () => this.onDoubleClick(indicator),
-        },
-        rights.includes(RIGHT_INDICATOR_UPDATE) && {
-          icon: <DeleteIcon />,
-          tooltip: formatMessage(this.props.intl, 'socialProtection', 'tooltip.delete'),
-          onClick: () => this.onClickDelete(indicator),
-        },
-      ],
-    };
-  }
-
-  render() {
-    const {
-      intl, indicators, indicatorsPageInfo, fetchingIndicators,
-      fetchingIndicators, errorIndicators, indicatorsTotalCount, modulesManager,
-      classes, rights,
-    } = this.props;
-
-    return (
-      <Searcher
-        module="socialProtection"
-        FilterPane={this.indicatorFilter}
-        fetch={this.fetch}
-        items={indicators}
-        itemsPageInfo={indicatorsPageInfo}
-        fetchingItems={fetchingIndicators}
-        fetchedItems={!fetchingIndicators}
-        errorItems={errorIndicators}
-        tableTitle={formatMessageWithValues(intl, 'socialProtection', 'indicator.searcherResultsTitle', { count: indicatorsTotalCount ?? 0 })}
-        itemsNber={indicatorsTotalCount}
-        rowDisabled={this.rowDisabled}
-        headers={this.headers}
-        itemFormatters={this.formatResult}
-        rowIdentifier={this.rowIdentifier}
-        onDoubleClick={this.onDoubleClick}
-        rights={rights}
-      />
+          </div>
+        </div>
+      </div>
     );
-  }
+  };
+
+  const defaultFilters = () => ({});
+
+  const isRowDisabled = (_, indicator) => deletedIndicatorIds.includes(indicator.id);
+
+  return (
+    <Searcher
+      module="socialProtection"
+      fetch={fetchData}
+      items={indicators}
+      itemsPageInfo={indicatorsPageInfo}
+      fetchedItems={!fetchingIndicators}
+      fetchingItems={fetchingIndicators}
+      errorItems={errorIndicators}
+      tableTitle={formatMessageWithValues('indicator.searcherResultsTitle', { count: indicatorsTotalCount ?? 0 })}
+      headers={headers}
+      itemFormatters={itemFormatters}
+      sorts={sorts}
+      rowIdentifier={rowIdentifier}
+      onDoubleClick={onDoubleClick}
+      defaultFilters={defaultFilters()}
+      rowDisabled={isRowDisabled}
+      rowLocked={isRowDisabled}
+      FilterPane={indicatorFilter}
+    />
+  );
 }
 
 const mapStateToProps = (state) => ({
@@ -224,10 +208,4 @@ const mapDispatchToProps = (dispatch) => bindActionCreators({
   journalize,
 }, dispatch);
 
-export default withHistory(
-  withModulesManager(
-    connect(mapStateToProps, mapDispatchToProps)(
-      injectIntl(withTheme(withStyles(styles)(IndicatorSearcher)))
-    )
-  )
-);
+export default connect(mapStateToProps, mapDispatchToProps)(IndicatorSearcher);

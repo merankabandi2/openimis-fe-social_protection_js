@@ -1,163 +1,171 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { bindActionCreators } from 'redux';
-import { connect } from 'react-redux';
-import { injectIntl } from 'react-intl';
-import { withTheme, withStyles } from '@material-ui/core/styles';
+import { connect, useSelector } from 'react-redux';
+
+import { IconButton, Tooltip } from '@material-ui/core';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 
 import {
   Searcher,
   useHistory,
-  withModulesManager,
-  formatMessage,
-  formatMessageWithValues,
+  useModulesManager,
+  useTranslations,
   clearConfirm,
   coreConfirm,
   journalize,
 } from '@openimis/fe-core';
 import { fetchSections, deleteSection } from '../../actions';
-import { RIGHT_SECTION_SEARCH, SECTION_ROUTE } from '../../constants';
+import { RIGHT_SECTION_SEARCH, RIGHT_SECTION_UPDATE, SECTION_ROUTE } from '../../constants';
 import { ACTION_TYPE } from '../../reducer';
 
-const styles = (theme) => ({
-  tableTitle: theme.table.title,
-  item: theme.paper.item,
-  fullHeight: {
-    height: '100%',
-  },
-});
+function SectionSearcher({
+  fetchSections,
+  fetchingSections,
+  fetchedSections,
+  errorSections,
+  deleteSection,
+  sections,
+  coreConfirm,
+  clearConfirm,
+  sectionsPageInfo,
+  sectionsTotalCount,
+  confirmed,
+  submittingMutation,
+  mutation,
+}) {
+  const history = useHistory();
+  const modulesManager = useModulesManager();
+  const { formatMessage, formatMessageWithValues } = useTranslations('socialProtection', modulesManager);
+  const rights = useSelector((store) => store.core.user.i_user.rights ?? []);
 
-class SectionSearcher extends React.Component {
-  state = {
-    toDelete: null,
-    deleted: [],
+  const [sectionToDelete, setSectionToDelete] = useState(null);
+  const [deletedSectionIds, setDeletedSectionIds] = useState([]);
+  const [filters, setFilters] = useState({
+    name: null,
+  });
+  const prevSubmittingMutationRef = useRef();
+
+  const openDeleteSectionConfirmDialog = () => {
+    coreConfirm(
+      formatMessage('section.delete.confirm.title'),
+      formatMessageWithValues('section.delete.confirm.message', { name: sectionToDelete.name }),
+    );
   };
 
-  componentDidUpdate(prevProps) {
-    if (prevProps.confirmed !== this.props.confirmed && this.props.confirmed) {
-      this.confirmedAction();
+  useEffect(() => sectionToDelete && openDeleteSectionConfirmDialog(), [sectionToDelete]);
+
+  useEffect(() => {
+    if (sectionToDelete && confirmed) {
+      deleteSection(
+        sectionToDelete,
+        formatMessageWithValues('section.mutation.deleteLabel', { name: sectionToDelete.name }),
+      );
+      setDeletedSectionIds([...deletedSectionIds, sectionToDelete.id]);
     }
-
-    if (prevProps.submittingMutation && !this.props.submittingMutation) {
-      this.props.journalize(this.props.mutation);
-      if (this.props.mutation?.actionType === ACTION_TYPE.DELETE_SECTION) {
-        this.setState((state) => ({
-          deleted: [...state.deleted, state.toDelete.id],
-          toDelete: null,
-        }));
-      }
+    if (sectionToDelete && confirmed !== null) {
+      setSectionToDelete(null);
     }
-  }
+    return () => confirmed && clearConfirm(false);
+  }, [confirmed]);
 
-  fetch = (params) => {
-    this.props.fetchSections(this.props.modulesManager, params);
-  }
+  useEffect(() => {
+    if (prevSubmittingMutationRef.current && !submittingMutation) {
+      journalize(mutation);
+    }
+  }, [submittingMutation]);
 
-  headers = () => [
-    {
-      id: 'name',
-      label: formatMessage(this.props.intl, 'socialProtection', 'section.name'),
-      sortable: true,
-    },
-    {
-      id: 'actions',
-      label: formatMessage(this.props.intl, 'socialProtection', 'emptyLabel'),
-      sortable: false,
-    },
-  ]
+  useEffect(() => {
+    prevSubmittingMutationRef.current = submittingMutation;
+  });
 
-  openDeleteSectionConfirmDialog = (section) => {
-    this.setState({ toDelete: section });
-    this.confirmedAction = this.deleteSection;
-    this.props.coreConfirm(
-      formatMessage(this.props.intl, 'socialProtection', 'section.delete.confirm.title'),
-      formatMessageWithValues(this.props.intl, 'socialProtection', 'section.delete.confirm.message', { name: section.name }),
-    );
-  }
+  const headers = () => [
+    'section.name',
+    'emptyLabel',
+  ];
 
-  deleteSection = () => {
-    this.props.deleteSection(
-      this.state.toDelete,
-      formatMessageWithValues(this.props.intl, 'socialProtection', 'section.mutation.deleteLabel', { name: this.state.toDelete.name }),
-    );
-    this.props.clearConfirm();
-  }
+  const sorts = () => [
+    ['name', true],
+  ];
 
-  rowIdentifier = (r) => r.id
+  const fetchData = (params) => fetchSections(modulesManager, params);
 
-  rowDisabled = (row) => this.state.deleted.includes(row.id)
+  const rowIdentifier = (section) => section.id;
 
-  onDoubleClick = (section, newTab = false) => {
-    const { history, modulesManager } = this.props;
-    history.push(`/${modulesManager.getRef(SECTION_ROUTE)}/${section.id}`, newTab);
-  }
+  const openSection = (section) => rights.includes(RIGHT_SECTION_SEARCH) && history.push(
+    `/${modulesManager.getRef(SECTION_ROUTE)}/${section?.id}`,
+  );
 
-  onClickDelete = (section) => this.openDeleteSectionConfirmDialog(section)
+  const onDelete = (section) => setSectionToDelete(section);
 
-  sectionFilter = () => {
-    const { intl } = this.props;
-    return {
-      title: formatMessage(intl, 'socialProtection', 'section.searchFilter.title'),
-      items: [
-        {
-          id: 'name',
-          value: filters.name,
-          filter: 'name_Icontains',
-          display: formatMessage(intl, 'socialProtection', 'section.name'),
-        },
-      ],
-    };
-  }
+  const itemFormatters = () => [
+    (section) => section.name,
+    (section) => (
+      <div style={{ display: 'flex', flexDirection: 'row' }}>
+        <Tooltip title={formatMessage('tooltip.edit')}>
+          <IconButton
+            onClick={() => openSection(section)}
+          >
+            <EditIcon />
+          </IconButton>
+        </Tooltip>
+        {rights.includes(RIGHT_SECTION_UPDATE) && (
+          <Tooltip title={formatMessage('tooltip.delete')}>
+            <IconButton
+              onClick={() => onDelete(section)}
+              disabled={deletedSectionIds.includes(section.id)}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+      </div>
+    ),
+  ];
 
-  formatResult = (section) => {
-    const { rights } = this.props;
-    return {
-      id: section.id,
-      name: section.name,
-      actions: [
-        {
-          icon: <EditIcon />,
-          tooltip: formatMessage(this.props.intl, 'socialProtection', 'tooltip.edit'),
-          onClick: () => this.onDoubleClick(section),
-        },
-        rights.includes(RIGHT_SECTION_UPDATE) && {
-          icon: <DeleteIcon />,
-          tooltip: formatMessage(this.props.intl, 'socialProtection', 'tooltip.delete'),
-          onClick: () => this.onClickDelete(section),
-        },
-      ],
-    };
-  }
+  const onDoubleClick = (section) => openSection(section);
 
-  render() {
-    const {
-      intl, sections, sectionsPageInfo, fetchingSections,
-      fetchingIndicators, errorSections, sectionsTotalCount, modulesManager,
-      classes, rights,
-    } = this.props;
-
+  const sectionFilter = ({ filters, onChangeFilters }) => {
     return (
-      <Searcher
-        module="socialProtection"
-        FilterPane={this.sectionFilter}
-        fetch={this.fetch}
-        items={sections}
-        itemsPageInfo={sectionsPageInfo}
-        fetchingItems={fetchingSections}
-        fetchedItems={!fetchingSections}
-        errorItems={errorSections}
-        tableTitle={formatMessageWithValues(intl, 'socialProtection', 'section.searcherResultsTitle', { count: sectionsTotalCount ?? 0 })}
-        itemsNber={sectionsTotalCount}
-        rowDisabled={this.rowDisabled}
-        headers={this.headers}
-        itemFormatters={this.formatResult}
-        rowIdentifier={this.rowIdentifier}
-        onDoubleClick={this.onDoubleClick}
-        rights={rights}
-      />
+      <div style={{ padding: '16px' }}>
+        <div>
+          <label>{formatMessage('section.name')}</label>
+          <input 
+            type="text" 
+            value={filters.name || ''} 
+            onChange={(e) => onChangeFilters({ ...filters, name: e.target.value })}
+            style={{ marginLeft: '8px' }}
+          />
+        </div>
+      </div>
     );
-  }
+  };
+
+  const defaultFilters = () => ({});
+
+  const isRowDisabled = (_, section) => deletedSectionIds.includes(section.id);
+
+  return (
+    <Searcher
+      module="socialProtection"
+      fetch={fetchData}
+      items={sections}
+      itemsPageInfo={sectionsPageInfo}
+      fetchedItems={!fetchingSections}
+      fetchingItems={fetchingSections}
+      errorItems={errorSections}
+      tableTitle={formatMessageWithValues('section.searcherResultsTitle', { count: sectionsTotalCount ?? 0 })}
+      headers={headers}
+      itemFormatters={itemFormatters}
+      sorts={sorts}
+      rowIdentifier={rowIdentifier}
+      onDoubleClick={onDoubleClick}
+      defaultFilters={defaultFilters()}
+      rowDisabled={isRowDisabled}
+      rowLocked={isRowDisabled}
+      FilterPane={sectionFilter}
+    />
+  );
 }
 
 const mapStateToProps = (state) => ({
@@ -180,10 +188,4 @@ const mapDispatchToProps = (dispatch) => bindActionCreators({
   journalize,
 }, dispatch);
 
-export default withHistory(
-  withModulesManager(
-    connect(mapStateToProps, mapDispatchToProps)(
-      injectIntl(withTheme(withStyles(styles)(SectionSearcher)))
-    )
-  )
-);
+export default connect(mapStateToProps, mapDispatchToProps)(SectionSearcher);

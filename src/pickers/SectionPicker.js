@@ -20,7 +20,7 @@ class SectionPicker extends Component {
   componentDidMount() {
     if (!this.props.fetchedSections) {
       // Initial load
-      this.props.fetchSections(this.props.modulesManager);
+      this.props.fetchSections({});
     }
   }
 
