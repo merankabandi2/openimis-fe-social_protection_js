@@ -23,6 +23,7 @@ import {
 } from '../actions';
 import {
   MODULE_NAME,
+  RIGHT_INDICATOR_CREATE,
   RIGHT_INDICATOR_UPDATE,
 } from '../constants';
 import { ACTION_TYPE } from '../reducer';
@@ -135,13 +136,26 @@ function IndicatorPage({
     },
   ];
 
+  const canViewPage = indicatorId 
+    ? rights.includes(RIGHT_INDICATOR_UPDATE) 
+    : rights.includes(RIGHT_INDICATOR_CREATE);
+
+  if (!canViewPage) {
+    return (
+      <div className={classes.page}>
+        <h3>You don't have permission to {indicatorId ? 'edit' : 'create'} indicators</h3>
+        <p>Required right: {indicatorId ? RIGHT_INDICATOR_UPDATE : RIGHT_INDICATOR_CREATE}</p>
+        <p>Your rights: {rights.join(', ')}</p>
+      </div>
+    );
+  }
+
   return (
-    rights.includes(RIGHT_INDICATOR_UPDATE) && (
     <div className={pageLocked ? classes.lockedPage : null}>
       <div className={classes.page}>
         <Form
           module="socialProtection"
-          title={formatMessageWithValues('IndicatorPage.title', pageTitle(indicator))}
+          title={indicatorId ? formatMessage('indicator.page.editTitle') : formatMessage('indicator.page.createTitle')}
           titleParams={pageTitle(indicator)}
           openDirty
           edited={editedIndicator}
@@ -162,7 +176,6 @@ function IndicatorPage({
         )}
       </div>
     </div>
-    )
   );
 }
 

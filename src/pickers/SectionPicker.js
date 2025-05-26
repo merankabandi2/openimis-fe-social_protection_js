@@ -37,6 +37,11 @@ class SectionPicker extends Component {
     }
   }
 
+  onInputChange = (search) => {
+    // Handle search input changes if needed
+    // For now, we don't need to do anything special
+  }
+
   render() {
     const {
       intl, sections, fetchingSections, readOnly, value, className, required,
@@ -44,19 +49,24 @@ class SectionPicker extends Component {
     } = this.props;
     
     const pickerLabel = label || formatMessage(intl, 'socialProtection', 'section.label');
+    const safeSections = sections || [];
 
     return (
       <Autocomplete
         required={required}
         readOnly={readOnly}
-        options={sections}
+        options={safeSections}
         isLoading={fetchingSections}
         value={value}
         getOptionLabel={this.formatOption}
         onChange={this.onSectionChange}
+        onInputChange={this.onInputChange}
         filterOptions={(options, params) => {
           const { inputValue } = params;
-          const filtered = options.filter((option) => option.name.toLowerCase().includes(inputValue.toLowerCase()));
+          if (!options || options.length === 0) return [];
+          const filtered = options.filter((option) => 
+            option && option.name && option.name.toLowerCase().includes(inputValue.toLowerCase())
+          );
           return filtered;
         }}
         className={className}
@@ -65,6 +75,7 @@ class SectionPicker extends Component {
         withNull={withNull}
         nullLabel={this.nullDisplay}
         reset={reset}
+        noOptionsText={formatMessage(intl, 'socialProtection', 'section.picker.noOptions')}
       />
     );
   }

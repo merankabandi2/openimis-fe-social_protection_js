@@ -14,7 +14,9 @@ import {
   baseApiUrl,
   apiHeaders,
   combine,
+  formatMessage,
 } from '@openimis/fe-core';
+import { useIntl } from 'react-intl';
 import { makeStyles } from '@material-ui/styles';
 import {
   RESULTS_FRAMEWORK_TAB_VALUE, MODULE_NAME,
@@ -136,6 +138,7 @@ function AchievementDialog({
   achievement,
   onSave,
   isEdit = false,
+  intl,
 }) {
   const [achieved, setAchieved] = useState('');
   const [date, setDate] = useState('');
@@ -145,7 +148,7 @@ function AchievementDialog({
     if (achievement && isEdit) {
       setAchieved(achievement.achieved || '');
       setDate(achievement.date || '');
-      setNotes(achievement.notes || '');
+      setNotes(achievement.comment || '');
     } else {
       setAchieved('');
       setDate(new Date().toISOString().split('T')[0]);
@@ -159,7 +162,7 @@ function AchievementDialog({
       indicator: { id: indicator.id },
       achieved,
       date,
-      notes,
+      comment: notes,
     };
     onSave(achievementData);
     onClose();
@@ -168,7 +171,7 @@ function AchievementDialog({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>
-        {isEdit ? 'Edit Achievement' : 'Add Achievement'}
+        {formatMessage(intl, "achievement.dialog", isEdit ? "edit.title" : "add.title")}
         {' '}
         -
         {indicator?.name}
@@ -177,7 +180,7 @@ function AchievementDialog({
         <Grid container spacing={2}>
           <Grid item xs={12}>
             <TextField
-              label="Achieved Value"
+              label={formatMessage(intl, "achievement.dialog.value", "label")}
               value={achieved}
               onChange={(e) => setAchieved(e.target.value)}
               fullWidth
@@ -187,7 +190,7 @@ function AchievementDialog({
           </Grid>
           <Grid item xs={12}>
             <TextField
-              label="Date"
+              label={formatMessage(intl, "achievement.dialog", "date")}
               value={date}
               onChange={(e) => setDate(e.target.value)}
               fullWidth
@@ -198,7 +201,7 @@ function AchievementDialog({
           </Grid>
           <Grid item xs={12}>
             <TextField
-              label="Notes"
+              label={formatMessage(intl, "achievement.dialog.notes", "label")}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               fullWidth
@@ -211,10 +214,10 @@ function AchievementDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="primary">
-          Cancel
+          {formatMessage(intl, "core", "cancel")}
         </Button>
         <Button onClick={handleSave} color="primary" variant="contained">
-          Save
+          {formatMessage(intl, "core", "save")}
         </Button>
       </DialogActions>
     </Dialog>
@@ -239,6 +242,7 @@ function ResultsFrameworkTabPanel({
   const classes = useStyles();
   const modulesManager = useModulesManager();
   const history = useHistory();
+  const intl = useIntl();
   const { formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
 
   const [achievementDialog, setAchievementDialog] = useState({
@@ -264,7 +268,7 @@ function ResultsFrameworkTabPanel({
       const sectionId = indicator.section?.id || 'no-section';
       if (!sectionMap[sectionId]) {
         sectionMap[sectionId] = {
-          section: indicator.section || { id: 'no-section', name: 'Indicators without section' },
+          section: indicator.section || { id: 'no-section', name: formatMessage(intl, "indicator", "withoutSection") },
           indicators: [],
         };
       }
@@ -337,9 +341,9 @@ function ResultsFrameworkTabPanel({
 
   const handleSaveAchievement = (achievementData) => {
     if (achievementDialog.isEdit) {
-      updateIndicatorAchievement(achievementData, 'Update achievement');
+      updateIndicatorAchievement(achievementData, formatMessage(intl, "indicator.mutation", "updateLabel"));
     } else {
-      createIndicatorAchievement(achievementData, 'Create achievement');
+      createIndicatorAchievement(achievementData, formatMessage(intl, "indicator.mutation", "createLabel"));
     }
     // Refresh data
     setTimeout(() => {
@@ -434,7 +438,7 @@ function ResultsFrameworkTabPanel({
               variant="contained"
               onClick={() => historyPush(modulesManager, history, 'socialProtection.route.indicators')}
             >
-              Manage Indicators
+              {formatMessage(intl, "indicatorsTab", "manageIndicators")}
             </Button>
           </div>
           <Searcher
@@ -466,6 +470,7 @@ function ResultsFrameworkTabPanel({
         achievement={achievementDialog.achievement}
         onSave={handleSaveAchievement}
         isEdit={achievementDialog.isEdit}
+        intl={intl}
       />
     </>
   );

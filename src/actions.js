@@ -53,7 +53,7 @@ const BENEFICIARY_FULL_PROJECTION = (modulesManager) => [
   'isEligible',
 ];
 
-const INDICATOR_FULL_PROJECTION = () => [
+const INDICATOR_FULL_PROJECTION = (modulesManager) => [
   'id',
   'section {id, name}',
   'name',
@@ -157,9 +157,33 @@ export function fetchIndicators(modulesManager, params) {
   return graphql(payload, ACTION_TYPE.SEARCH_INDICATORS);
 }
 
+export function fetchIndicator(modulesManager, filters) {
+  const payload = formatPageQuery('indicator', filters, INDICATOR_FULL_PROJECTION(modulesManager));
+  return graphql(payload, ACTION_TYPE.GET_INDICATOR);
+}
+
+export function clearIndicator() {
+  return (dispatch) => {
+    dispatch({ type: ACTION_TYPE.CLEAR_INDICATOR });
+  };
+}
+
 export function fetchSections(params) {
   const payload = formatPageQueryWithCount('section', params, SECTION_FULL_PROJECTION());
   return graphql(payload, ACTION_TYPE.SEARCH_SECTIONS);
+}
+
+export function fetchSection(modulesManager, filters) {
+  const payload = formatQuery('section', filters, SECTION_FULL_PROJECTION());
+  return graphql(payload, ACTION_TYPE.GET_SECTION);
+}
+
+export function clearSection() {
+  return (dispatch) => {
+    dispatch({
+      type: CLEAR(ACTION_TYPE.SECTION),
+    });
+  };
 }
 
 export function fetchIndicatorAchievements(params) {
@@ -835,7 +859,7 @@ export function deleteSection(section, clientMutationLabel) {
 const formatIndicatorGQL = (indicator) => `
   ${indicator?.id ? `id: "${indicator.id}"` : ''}
   ${indicator?.name ? `name: "${formatGQLString(indicator.name)}"` : ''}
-  ${indicator?.section?.id ? `sectionId: "${indicator.section.id}"` : ''}
+  ${indicator?.section?.id ? `sectionId: ${indicator.section.id}` : ''}
   ${indicator?.pbc ? `pbc: "${formatGQLString(indicator.pbc)}"` : ''}
   ${indicator?.baseline !== undefined ? `baseline: "${indicator.baseline}"` : ''}
   ${indicator?.target !== undefined ? `target: "${indicator.target}"` : ''}
@@ -873,10 +897,10 @@ export function deleteIndicator(indicator, clientMutationLabel) {
 // Indicator Achievement CRUD operations
 const formatIndicatorAchievementGQL = (achievement) => `
   ${achievement?.id ? `id: "${achievement.id}"` : ''}
-  ${achievement?.indicator?.id ? `indicatorId: "${achievement.indicator.id}"` : ''}
+  ${achievement?.indicator?.id ? `indicatorId: ${achievement.indicator.id}` : ''}
   ${achievement?.achieved !== undefined ? `achieved: "${achievement.achieved}"` : ''}
   ${achievement?.date ? `date: "${achievement.date}"` : ''}
-  ${achievement?.notes ? `comment: "${formatGQLString(achievement.notes)}"` : ''}
+  ${achievement?.comment ? `comment: "${formatGQLString(achievement.comment)}"` : ''}
 `;
 
 export function createIndicatorAchievement(achievement, clientMutationLabel) {

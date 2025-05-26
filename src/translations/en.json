@@ -197,6 +197,13 @@
   "section.page.title": "Sections",
   
   "indicator.page.title": "Indicators",
+  "indicator.page.createTitle": "Create Indicator",
+  "indicator.page.editTitle": "Edit Indicator",
+  "indicator.mutation.createLabel": "Create indicator",
+  "indicator.mutation.updateLabel": "Update indicator {name}",
+  "indicator.mutation.deleteLabel": "Delete indicator {name}",
+  "indicator.delete.confirm.title": "Delete Indicator {name}",
+  "indicator.delete.confirm.message": "Are you sure you want to delete this indicator?",
   
   "tooltip.createButton": "Create",
   
@@ -215,5 +222,11 @@
   "provincePaymentPoint.dialog.delete.message": "Are you sure you want to remove payment point '{paymentPointName}' from province '{provinceName}'{planName, select, null {} other { for plan '{planName}'}}?",
   "provincePaymentPoint.dialog.delete.error": "An error occurred while deleting the payment point assignment.",
   
-  "provincePaymentPoint.mutation.add": "Adding payment point to province"
+  "provincePaymentPoint.mutation.add": "Adding payment point to province",
+  
+  "add": "Add",
+  "resultFrameworkIndicators.actions": "Actions",
+  "indicator.withoutSection": "Indicators without section",
+  "core.cancel": "Cancel",
+  "core.save": "Save"
 }

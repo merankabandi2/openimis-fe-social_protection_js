@@ -97,7 +97,9 @@ import {
 import MEMainMenu from './menus/MEMainMenu';
 import MEIndicatorsPage from './pages/MEIndicatorsPage';
 import IndicatorsPage from './pages/IndicatorsPage';
+import IndicatorPage from './pages/IndicatorPage';
 import SectionsPage from './pages/SectionsPage';
+import SectionPage from './pages/SectionPage';
 import HomePageContainer from './components/dashboard/HomePageContainer';
 import MonetaryTransferPage from './pages/MonetaryTransferPage';
 import MonetaryTransfersPage from './pages/MonetaryTransfersPage';
@@ -144,8 +146,16 @@ const DEFAULT_CONFIG = {
       component: IndicatorsPage,
     },
     {
+      path: 'socialProtection/indicators/indicator/:indicator_id?',
+      component: IndicatorPage,
+    },
+    {
       path: 'socialProtection/sections',
       component: SectionsPage,
+    },
+    {
+      path: 'socialProtection/sections/section/:section_id?',
+      component: SectionPage,
     },
     { path: ROUTE_MONETARY_TRANSFERS, component: MonetaryTransfersPage },
     { path: ROUTE_RESULT_FRAMEWORK, component: MEResultFrameworkPage },
@@ -169,7 +179,9 @@ const DEFAULT_CONFIG = {
     { key: 'socialProtection.route.monetaryTransfer', ref: ROUTE_MONETARY_TRANSFER },
     { key: 'socialProtection.route.resultFramework"', ref: ROUTE_RESULT_FRAMEWORK },
     { key: 'socialProtection.route.indicators', ref: 'socialProtection/indicators' },
+    { key: 'socialProtection.route.indicator', ref: 'socialProtection/indicators/indicator' },
     { key: 'socialProtection.route.sections', ref: 'socialProtection/sections' },
+    { key: 'socialProtection.route.section', ref: 'socialProtection/sections/section' },
   ],
   'benefitPlan.TabPanel.label': [
     BenefitPlanBeneficiariesListTabLabel,
@@ -210,12 +222,10 @@ const DEFAULT_CONFIG = {
   'meResultFrameWork.TabPanel.label': [
     DevelopmentIndicatorsTabLabel,
     IntermediateIndicatorsTabLabel,
-    ResultsFrameworkTabLabel,
   ],
   'meResultFrameWork.TabPanel.panel': [
     DevelopmentIndicatorsTabPanel,
     IntermediateIndicatorsTabPanel,
-    ResultsFrameworkTabPanel,
   ],
   'tasksManagement.tasks': [{
     text: <FormattedMessage module="socialProtection" id="benefitPlan.tasks.update.title" />,

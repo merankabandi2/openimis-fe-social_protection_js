@@ -31,7 +31,11 @@ export const ACTION_TYPE = {
   BENEFIT_PLAN_NAME_SET_VALID: 'BENEFIT_PLAN_NAME_SET_VALID',
   BENEFIT_PLAN_SCHEMA_SET_VALID: 'BENEFIT_PLAN_NAME_SET_VALID',
   SEARCH_INDICATORS: 'SEARCH_INDICATORS',
+  GET_INDICATOR: 'GET_INDICATOR',
+  CLEAR_INDICATOR: 'CLEAR_INDICATOR',
   SEARCH_SECTIONS: 'SEARCH_SECTIONS',
+  GET_SECTION: 'GET_SECTION',
+  SECTION: 'SECTION',
   SEARCH_INDICATOR_ACHIEVEMENTS: 'SEARCH_INDICATOR_ACHIEVEMENTS',
   CREATE_SECTION: 'CREATE_SECTION',
   UPDATE_SECTION: 'UPDATE_SECTION',
@@ -82,19 +86,19 @@ export const MUTATION_SERVICE = {
     DELETE_PROVINCE_PAYMENT_POINT: 'deleteProvincePaymentPoint',
   },
   SECTION: {
-    CREATE: 'create_section',
-    UPDATE: 'update_section',
-    DELETE: 'delete_section',
+    CREATE: 'createSection',
+    UPDATE: 'updateSection',
+    DELETE: 'deleteSection',
   },
   INDICATOR: {
-    CREATE: 'create_indicator',
-    UPDATE: 'update_indicator',
-    DELETE: 'delete_indicator',
+    CREATE: 'createIndicator',
+    UPDATE: 'updateIndicator',
+    DELETE: 'deleteIndicator',
   },
   INDICATOR_ACHIEVEMENT: {
-    CREATE: 'create_indicator_achievement',
-    UPDATE: 'update_indicator_achievement',
-    DELETE: 'delete_indicator_achievement',
+    CREATE: 'createIndicatorAchievement',
+    UPDATE: 'updateIndicatorAchievement',
+    DELETE: 'deleteIndicatorAchievement',
   },
 };
 
@@ -215,12 +219,20 @@ function reducer(
     indicatorsPageInfo: {},
     indicatorsTotalCount: 0,
     errorIndicators: null,
+    fetchingIndicator: false,
+    fetchedIndicator: false,
+    indicator: null,
+    errorIndicator: null,
     fetchingSections: false,
     fetchedSections: false,
     sections: [],
     sectionsPageInfo: {},
     sectionsTotalCount: 0,
     errorSections: null,
+    fetchingSection: false,
+    fetchedSection: false,
+    section: null,
+    errorSection: null,
     fetchingIndicatorAchievements: false,
     fetchedIndicatorAchievements: false,
     indicatorAchievements: [],
@@ -1050,6 +1062,39 @@ function reducer(
         fetchingIndicators: false,
         errorIndicators: formatServerError(action.payload),
       };
+    case REQUEST(ACTION_TYPE.GET_INDICATOR):
+      return {
+        ...state,
+        fetchingIndicator: true,
+        fetchedIndicator: false,
+        indicator: null,
+        errorIndicator: null,
+      };
+    case SUCCESS(ACTION_TYPE.GET_INDICATOR):
+      return {
+        ...state,
+        fetchingIndicator: false,
+        fetchedIndicator: true,
+        indicator: parseData(action.payload.data.indicator)?.map((indicator) => ({
+          ...indicator,
+          id: decodeId(indicator.id),
+        }))?.[0] || null,
+        errorIndicator: formatGraphQLError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.GET_INDICATOR):
+      return {
+        ...state,
+        fetchingIndicator: false,
+        errorIndicator: formatServerError(action.payload),
+      };
+    case ACTION_TYPE.CLEAR_INDICATOR:
+      return {
+        ...state,
+        fetchingIndicator: false,
+        fetchedIndicator: false,
+        indicator: null,
+        errorIndicator: null,
+      };
     case REQUEST(ACTION_TYPE.SEARCH_SECTIONS):
       return {
         ...state,
@@ -1079,6 +1124,41 @@ function reducer(
         fetchingSections: false,
         errorSections: formatServerError(action.payload),
       };
+    case REQUEST(ACTION_TYPE.GET_SECTION):
+      return {
+        ...state,
+        fetchingSection: true,
+        fetchedSection: false,
+        section: null,
+        errorSection: null,
+      };
+    case SUCCESS(ACTION_TYPE.GET_SECTION):
+      return {
+        ...state,
+        fetchingSection: false,
+        fetchedSection: true,
+        section: parseData(action.payload.data.section)?.length > 0
+          ? {
+            ...parseData(action.payload.data.section)[0],
+            id: decodeId(parseData(action.payload.data.section)[0].id),
+          }
+          : null,
+        errorSection: formatGraphQLError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.GET_SECTION):
+      return {
+        ...state,
+        fetchingSection: false,
+        errorSection: formatServerError(action.payload),
+      };
+    case CLEAR(ACTION_TYPE.SECTION):
+      return {
+        ...state,
+        fetchingSection: false,
+        fetchedSection: false,
+        section: null,
+        errorSection: null,
+      };
     case REQUEST(ACTION_TYPE.SEARCH_INDICATOR_ACHIEVEMENTS):
       return {
         ...state,
@@ -1094,12 +1174,16 @@ function reducer(
         ...state,
         fetchingIndicatorAchievements: false,
         fetchedIndicatorAchievements: true,
-        indicatorAchievements: parseData(action.payload.data.indicator_achievement)?.map((achievement) => ({
+        indicatorAchievements: parseData(action.payload.data.indicatorAchievement)?.map((achievement) => ({
           ...achievement,
           id: decodeId(achievement.id),
+          indicator: achievement.indicator ? {
+            ...achievement.indicator,
+            id: decodeId(achievement.indicator.id),
+          } : null,
         })),
-        indicatorAchievementsPageInfo: pageInfo(action.payload.data.indicator_achievement),
-        indicatorAchievementsTotalCount: action.payload.data.indicator_achievement ? action.payload.data.indicator_achievement.totalCount : null,
+        indicatorAchievementsPageInfo: pageInfo(action.payload.data.indicatorAchievement),
+        indicatorAchievementsTotalCount: action.payload.data.indicatorAchievement ? action.payload.data.indicatorAchievement.totalCount : null,
         errorIndicatorAchievements: formatGraphQLError(action.payload),
       };
     case ERROR(ACTION_TYPE.SEARCH_INDICATOR_ACHIEVEMENTS):

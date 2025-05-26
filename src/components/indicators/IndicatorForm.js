@@ -1,17 +1,22 @@
 import React from 'react';
 import { injectIntl } from 'react-intl';
 
-import { Grid } from '@material-ui/core';
+import { Grid, IconButton, Tooltip } from '@material-ui/core';
 import { withTheme, withStyles } from '@material-ui/core/styles';
+import AddIcon from '@material-ui/icons/Add';
 
 import {
   FormPanel,
   withModulesManager,
+  withHistory,
   TextInput,
   NumberInput,
   TextAreaInput,
   PublishedComponent,
+  formatMessage,
+  historyPush,
 } from '@openimis/fe-core';
+import { RIGHT_SECTION_CREATE } from '../../constants';
 
 const styles = (theme) => ({
   tableTitle: theme.table.title,
@@ -19,27 +24,53 @@ const styles = (theme) => ({
   fullHeight: {
     height: '100%',
   },
+  sectionWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  sectionPicker: {
+    flex: 1,
+  },
 });
 
 class IndicatorForm extends FormPanel {
+  onCreateSection = () => {
+    // Navigate to sections page
+    window.location.href = '/front/socialProtection/sections';
+  }
+
   render() {
     const {
       edited,
       classes,
       readOnly,
+      intl,
+      rights,
+      modulesManager,
     } = this.props;
     const indicator = { ...edited };
+    const canCreateSection = rights?.includes(RIGHT_SECTION_CREATE);
 
     return (
       <Grid container className={classes.item}>
         <Grid item xs={6} className={classes.item}>
-          <PublishedComponent
-            pubRef="socialProtection.SectionPicker"
-            value={indicator?.section ?? null}
-            required
-            readOnly={readOnly}
-            onChange={(section) => this.updateAttribute('section', section)}
-          />
+          <div className={classes.sectionWrapper}>
+            <PublishedComponent
+              pubRef="socialProtection.SectionPicker"
+              value={indicator?.section ?? null}
+              required
+              readOnly={readOnly}
+              onChange={(section) => this.updateAttribute('section', section)}
+              className={classes.sectionPicker}
+            />
+            {!readOnly && canCreateSection && (
+              <Tooltip title={formatMessage(intl, 'socialProtection', 'section.createNew')}>
+                <IconButton onClick={this.onCreateSection} color="primary">
+                  <AddIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+          </div>
         </Grid>
         <Grid item xs={6} className={classes.item}>
           <TextInput
@@ -92,4 +123,4 @@ class IndicatorForm extends FormPanel {
   }
 }
 
-export default withModulesManager(injectIntl(withTheme(withStyles(styles)(IndicatorForm))));
+export default withHistory(withModulesManager(injectIntl(withTheme(withStyles(styles)(IndicatorForm)))));

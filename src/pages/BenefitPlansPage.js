@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Helmet, withModulesManager, formatMessage, withTooltip, historyPush,
+  Helmet, withModulesManager, formatMessage, withTooltip, historyPush, withHistory,
 } from '@openimis/fe-core';
 import { injectIntl } from 'react-intl';
 import { withTheme, withStyles } from '@material-ui/core/styles';
@@ -52,6 +52,6 @@ const mapStateToProps = (state) => ({
   rights: !!state.core && !!state.core.user && !!state.core.user.i_user ? state.core.user.i_user.rights : [],
 });
 
-export default withModulesManager(injectIntl(withTheme(withStyles(styles)(
+export default withHistory(withModulesManager(injectIntl(withTheme(withStyles(styles)(
   connect(mapStateToProps)(BenefitPlansPage),
-))));
+)))));

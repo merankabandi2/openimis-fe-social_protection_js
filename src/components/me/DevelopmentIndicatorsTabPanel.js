@@ -1,17 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Tab } from '@material-ui/core';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
+import {
+  Tab, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Grid,
+} from '@material-ui/core';
 import {
   baseApiUrl, apiHeaders,
   PublishedComponent,
   useTranslations,
   useModulesManager,
   Searcher,
+  useHistory,
+  historyPush,
+  formatMessage,
 } from '@openimis/fe-core';
+import { useIntl } from 'react-intl';
 import { makeStyles } from '@material-ui/styles';
 import {
-  DEVELOPMENT_INDICATORS_LIST_TAB_VALUE, MODULE_NAME, DEFAULT_PAGE_SIZE, ROWS_PER_PAGE_OPTIONS,
+  DEVELOPMENT_INDICATORS_LIST_TAB_VALUE, MODULE_NAME,
 } from '../../constants';
 import DevelopmentIndicatorsFilter from './DevelopmentIndicatorsFilter';
+import {
+  fetchSections,
+  fetchIndicators,
+  fetchIndicatorAchievements,
+  createIndicatorAchievement,
+  updateIndicatorAchievement,
+  deleteIndicatorAchievement,
+} from '../../actions';
 
 const useStyles = makeStyles((theme) => ({
   tableContainer: {
@@ -55,6 +71,9 @@ const useStyles = makeStyles((theme) => ({
   },
   lowAchievement: {
     backgroundColor: '#f44336', // red
+  },
+  addButton: {
+    margin: theme.spacing(1),
   },
 }));
 
@@ -111,17 +130,132 @@ function AchievementRateBar({ achieved, target, classes }) {
   );
 }
 
+function AchievementDialog({
+  open,
+  onClose,
+  indicator,
+  achievement,
+  onSave,
+  isEdit = false,
+  intl,
+}) {
+  const [achieved, setAchieved] = useState('');
+  const [date, setDate] = useState('');
+  const [notes, setNotes] = useState('');
+
+  useEffect(() => {
+    if (achievement && isEdit) {
+      setAchieved(achievement.achieved || '');
+      setDate(achievement.date || '');
+      setNotes(achievement.comment || '');
+    } else {
+      setAchieved('');
+      setDate(new Date().toISOString().split('T')[0]);
+      setNotes('');
+    }
+  }, [achievement, isEdit, open]);
+
+  const handleSave = () => {
+    const achievementData = {
+      ...achievement,
+      indicator: { id: indicator.id },
+      achieved,
+      date,
+      comment: notes,
+    };
+    onSave(achievementData);
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>
+        {formatMessage(intl, "achievement.dialog", isEdit ? "edit.title" : "add.title")}
+        {' '}
+        -
+        {indicator?.name}
+      </DialogTitle>
+      <DialogContent>
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <TextField
+              label={formatMessage(intl, "achievement.dialog.value", "label")}
+              value={achieved}
+              onChange={(e) => setAchieved(e.target.value)}
+              fullWidth
+              type="number"
+              margin="normal"
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              label={formatMessage(intl, "achievement.dialog", "date")}
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              fullWidth
+              type="date"
+              margin="normal"
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              label={formatMessage(intl, "achievement.dialog.notes", "label")}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              fullWidth
+              multiline
+              rows={3}
+              margin="normal"
+            />
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="primary">
+          {formatMessage(intl, "core", "cancel")}
+        </Button>
+        <Button onClick={handleSave} color="primary" variant="contained">
+          {formatMessage(intl, "core", "save")}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 function DevelopmentIndicatorsTabPanel({
   value,
+  sections,
+  indicators,
+  indicatorAchievements,
+  fetchingSections,
+  fetchingIndicators,
+  fetchingIndicatorAchievements,
+  fetchSections,
+  fetchIndicators,
+  fetchIndicatorAchievements,
+  createIndicatorAchievement,
+  updateIndicatorAchievement,
+  deleteIndicatorAchievement,
 }) {
   const classes = useStyles();
   const modulesManager = useModulesManager();
+  const history = useHistory();
+  const intl = useIntl();
   const { formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
+  const [additionalData, setAdditionalData] = useState(null);
   const [loading, setLoading] = useState(true);
-  var developmentIndicatorsData = [];
-  const loadTransfersData = async () => {
+  const [error, setError] = useState(null);
+
+  const [achievementDialog, setAchievementDialog] = useState({
+    open: false,
+    indicator: null,
+    achievement: null,
+    isEdit: false,
+  });
+
+  // Load data from GraphQL for dynamic values
+  const loadDynamicData = async () => {
     setLoading(true);
     try {
       const response = await window.fetch(`${baseApiUrl}/graphql`, {
@@ -132,33 +266,153 @@ function DevelopmentIndicatorsTabPanel({
             groupBeneficiary {
               totalCount
             }
-            }`,
+          }`,
         }),
       });
-  
+
       if (!response.ok) {
-        throw new Error('Failed to fetch transfers data');
+        throw new Error('Failed to fetch dynamic data');
       }
-  
+
       const result = await response.json();
-      setData(result.data);
+      setAdditionalData(result.data);
       setError(null);
     } catch (err) {
-      console.error('Error loading transfers data:', err);
+      console.error('Error loading dynamic data:', err);
       setError(err);
-      setData(null);
+      setAdditionalData(null);
     } finally {
       setLoading(false);
     }
   };
-  
+
+  // Load data on component mount
   useEffect(() => {
-    loadTransfersData();
-  }, []);
-  
+    fetchSections({});
+    fetchIndicators(modulesManager, {});
+    fetchIndicatorAchievements({});
+    loadDynamicData();
+  }, [fetchSections, fetchIndicators, fetchIndicatorAchievements, modulesManager]);
 
+  // Filter indicators to show only development indicators
+  const developmentIndicators = React.useMemo(() => {
+    // Define development section names that should be included
+    const developmentSectionNames = [
+      'Renforcer les capacités de gestion',
+      'Renforcer les filets de sécurité',
+      'Promouvoir l\'inclusion productive et l\'accès à l\'emploi',
+      'Apporter une réponse immédiate et efficace à une crise ou une urgence éligible',
+    ];
 
-  
+    // Define development indicator keywords
+    const developmentKeywords = [
+      'Ménages',
+      'ménages',
+      'Registre social',
+      'registre social',
+      'Bénéficiaires',
+      'bénéficiaires',
+      'protection sociale',
+      'emploi',
+      'Agriculteurs',
+      'agriculteurs',
+      'actifs',
+      'services agricoles',
+    ];
+
+    // Filter indicators based on keywords or section names
+    const filteredIndicators = indicators.filter(indicator => {
+      // Check if indicator name contains any of the keywords
+      const nameMatch = developmentKeywords.some(keyword => 
+        indicator.name?.toLowerCase().includes(keyword.toLowerCase())
+      );
+      
+      // Check if indicator belongs to development sections
+      const sectionMatch = indicator.section && 
+        typeof indicator.section === 'object' && 
+        developmentSectionNames.includes(indicator.section.name);
+      
+      return nameMatch || sectionMatch;
+    });
+
+    // Get unique sections from filtered indicators
+    const uniqueSections = new Map();
+    filteredIndicators.forEach(indicator => {
+      if (indicator.section && typeof indicator.section === 'object') {
+        uniqueSections.set(indicator.section.id, indicator.section);
+      }
+    });
+    const filteredSections = Array.from(uniqueSections.values());
+
+    return { sections: filteredSections, indicators: filteredIndicators };
+  }, [sections, indicators]);
+
+  // Process data to create a unified view with sections and indicators
+  const processedData = React.useMemo(() => {
+    const sectionMap = {};
+    
+    // Debug logging
+    console.log('Development Indicators:', developmentIndicators.indicators);
+    console.log('Achievements:', indicatorAchievements);
+
+    // Group indicators by section
+    developmentIndicators.indicators.forEach((indicator) => {
+      let sectionId = 'no-section';
+      let sectionObj = { id: 'no-section', name: formatMessage(intl, "indicator", "withoutSection") };
+      
+      if (indicator.section) {
+        if (typeof indicator.section === 'object') {
+          sectionId = indicator.section.id;
+          sectionObj = indicator.section;
+        } else {
+          // If section is just an ID, try to find it in our sections
+          sectionId = indicator.section;
+          sectionObj = developmentIndicators.sections.find(s => s.id === sectionId) || 
+            { id: sectionId, name: `Section ${sectionId}` };
+        }
+      }
+      
+      if (!sectionMap[sectionId]) {
+        sectionMap[sectionId] = {
+          section: sectionObj,
+          indicators: [],
+        };
+      }
+
+      // Find latest achievement for this indicator
+      const latestAchievement = indicatorAchievements
+        .filter((achievement) => achievement.indicator?.id === indicator.id)
+        .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+
+      // Special handling for specific indicators that use dynamic data
+      let achieved = latestAchievement?.achieved || indicator.achieved || '0';
+      if (indicator.name?.includes('Ménages des zones ciblées inscrits au Registre social national')) {
+        achieved = additionalData?.groupBeneficiary?.totalCount || achieved;
+      }
+
+      sectionMap[sectionId].indicators.push({
+        ...indicator,
+        latestAchievement,
+        achieved,
+      });
+    });
+
+    // Convert to array and flatten for display
+    const result = [];
+    
+    // First add all sections with their indicators
+    Object.values(sectionMap).forEach(({ section, indicators: sectionIndicators }) => {
+      result.push({
+        id: `section-${section.id}`,
+        name: section.name,
+        isSection: true,
+      });
+      result.push(...sectionIndicators);
+    });
+
+    return result;
+  }, [developmentIndicators, indicatorAchievements, additionalData]);
+
   const headers = () => [
     'resultFrameworkIndicators.name',
     'resultFrameworkIndicators.pbc',
@@ -166,6 +420,7 @@ function DevelopmentIndicatorsTabPanel({
     'resultFrameworkIndicators.target',
     'resultFrameworkIndicators.achieved',
     'resultFrameworkIndicators.observation',
+    'resultFrameworkIndicators.actions',
   ];
 
   const sorts = () => [
@@ -175,176 +430,190 @@ function DevelopmentIndicatorsTabPanel({
     ['target', true],
     ['achieved', true],
     ['observation', true],
+    [null, false], // actions column - not sortable
   ];
 
-  const [filteredIndicators, setFilteredIndicators] = useState(developmentIndicatorsData);
+  const rowIdentifier = (item) => item.id;
 
-  const rowIdentifier = (indicator) => indicator.id;
-
-  // Mock fetch function that would be replaced with an actual API call in a real implementation
-  const fetch = (params) => {
-    // Apply filters if any
-
-      // Static data kept from original component
-      developmentIndicatorsData = [
-        {
-          id: 'section1',
-          name: 'Renforcer les capacités de gestion',
-          isSection: true,
-        },
-        {
-          id: 1,
-          name: 'Ménages des zones ciblées inscrits au Registre social national (nombre)',
-          pbc: '',
-          baseline: '0.00',
-          target: '250,000.00',
-          achieved: data?.groupBeneficiary?.totalCount || '0',
-          observation: 'Ménages appuyés de la s/c 1.1, 1.2, compo 4 et 6',
-        },
-        {
-          id: 2,
-          name: 'Ménages des zones ciblées inscrits au Registre social national - réfugiés, ventilés par sexe (Nombre)',
-          pbc: '',
-          baseline: '0.00',
-          target: '15,000.00',
-          achieved: '3,395',
-          observation: 'Ménages de 2 camps des réfugiés de la Province Ruyigi (Bwagiriza et Nyankanda)',
-        },
-        {
-          id: 3,
-          name: 'Ménages des zones ciblées inclus dans le registre social national - communautés d\'accueil, ventilés par sexe (nombre)',
-          pbc: '',
-          baseline: '0.00',
-          target: '25,000.00',
-          achieved: '5,633',
-          observation: '5 633 transferts monétaires aux ménages des communautés hôtes en communes Butezi (966), Bweru (360) et Ryigi (1 241) en Province Ruyigi, Gasorwe (1 800) en Province Munynga et Kiremba (1 266) en Province Ngozi',
-        },
-        {
-          id: 4,
-          name: 'Proportion des ménages inscrits dans la base de données des bénéficiaires vivant sous le seuil d\'extrême pauvreté (Pourcentage)',
-          pbc: '',
-          baseline: '0.00',
-          target: '80.00',
-          achieved: '0',
-          observation: '',
-        },
-        {
-          id: 'section2',
-          name: 'Renforcer les filets de sécurité',
-          isSection: true,
-        },
-        {
-          id: 5,
-          name: 'Bénéficiaires des programmes de protection sociale (CRI, nombre)',
-          pbc: '',
-          baseline: '56,090.00',
-          target: '305,000.00',
-          achieved: '210,636',
-          observation: 'Ménages appuyés de la s/c 1.1, 1.2, de la compo 4 et 6 + les bénéficiaires de la vague1',
-        },
-        // Add all remaining indicators from section 1
-        {
-          id: 'section3',
-          name: 'Promouvoir l\'inclusion productive et l\'accès à l\'emploi',
-          isSection: true,
-        },
-        {
-          id: 10,
-          name: 'Bénéficiaires d\'interventions axées sur l\'emploi (CRI, nombre)',
-          pbc: '',
-          baseline: '0.00',
-          target: '150,000.00',
-          achieved: '0',
-          observation: '',
-        },
-        {
-          id: 'section4',
-          name: 'Apporter une réponse immédiate et efficace à une crise ou une urgence éligible',
-          isSection: true,
-        },
-        {
-          id: 15,
-          name: 'Agriculteurs ayant bénéficié d\'actifs ou de services agricoles (CRI, nombre)',
-          pbc: '',
-          baseline: '0.00',
-          target: '50,000.00',
-          achieved: '50,717',
-          observation: 'Bénéficiaires de la composante 6 (CERC)',
-        },
-      ];
-    let filtered = [...developmentIndicatorsData];
-    setFilteredIndicators(filtered);
-    return Promise.resolve({});
+  const handleAddAchievement = (indicator) => {
+    setAchievementDialog({
+      open: true,
+      indicator,
+      achievement: null,
+      isEdit: false,
+    });
   };
 
+  const handleEditAchievement = (indicator) => {
+    setAchievementDialog({
+      open: true,
+      indicator,
+      achievement: indicator.latestAchievement,
+      isEdit: true,
+    });
+  };
+
+  const handleSaveAchievement = (achievementData) => {
+    if (achievementDialog.isEdit) {
+      updateIndicatorAchievement(achievementData, formatMessage(intl, "indicator.mutation", "updateLabel"));
+    } else {
+      createIndicatorAchievement(achievementData, formatMessage(intl, "indicator.mutation", "createLabel"));
+    }
+    // Refresh data
+    setTimeout(() => {
+      fetchIndicatorAchievements({});
+    }, 1000);
+  };
+
+  const handleCloseDialog = () => {
+    setAchievementDialog({
+      open: false,
+      indicator: null,
+      achievement: null,
+      isEdit: false,
+    });
+  };
+
+  const fetch = (params) => Promise.resolve({});
+
   const itemFormatters = () => [
-    (indicator) => (
-      indicator.isSection ? (
+    (item) => (
+      item.isSection ? (
         <span style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
-          {indicator.name}
+          {item.name}
         </span>
-      ) : indicator.name
+      ) : item.name
     ),
-    (indicator) => (indicator.isSection ? '' : indicator.pbc),
-    (indicator) => (indicator.isSection ? '' : indicator.baseline),
-    (indicator) => (
-      indicator.isSection ? indicator.target : (
-        <span style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>
-          {indicator.target}
+    (item) => (item.isSection ? '' : item.pbc),
+    (item) => (item.isSection ? '' : item.baseline),
+    (item) => (
+      item.isSection ? '' : (
+        <span style={{ fontWeight: 'bold' }}>
+          {item.target}
         </span>
       )
     ),
-    (indicator) => {
-      if (indicator.isSection) return '';
+    (item) => {
+      if (item.isSection) return '';
       return (
         <>
-          <AchievementRateBar achieved={indicator.achieved} target={indicator.target} classes={classes} />
-          {`(${indicator.achieved})`}
+          <AchievementRateBar achieved={item.achieved} target={item.target} classes={classes} />
+          {`(${item.achieved})`}
         </>
       );
     },
-    (indicator) => (indicator.isSection ? '' : indicator.observation),
+    (item) => (item.isSection ? '' : item.observation),
+    (item) => {
+      if (item.isSection) return '';
+      return (
+        <div>
+          <Button
+            size="small"
+            color="primary"
+            onClick={() => handleAddAchievement(item)}
+            className={classes.addButton}
+          >
+            {formatMessage(intl, "achievement", "add")}
+          </Button>
+          {item.latestAchievement && (
+            <Button
+              size="small"
+              color="secondary"
+              onClick={() => handleEditAchievement(item)}
+              className={classes.addButton}
+            >
+              {formatMessage(intl, "achievement", "edit")}
+            </Button>
+          )}
+        </div>
+      );
+    },
   ];
 
   const defaultFilters = () => ({});
 
-  const isRowSectionHeader = (_, indicator) => indicator.isSection;
+  const isRowSectionHeader = (_, item) => item.isSection;
 
   const filterPane = ({ filters, onChangeFilters }) => (
     <DevelopmentIndicatorsFilter filters={filters} onChangeFilters={onChangeFilters} />
   );
 
   return (
-    <PublishedComponent
-      pubRef="policyHolder.TabPanel"
-      module="socialProtection"
-      index={DEVELOPMENT_INDICATORS_LIST_TAB_VALUE}
-      value={value}
-    >
-      <div className={classes.tableContainer}>
-        <h3>Indicateurs des objectifs de développement du projet par objectifs/résultats</h3>
-        <Searcher
-          module="social_protection"
-          fetch={fetch}
-          items={filteredIndicators}
-          itemsPageInfo={{ totalCount: filteredIndicators.length }}
-          fetchedItems
-          fetchingItems={false}
-          errorItems={null}
-          tableTitle={formatMessageWithValues('DevelopmentIndicatorsSearcher.results', { totalCount: filteredIndicators.length })}
-          headers={headers}
-          itemFormatters={itemFormatters}
-          sorts={sorts}
-          rowsPerPageOptions={100}
-          defaultPageSize={100}
-          rowIdentifier={rowIdentifier}
-          rowDisabled={isRowSectionHeader}
-          rowHighlighted={isRowSectionHeader}
-          defaultFilters={defaultFilters()}
-        />
-      </div>
-    </PublishedComponent>
+    <>
+      <PublishedComponent
+        pubRef="policyHolder.TabPanel"
+        module="socialProtection"
+        index={DEVELOPMENT_INDICATORS_LIST_TAB_VALUE}
+        value={value}
+      >
+        <div className={classes.tableContainer}>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16,
+          }}
+          >
+            <h3>Indicateurs des objectifs de développement du projet par objectifs/résultats</h3>
+            <Button
+              color="primary"
+              variant="contained"
+              onClick={() => historyPush(modulesManager, history, 'socialProtection.route.indicators')}
+            >
+              {formatMessage(intl, "indicatorsTab", "manageIndicators")}
+            </Button>
+          </div>
+          <Searcher
+            module="social_protection"
+            fetch={fetch}
+            items={processedData}
+            itemsPageInfo={{ totalCount: processedData.length }}
+            fetchedItems={!fetchingSections && !fetchingIndicators && !fetchingIndicatorAchievements && !loading}
+            fetchingItems={fetchingSections || fetchingIndicators || fetchingIndicatorAchievements || loading}
+            errorItems={error}
+            tableTitle={formatMessageWithValues('DevelopmentIndicatorsSearcher.results', { totalCount: processedData.length })}
+            headers={headers}
+            itemFormatters={itemFormatters}
+            sorts={sorts}
+            rowsPerPageOptions={[100]}
+            defaultPageSize={100}
+            rowIdentifier={rowIdentifier}
+            rowDisabled={isRowSectionHeader}
+            rowHighlighted={isRowSectionHeader}
+            defaultFilters={defaultFilters()}
+            filterPane={filterPane}
+          />
+        </div>
+      </PublishedComponent>
+
+      <AchievementDialog
+        open={achievementDialog.open}
+        onClose={handleCloseDialog}
+        indicator={achievementDialog.indicator}
+        achievement={achievementDialog.achievement}
+        onSave={handleSaveAchievement}
+        isEdit={achievementDialog.isEdit}
+        intl={intl}
+      />
+    </>
   );
 }
 
-export { DevelopmentIndicatorsTabLabel, DevelopmentIndicatorsTabPanel };
+const mapStateToProps = (state) => ({
+  sections: state.socialProtection?.sections || [],
+  indicators: state.socialProtection?.indicators || [],
+  indicatorAchievements: state.socialProtection?.indicatorAchievements || [],
+  fetchingSections: state.socialProtection?.fetchingSections || false,
+  fetchingIndicators: state.socialProtection?.fetchingIndicators || false,
+  fetchingIndicatorAchievements: state.socialProtection?.fetchingIndicatorAchievements || false,
+});
+
+const mapDispatchToProps = (dispatch) => bindActionCreators({
+  fetchSections,
+  fetchIndicators,
+  fetchIndicatorAchievements,
+  createIndicatorAchievement,
+  updateIndicatorAchievement,
+  deleteIndicatorAchievement,
+}, dispatch);
+
+const ConnectedDevelopmentIndicatorsTabPanel = connect(mapStateToProps, mapDispatchToProps)(DevelopmentIndicatorsTabPanel);
+
+export { DevelopmentIndicatorsTabLabel, ConnectedDevelopmentIndicatorsTabPanel as DevelopmentIndicatorsTabPanel };

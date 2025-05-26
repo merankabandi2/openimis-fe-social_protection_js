@@ -23,6 +23,7 @@ import {
 } from '../actions';
 import {
   MODULE_NAME,
+  RIGHT_SECTION_CREATE,
   RIGHT_SECTION_UPDATE,
 } from '../constants';
 import { ACTION_TYPE } from '../reducer';
@@ -134,8 +135,21 @@ function SectionPage({
     },
   ];
 
+  const canViewPage = sectionId 
+    ? rights.includes(RIGHT_SECTION_UPDATE) 
+    : rights.includes(RIGHT_SECTION_CREATE);
+
+  if (!canViewPage) {
+    return (
+      <div className={classes.page}>
+        <h3>You don't have permission to {sectionId ? 'edit' : 'create'} sections</h3>
+        <p>Required right: {sectionId ? RIGHT_SECTION_UPDATE : RIGHT_SECTION_CREATE}</p>
+        <p>Your rights: {rights.join(', ')}</p>
+      </div>
+    );
+  }
+
   return (
-    rights.includes(RIGHT_SECTION_UPDATE) && (
     <div className={pageLocked ? classes.lockedPage : null}>
       <div className={classes.page}>
         <Form
@@ -158,7 +172,6 @@ function SectionPage({
         />
       </div>
     </div>
-    )
   );
 }
 
