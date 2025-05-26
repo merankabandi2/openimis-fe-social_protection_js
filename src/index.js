@@ -2,9 +2,10 @@
 /* eslint-disable camelcase */
 /* eslint-disable import/prefer-default-export */
 import React from 'react';
-import { Tune } from '@material-ui/icons';
+import { Tune, Dashboard } from '@material-ui/icons';
 import { FormattedMessage } from '@openimis/fe-core';
 import messages_en from './translations/en.json';
+import messages_fr from './translations/fr.json';
 import reducer from './reducer';
 import BenefitPlanMainMenu from './menus/BenefitPlanMainMenu';
 import BenefitPlansPage from './pages/BenefitPlansPage';
@@ -104,6 +105,7 @@ import HomePageContainer from './components/dashboard/HomePageContainer';
 import MonetaryTransferPage from './pages/MonetaryTransferPage';
 import MonetaryTransfersPage from './pages/MonetaryTransfersPage';
 import MEResultFrameworkPage from './pages/MEResultFrameworkPage';
+import MEDashboard from './components/dashboards/MEDashboard';
 
 const ROUTE_BENEFIT_PLANS = 'benefitPlans';
 const ROUTE_BENEFIT_PLAN = 'benefitPlans/benefitPlan';
@@ -113,9 +115,13 @@ const ROUTE_ME = 'me';
 const ROUTE_RESULT_FRAMEWORK = `${ROUTE_ME}/result-framework`;
 const ROUTE_MONETARY_TRANSFERS = `${ROUTE_ME}/monetary-transfers`;
 const ROUTE_MONETARY_TRANSFER = `${ROUTE_ME}/monetary-transfers/monetary-transfer`;
+const ROUTE_ME_DASHBOARD = `${ROUTE_ME}/dashboard`;
 
 const DEFAULT_CONFIG = {
-  translations: [{ key: 'en', messages: messages_en }],
+  translations: [
+    { key: 'en', messages: messages_en },
+    { key: 'fr', messages: messages_fr }
+  ],
   reducers: [{ key: 'socialProtection', reducer }],
   'core.MainMenu': [
     { name: 'BenefitPlanMainMenu', component: BenefitPlanMainMenu },
@@ -158,8 +164,10 @@ const DEFAULT_CONFIG = {
       component: SectionPage,
     },
     { path: ROUTE_MONETARY_TRANSFERS, component: MonetaryTransfersPage },
+    { path: 'socialProtection/monetaryTransfers', component: MonetaryTransfersPage },
     { path: ROUTE_RESULT_FRAMEWORK, component: MEResultFrameworkPage },
     { path: `${ROUTE_MONETARY_TRANSFER}/:monetary_transfer_uuid?`, component: MonetaryTransferPage },
+    { path: ROUTE_ME_DASHBOARD, component: MEDashboard },
   ],
   refs: [
     { key: 'socialProtection.route.benefitPlan', ref: ROUTE_BENEFIT_PLAN },
@@ -176,12 +184,15 @@ const DEFAULT_CONFIG = {
     { key: 'socialProtection.BeneficiaryPicker', ref: BeneficiaryPicker },
     { key: 'socialProtection.SectionPicker', ref: SectionPicker },
     { key: 'socialProtection.route.monetaryTransfers', ref: ROUTE_MONETARY_TRANSFERS },
+    { key: 'socialProtection.monetaryTransfers', ref: 'socialProtection/monetaryTransfers' },
     { key: 'socialProtection.route.monetaryTransfer', ref: ROUTE_MONETARY_TRANSFER },
     { key: 'socialProtection.route.resultFramework"', ref: ROUTE_RESULT_FRAMEWORK },
     { key: 'socialProtection.route.indicators', ref: 'socialProtection/indicators' },
     { key: 'socialProtection.route.indicator', ref: 'socialProtection/indicators/indicator' },
     { key: 'socialProtection.route.sections', ref: 'socialProtection/sections' },
     { key: 'socialProtection.route.section', ref: 'socialProtection/sections/section' },
+    { key: 'socialProtection.route.meDashboard', ref: ROUTE_ME_DASHBOARD },
+    { key: 'socialProtection.MEDashboard', ref: MEDashboard },
   ],
   'benefitPlan.TabPanel.label': [
     BenefitPlanBeneficiariesListTabLabel,
@@ -264,6 +275,13 @@ const DEFAULT_CONFIG = {
     },
   ],
   'me.MainMenu': [
+    {
+      text: <FormattedMessage module="socialProtection" id="menu.socialProtection.dashboard" />,
+      icon: <Dashboard />,
+      route: `/${ROUTE_ME_DASHBOARD}`,
+      filter: (rights) => rights.includes(RIGHT_BENEFIT_PLAN_SEARCH),
+      id: 'socialProtection.me.dashboard',
+    },
     {
       text: <FormattedMessage module="socialProtection" id="menu.socialProtection.indicators" />,
       icon: <Tune />,

@@ -2,9 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect, useSelector } from 'react-redux';
 
-import { IconButton, Tooltip } from '@material-ui/core';
+import { IconButton, Tooltip, Chip } from '@material-ui/core';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import DeleteIcon from '@material-ui/icons/Delete';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
+import CancelIcon from '@material-ui/icons/Cancel';
+import HourglassEmptyIcon from '@material-ui/icons/HourglassEmpty';
 
 import {
   Searcher,
@@ -28,6 +31,7 @@ import {
 } from '../../constants';
 import { mutationLabel, pageTitle } from '../../util/string-utils';
 import SensitizationTrainingFilter from './SensitizationTrainingFilter';
+import ValidationDialog from '../dialogs/ValidationDialog';
 
 function SensitizationTrainingSearcher({
   fetchSensitizationTrainings,
@@ -51,6 +55,8 @@ function SensitizationTrainingSearcher({
 
   const [sensitizationTrainingToDelete, setSensitizationTrainingToDelete] = useState(null);
   const [deletedSensitizationTrainingUuids, setDeletedSensitizationTrainingUuids] = useState([]);
+  const [validationDialogOpen, setValidationDialogOpen] = useState(false);
+  const [selectedTraining, setSelectedTraining] = useState(null);
   const prevSubmittingMutationRef = useRef();
 
   const openDeleteSensitizationTrainingConfirmDialog = () => {
@@ -86,6 +92,44 @@ function SensitizationTrainingSearcher({
     prevSubmittingMutationRef.current = submittingMutation;
   });
 
+  const handleOpenValidationDialog = (training) => {
+    setSelectedTraining(training);
+    setValidationDialogOpen(true);
+  };
+
+  const handleCloseValidationDialog = () => {
+    setValidationDialogOpen(false);
+    setSelectedTraining(null);
+  };
+
+  const handleValidationComplete = () => {
+    handleCloseValidationDialog();
+    // Refresh the list
+    fetchData({});
+  };
+
+  const renderValidationStatus = (training) => {
+    const statusMap = {
+      'PENDING': { icon: <HourglassEmptyIcon />, color: 'default', label: formatMessage('validation.status.pending') },
+      'VALIDATED': { icon: <CheckCircleIcon />, color: 'primary', label: formatMessage('validation.status.validated') },
+      'REJECTED': { icon: <CancelIcon />, color: 'secondary', label: formatMessage('validation.status.rejected') },
+    };
+
+    const status = training.validationStatus || 'PENDING';
+    const statusConfig = statusMap[status] || statusMap['PENDING'];
+
+    return (
+      <Chip
+        icon={statusConfig.icon}
+        label={statusConfig.label}
+        color={statusConfig.color}
+        size="small"
+        onClick={() => handleOpenValidationDialog(training)}
+        style={{ cursor: 'pointer' }}
+      />
+    );
+  };
+
   const headers = () => [
     'sensitizationTraining.sensitization_date',
     'location.locationType.0',
@@ -95,6 +139,7 @@ function SensitizationTrainingSearcher({
     'me.male_participants',
     'me.female_participants',
     'me.twa_participants',
+    'validation.status',
     'emptyLabel',
     'emptyLabel',
   ];
@@ -124,6 +169,7 @@ function SensitizationTrainingSearcher({
     (sensitizationTraining) => sensitizationTraining.maleParticipants,
     (sensitizationTraining) => sensitizationTraining.femaleParticipants,
     (sensitizationTraining) => sensitizationTraining.twaParticipants,
+    (sensitizationTraining) => renderValidationStatus(sensitizationTraining),
     (sensitizationTraining) => (
       <Tooltip title={formatMessage('tooltip.viewDetails')}>
         <IconButton
@@ -202,31 +248,52 @@ function SensitizationTrainingSearcher({
   };
 
   return (
-    <Searcher
-      module="social_protection"
-      fetch={fetchData}
-      items={sensitizationTrainings}
-      itemsPageInfo={pageInfo}
-      fetchedItems={fetchedSensitizationTrainings}
-      fetchingItems={fetchingSensitizationTrainings}
-      errorItems={errorSensitizationTrainings}
-      tableTitle={formatMessageWithValues('SensitizationTrainingSearcher.results', { totalCount })}
-      headers={headers}
-      itemFormatters={itemFormatters}
-      sorts={sorts}
-      rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
-      defaultPageSize={DEFAULT_PAGE_SIZE}
-      rowIdentifier={rowIdentifier}
-      onDoubleClick={onDoubleClick}
-      defaultFilters={defaultFilters()}
-      rowDisabled={isRowDisabled}
-      rowLocked={isRowDisabled}
-      exportable
-      exportFetch={downloadSensitizationTrainings}
-      exportFields={exportFields}
-      exportFieldsColumns={exportFieldsColumns}
-      exportFieldLabel={formatMessage('export.label')}
-    />
+    <>
+      <Searcher
+        module="social_protection"
+        fetch={fetchData}
+        items={sensitizationTrainings}
+        itemsPageInfo={pageInfo}
+        fetchedItems={fetchedSensitizationTrainings}
+        fetchingItems={fetchingSensitizationTrainings}
+        errorItems={errorSensitizationTrainings}
+        tableTitle={formatMessageWithValues('SensitizationTrainingSearcher.results', { totalCount })}
+        headers={headers}
+        itemFormatters={itemFormatters}
+        sorts={sorts}
+        rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+        defaultPageSize={DEFAULT_PAGE_SIZE}
+        rowIdentifier={rowIdentifier}
+        onDoubleClick={onDoubleClick}
+        defaultFilters={defaultFilters()}
+        rowDisabled={isRowDisabled}
+        rowLocked={isRowDisabled}
+        exportable
+        exportFetch={downloadSensitizationTrainings}
+        exportFields={exportFields}
+        exportFieldsColumns={exportFieldsColumns}
+        exportFieldLabel={formatMessage('export.label')}
+      />
+      {selectedTraining && (
+        <ValidationDialog
+          open={validationDialogOpen}
+          onClose={handleCloseValidationDialog}
+          onValidationComplete={handleValidationComplete}
+          type="sensitization"
+          data={selectedTraining}
+          detailFields={[
+            { key: 'sensitizationDate', label: 'sensitizationTraining.sensitization_date' },
+            { key: 'category', label: 'sensitizationTraining.category' },
+            { key: 'location.name', label: 'location' },
+            { key: 'maleParticipants', label: 'me.male_participants' },
+            { key: 'femaleParticipants', label: 'me.female_participants' },
+            { key: 'twaParticipants', label: 'me.twa_participants' },
+            { key: 'topics', label: 'sensitizationTraining.topics' },
+            { key: 'facilitator', label: 'sensitizationTraining.facilitator' },
+          ]}
+        />
+      )}
+    </>
   );
 }
 

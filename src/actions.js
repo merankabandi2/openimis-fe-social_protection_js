@@ -86,6 +86,10 @@ const SENSITIZATION_TRAINING_FULL_PROJECTION = (modulesManager) => [
   'femaleParticipants',
   'twaParticipants',
   'observations',
+  'validationStatus',
+  'validatedBy {username}',
+  'validationDate',
+  'validationComment',
 ];
 
 const BEHAVIOR_CHANGE_PROMOTION_FULL_PROJECTION = (modulesManager) => [
@@ -96,6 +100,10 @@ const BEHAVIOR_CHANGE_PROMOTION_FULL_PROJECTION = (modulesManager) => [
   'femaleParticipants',
   'twaParticipants',
   'comments',
+  'validationStatus',
+  'validatedBy {username}',
+  'validationDate',
+  'validationComment',
 ];
 
 const MICRO_PROJECT_FULL_PROJECTION = (modulesManager) => [
@@ -113,6 +121,10 @@ const MICRO_PROJECT_FULL_PROJECTION = (modulesManager) => [
   'livestockPoultryBeneficiaries',
   'livestockCattleBeneficiaries',
   'commerceServicesBeneficiaries',
+  'validationStatus',
+  'validatedBy {username}',
+  'validationDate',
+  'validationComment',
 ];
 
 export const MONETARY_TRANSFER_PROJECTION = (modulesManager) => [

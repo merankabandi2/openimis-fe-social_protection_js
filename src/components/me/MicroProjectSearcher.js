@@ -2,9 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect, useSelector } from 'react-redux';
 
-import { IconButton, Tooltip } from '@material-ui/core';
+import { IconButton, Tooltip, Chip } from '@material-ui/core';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import DeleteIcon from '@material-ui/icons/Delete';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
+import CancelIcon from '@material-ui/icons/Cancel';
+import HourglassEmptyIcon from '@material-ui/icons/HourglassEmpty';
 
 import {
   Searcher,
@@ -27,6 +30,7 @@ import {
 } from '../../constants';
 import { mutationLabel, pageTitle } from '../../util/string-utils';
 import MicroProjectFilter from './MicroProjectFilter';
+import ValidationDialog from '../dialogs/ValidationDialog';
 
 function MicroProjectSearcher({
   fetchMicroProjects,
@@ -51,6 +55,9 @@ function MicroProjectSearcher({
   const [microProjectToDelete, setMicroProjectToDelete] = useState(null);
   const [deletedMicroProjectUuids, setDeletedMicroProjectUuids] = useState([]);
   const prevSubmittingMutationRef = useRef();
+  const [validationDialogOpen, setValidationDialogOpen] = useState(false);
+  const [selectedMicroProject, setSelectedMicroProject] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const openDeleteMicroProjectConfirmDialog = () => {
     coreConfirm(
@@ -116,6 +123,21 @@ function MicroProjectSearcher({
     prevSubmittingMutationRef.current = submittingMutation;
   });
 
+  const openValidationDialog = (microProject) => {
+    setSelectedMicroProject(microProject);
+    setValidationDialogOpen(true);
+  };
+
+  const handleValidationClose = () => {
+    setValidationDialogOpen(false);
+    setSelectedMicroProject(null);
+  };
+
+  const handleValidated = () => {
+    // Refresh the data after validation
+    setRefreshKey(refreshKey + 1);
+  };
+
   const headers = () => [
     'microProject.report_date',
     'location.locationType.0',
@@ -124,6 +146,7 @@ function MicroProjectSearcher({
     'me.male_participants',
     'me.female_participants',
     'me.twa_participants',
+    'validation.status',
     'emptyLabel',
     'emptyLabel',
   ];
@@ -143,6 +166,27 @@ function MicroProjectSearcher({
 
   const onDelete = (microProject) => setMicroProjectToDelete(microProject);
 
+  const renderValidationStatus = (microProject) => {
+    const statusMap = {
+      'PENDING': { icon: <HourglassEmptyIcon />, color: 'default', label: formatMessage('validation.status.pending') },
+      'VALIDATED': { icon: <CheckCircleIcon />, color: 'primary', label: formatMessage('validation.status.validated') },
+      'REJECTED': { icon: <CancelIcon />, color: 'secondary', label: formatMessage('validation.status.rejected') },
+    };
+    
+    const status = statusMap[microProject.validationStatus] || statusMap['PENDING'];
+    
+    return (
+      <Chip
+        icon={status.icon}
+        label={status.label}
+        color={status.color}
+        size="small"
+        onClick={() => openValidationDialog(microProject)}
+        style={{ cursor: 'pointer' }}
+      />
+    );
+  };
+
   const itemFormatters = () => [
     (microProject) => microProject.reportDate,
     (microProject) => microProject.location.parent.parent.name,
@@ -151,6 +195,7 @@ function MicroProjectSearcher({
     (microProject) => microProject.maleParticipants,
     (microProject) => microProject.femaleParticipants,
     (microProject) => microProject.twaParticipants,
+    (microProject) => renderValidationStatus(microProject),
     (microProject) => (
       <Tooltip title={formatMessage('tooltip.viewDetails')}>
         <IconButton
@@ -211,31 +256,41 @@ function MicroProjectSearcher({
   const isRowDisabled = (_, microProject) => deletedMicroProjectUuids.includes(microProject.id);
 
   return (
-    <Searcher
-      module="socialProtection"
-      fetch={fetchData}
-      items={microProjects}
-      itemsPageInfo={pageInfo}
-      fetchedItems={fetchedMicroProjects}
-      fetchingItems={fetchingMicroProjects}
-      errorItems={errorMicroProjects}
-      tableTitle={formatMessageWithValues('MicroProjectSearcher.results', { totalCount })}
-      headers={headers}
-      itemFormatters={itemFormatters}
-      sorts={sorts}
-      rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
-      defaultPageSize={DEFAULT_PAGE_SIZE}
-      rowIdentifier={rowIdentifier}
-      onDoubleClick={onDoubleClick}
-      defaultFilters={defaultFilters()}
-      rowDisabled={isRowDisabled}
-      rowLocked={isRowDisabled}
-      exportable
-      exportFetch={downloadIndicators}
-      exportFields={exportFields}
-      exportFieldsColumns={exportFieldsColumns}
-      exportFieldLabel={formatMessage('export.label')}
-    />
+    <>
+      <Searcher
+        module="socialProtection"
+        fetch={fetchData}
+        items={microProjects}
+        itemsPageInfo={pageInfo}
+        fetchedItems={fetchedMicroProjects}
+        fetchingItems={fetchingMicroProjects}
+        errorItems={errorMicroProjects}
+        tableTitle={formatMessageWithValues('MicroProjectSearcher.results', { totalCount })}
+        headers={headers}
+        itemFormatters={itemFormatters}
+        sorts={sorts}
+        rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+        defaultPageSize={DEFAULT_PAGE_SIZE}
+        rowIdentifier={rowIdentifier}
+        onDoubleClick={onDoubleClick}
+        defaultFilters={defaultFilters()}
+        rowDisabled={isRowDisabled}
+        rowLocked={isRowDisabled}
+        exportable
+        exportFetch={downloadIndicators}
+        exportFields={exportFields}
+        exportFieldsColumns={exportFieldsColumns}
+        exportFieldLabel={formatMessage('export.label')}
+        key={refreshKey}
+      />
+      <ValidationDialog
+        open={validationDialogOpen}
+        onClose={handleValidationClose}
+        data={selectedMicroProject}
+        type="microproject"
+        onValidated={handleValidated}
+      />
+    </>
   );
 }
 

@@ -48,6 +48,14 @@ const buildFilter = (itemName, filters) => {
       locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
       benefitPlanId: (val) => `benefitPlanUuid: "${decodeId(val)}"`,
     },
+    monetaryTransferBeneficiaryData: {
+      year: (val) => `year: ${val}`,
+      locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
+    },
+    monetaryTransfer: {
+      year: (val) => createYearDateRange(val, 'transferDate'),
+      locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
+    },
     paymentCycle: {
       year: (val) => `year: ${val}`,
     },
@@ -96,10 +104,15 @@ const buildFilter = (itemName, filters) => {
   return filterParts.length ? `(${filterParts.join(', ')})` : '';
 };
 
+const REQUESTED_WITH = 'webapp';
+
 const loadStatsAll = async (filters = {}) => {
+  const csrfToken = localStorage.getItem('csrfToken');
+  const baseHeaders = apiHeaders();
+
   const response = await fetch(`${baseApiUrl}/graphql`, {
     method: 'post',
-    headers: apiHeaders(),
+    headers: { ...baseHeaders, 'X-Requested-With': REQUESTED_WITH, 'X-CSRFToken': csrfToken },
     body: JSON.stringify(
       {
         query: `
@@ -107,6 +120,18 @@ const loadStatsAll = async (filters = {}) => {
             benefitsSummaryFiltered ${buildFilter('benefitsSummary', filters)} {
               totalAmountReceived,
               totalAmountDue
+            },
+            monetaryTransferBeneficiaryData ${buildFilter('monetaryTransferBeneficiaryData', filters)} {
+              transferType
+              malePaid
+              maleUnpaid
+              femalePaid
+              femaleUnpaid
+              totalPaid
+              totalUnpaid
+            },
+            monetaryTransfer ${buildFilter('monetaryTransfer', filters)} {
+              totalCount
             },
             paymentCycleFiltered ${buildFilter('paymentCycle', filters)} {
               totalCount
@@ -307,22 +332,113 @@ function MonetaryTransfertDashboard() {
 
   const classes = useStyles();
 
-  const getStat = (item, field = 'totalCount') => (
-    stats && stats[item] && stats[item][field] ? Number(stats[item][field])?.toLocaleString('fr-FR') : 0
-  );
+  const getStat = (item, field = 'totalCount') => {
+    if (!stats || !stats[item]) return 0;
+    
+    // Handle array responses (like monetaryTransferBeneficiaryData)
+    if (Array.isArray(stats[item])) {
+      // Sum up the field from all items in the array
+      const total = stats[item].reduce((sum, curr) => {
+        const value = curr[field] || 0;
+        return sum + (typeof value === 'number' ? value : Number(value));
+      }, 0);
+      return total.toLocaleString('fr-FR');
+    }
+    
+    // Handle regular object responses
+    const value = stats[item][field];
+    return value ? Number(value).toLocaleString('fr-FR') : 0;
+  };
 
   return (
     <ThemeProvider theme={theme}>
-      <div className={classes.wrapper}>
         <Container maxWidth={false} className={classes.contentArea}>
-          <div className="main">
-
+            <Paper className={classes.filterContainer}>
+              <Grid container spacing={1}>
+                <Grid item xs={6} sm={3}>
+                  <FormControl variant="outlined" className={classes.filterFormControl} fullWidth>
+                    <InputLabel id="location-label">Province</InputLabel>
+                    <Select
+                      labelId="location-label"
+                      name="locationId"
+                      value={filters.locationId}
+                      onChange={handleFilterChange}
+                      label="Localisation"
+                    >
+                      <MenuItem value="">
+                        <em>Toutes</em>
+                      </MenuItem>
+                      {locations.map(loc => (
+                        <MenuItem key={loc.uuid} value={loc.uuid}>{loc.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={6} sm={4}>
+                  <FormControl variant="outlined" className={classes.filterFormControl} fullWidth>
+                    <InputLabel id="benefit-plan-label">Intervention</InputLabel>
+                    <Select
+                      labelId="benefit-plan-label"
+                      name="benefitPlanId"
+                      value={filters.benefitPlanId}
+                      onChange={handleFilterChange}
+                      label="Plan de bénéfice"
+                    >
+                      <MenuItem value="">
+                        <em>Tous</em>
+                      </MenuItem>
+                      {benefitPlans.map(plan => (
+                        <MenuItem key={plan.id} value={plan.id}>{plan.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={2} sm={1}>
+                  <FormControl variant="outlined" className={classes.filterFormControl} fullWidth>
+                    <InputLabel id="year-label">Année</InputLabel>
+                    <Select
+                      labelId="year-label"
+                      name="year"
+                      value={filters.year}
+                      onChange={handleFilterChange}
+                      label="Année"
+                    >
+                      <MenuItem value="">
+                        <em>Tous</em>
+                      </MenuItem>
+                      {years.map(year => (
+                        <MenuItem key={year} value={year}>{year}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <div className={classes.filterActions}>
+                    <Button 
+                      variant="outlined" 
+                      color="secondary" 
+                      onClick={handleResetFilters}
+                      style={{ marginRight: 4 }}
+                    >
+                      Effacer
+                    </Button>
+                    <Button 
+                      variant="contained" 
+                      color="primary" 
+                      onClick={handleApplyFilters}
+                    >
+                      Filtrer
+                    </Button>
+                  </div>
+                </Grid>
+              </Grid>
+            </Paper>
             <Grid container spacing={2}>
               {/* Sparkboxes Row */}
               <Grid item xs={12} md={4}>
                 <BoxCard
                   label="Bénéficiaires"
-                  value={getStat('groupBeneficiaryFiltered')}
+                  value={getStat('monetaryTransferBeneficiaryData', 'totalPaid') || getStat('groupBeneficiaryFiltered')}
                   className={classes.box}
                   icon={<Person fontSize="large" />}
                   isLoading={isLoading}
@@ -331,7 +447,7 @@ function MonetaryTransfertDashboard() {
               <Grid item xs={12} md={4}>
                 <BoxCard
                   label="Paiements"
-                  value={getStat('paymentCycleFiltered')}
+                  value={getStat('monetaryTransfer') || getStat('paymentCycleFiltered')}
                   className={classes.box}
                   icon={<ReceiptIcon fontSize="large" />}
                   isLoading={isLoading}
@@ -359,9 +475,7 @@ function MonetaryTransfertDashboard() {
                 <BenefitConsumptionByProvinces filters={filters} />
               </Grid>
             </Grid>
-          </div>
         </Container>
-      </div>
     </ThemeProvider>
   );
 }
