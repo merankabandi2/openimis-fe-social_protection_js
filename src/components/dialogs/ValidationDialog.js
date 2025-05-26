@@ -64,6 +64,24 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
     behavior_change: 'validateBehaviorChange',
     microproject: 'validateMicroproject',
   };
+  
+  // Helper function to get category display label
+  const getCategoryLabel = (categoryKey) => {
+    if (!categoryKey) return '';
+    
+    // Try to get translation first - handle both lowercase and uppercase keys
+    const normalizedKey = categoryKey.toLowerCase();
+    const translationKey = `sensitizationTraining.category.${normalizedKey}`;
+    const translated = intl.formatMessage({ id: translationKey });
+    
+    // If translation exists (not same as key), return it
+    if (translated !== translationKey) {
+      return translated;
+    }
+    
+    // Otherwise return the original value
+    return categoryKey;
+  };
 
   const handleValidation = (status) => {
     // Show confirmation dialog first
@@ -149,7 +167,7 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
             </Box>
             <Box className={classes.dataRow}>
               <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.category')}:</span>
-              {data.category}
+              {getCategoryLabel(data.category)}
             </Box>
             <Box className={classes.dataRow}>
               <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.facilitator')}:</span>

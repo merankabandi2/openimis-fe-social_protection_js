@@ -106,6 +106,8 @@ import MonetaryTransferPage from './pages/MonetaryTransferPage';
 import MonetaryTransfersPage from './pages/MonetaryTransfersPage';
 import MEResultFrameworkPage from './pages/MEResultFrameworkPage';
 import MEDashboard from './components/dashboards/MEDashboard';
+import ResultsFrameworkDashboard from './components/dashboard/ResultsFrameworkDashboard';
+import ActivitiesDashboard from './components/dashboard/ActivitiesDashboard';
 
 const ROUTE_BENEFIT_PLANS = 'benefitPlans';
 const ROUTE_BENEFIT_PLAN = 'benefitPlans/benefitPlan';
@@ -116,6 +118,8 @@ const ROUTE_RESULT_FRAMEWORK = `${ROUTE_ME}/result-framework`;
 const ROUTE_MONETARY_TRANSFERS = `${ROUTE_ME}/monetary-transfers`;
 const ROUTE_MONETARY_TRANSFER = `${ROUTE_ME}/monetary-transfers/monetary-transfer`;
 const ROUTE_ME_DASHBOARD = `${ROUTE_ME}/dashboard`;
+const ROUTE_RESULTS_FRAMEWORK_DASHBOARD = `${ROUTE_ME}/results-framework-dashboard`;
+const ROUTE_ACTIVITIES_DASHBOARD = `${ROUTE_ME}/activities-dashboard`;
 
 const DEFAULT_CONFIG = {
   translations: [
@@ -168,6 +172,8 @@ const DEFAULT_CONFIG = {
     { path: ROUTE_RESULT_FRAMEWORK, component: MEResultFrameworkPage },
     { path: `${ROUTE_MONETARY_TRANSFER}/:monetary_transfer_uuid?`, component: MonetaryTransferPage },
     { path: ROUTE_ME_DASHBOARD, component: MEDashboard },
+    { path: ROUTE_RESULTS_FRAMEWORK_DASHBOARD, component: ResultsFrameworkDashboard },
+    { path: ROUTE_ACTIVITIES_DASHBOARD, component: ActivitiesDashboard },
   ],
   refs: [
     { key: 'socialProtection.route.benefitPlan', ref: ROUTE_BENEFIT_PLAN },
@@ -193,6 +199,10 @@ const DEFAULT_CONFIG = {
     { key: 'socialProtection.route.section', ref: 'socialProtection/sections/section' },
     { key: 'socialProtection.route.meDashboard', ref: ROUTE_ME_DASHBOARD },
     { key: 'socialProtection.MEDashboard', ref: MEDashboard },
+    { key: 'socialProtection.route.resultsFrameworkDashboard', ref: ROUTE_RESULTS_FRAMEWORK_DASHBOARD },
+    { key: 'socialProtection.ResultsFrameworkDashboard', ref: ResultsFrameworkDashboard },
+    { key: 'socialProtection.route.activitiesDashboard', ref: ROUTE_ACTIVITIES_DASHBOARD },
+    { key: 'socialProtection.ActivitiesDashboard', ref: ActivitiesDashboard },
   ],
   'benefitPlan.TabPanel.label': [
     BenefitPlanBeneficiariesListTabLabel,
@@ -302,6 +312,20 @@ const DEFAULT_CONFIG = {
       route: `/${RESULT_FRAMEWORK_ROUTE}`,
       filter: (rights) => rights.includes(RIGHT_MONETARY_TRANSFER_SEARCH),
       id: 'socialProtection.me.resultsFramework',
+    },
+    {
+      text: <FormattedMessage module="socialProtection" id="menu.socialProtection.resultsFrameworkDashboard" />,
+      icon: <Dashboard />,
+      route: `/${ROUTE_RESULTS_FRAMEWORK_DASHBOARD}`,
+      filter: (rights) => rights.includes(RIGHT_MONETARY_TRANSFER_SEARCH),
+      id: 'socialProtection.me.resultsFrameworkDashboard',
+    },
+    {
+      text: <FormattedMessage module="socialProtection" id="menu.socialProtection.activitiesDashboard" />,
+      icon: <Dashboard />,
+      route: `/${ROUTE_ACTIVITIES_DASHBOARD}`,
+      filter: (rights) => rights.includes(RIGHT_MONETARY_TRANSFER_SEARCH),
+      id: 'socialProtection.me.activitiesDashboard',
     },
   ],
 };

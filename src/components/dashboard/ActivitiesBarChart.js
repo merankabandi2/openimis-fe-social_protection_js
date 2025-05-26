@@ -5,7 +5,7 @@ import { CircularProgress, Typography } from '@material-ui/core';
 
 const REQUESTED_WITH = 'webapp';
 
-function ActivitiesBarChart({ filters = {} }) {
+function ActivitiesBarChart({ filters = {}, compact = false }) {
   const [chartData, setChartData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -101,7 +101,7 @@ function ActivitiesBarChart({ filters = {} }) {
   if (isLoading) {
     return (
       <div style={{
-        display: 'flex', justifyContent: 'center', alignItems: 'center', height: '300px',
+        display: 'flex', justifyContent: 'center', alignItems: 'center', height: compact ? '240px' : '300px',
       }}
       >
         <CircularProgress />
@@ -114,7 +114,7 @@ function ActivitiesBarChart({ filters = {} }) {
       options={options}
       series={series}
       type="bar"
-      height={300}
+      height={compact ? 240 : 300}
     />
   );
 }

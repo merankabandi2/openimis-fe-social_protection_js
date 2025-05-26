@@ -25,6 +25,8 @@ import PlaceIcon from '@material-ui/icons/Place';
 import FilterListIcon from '@material-ui/icons/FilterList';
 import AssignmentIcon from '@material-ui/icons/Assignment';
 import BarChartIcon from '@material-ui/icons/BarChart';
+import FaceIcon from '@material-ui/icons/Face';
+import AccessibilityIcon from '@material-ui/icons/Accessibility';
 import MapComponent from './MapComponent';
 import BoxCard from './BoxCard';
 import TicketsPieChart from './TicketsPieChart';
@@ -112,6 +114,19 @@ const loadStatsAll = async (filters = {}) => {
   const csrfToken = localStorage.getItem('csrfToken');
   const baseHeaders = apiHeaders();
 
+  // Build gender and minority filters
+  const genderFilterParts = [];
+  if (filters.locationId) {
+    genderFilterParts.push(`parentLocation: "${filters.locationId}", parentLocationLevel: 0`);
+  }
+  if (filters.year) {
+    const startDate = `${filters.year}-01-01T00:00:00.000Z`;
+    const endDate = `${filters.year}-12-31T23:59:59.999Z`;
+    genderFilterParts.push(`dateCreated_Lte: "${endDate}"`);
+    genderFilterParts.push(`dateCreated_Gte: "${startDate}"`);
+  }
+  const genderFilter = genderFilterParts.length ? `(${genderFilterParts.join(', ')})` : '';
+
   const response = await fetch(`${baseApiUrl}/graphql`, {
     method: 'post',
     headers: { ...baseHeaders, 'X-Requested-With': REQUESTED_WITH, 'X-CSRFToken': csrfToken },
@@ -133,6 +148,15 @@ const loadStatsAll = async (filters = {}) => {
               totalCount
             },
             groupBeneficiaryFiltered ${buildFilter('groupBeneficiary', filters)} {
+              totalCount
+            },
+            individualMale ${genderFilter} {
+              totalCount
+            },
+            individualFemale ${genderFilter} {
+              totalCount
+            },
+            minorityHouseholds ${genderFilter} {
               totalCount
             },
             ticketsByResolution ${buildFilter('ticketsByResolution', filters)} {
@@ -204,68 +228,83 @@ const theme = createTheme({
 // Custom styles
 const useStyles = makeStyles((theme) => ({
   wrapper: {
-    backgroundColor: '#f9fbfd',
+    backgroundColor: '#f5f7fa',
     minHeight: '100vh',
   },
   contentArea: {
-    padding: theme.spacing(1),
+    padding: theme.spacing(2),
   },
   box: {
     backgroundColor: '#fff',
-    padding: theme.spacing(1),
-    borderRadius: theme.shape.borderRadius,
-    boxShadow: '0 1px 20px 0 rgba(0,0,0,.1)',
+    padding: theme.spacing(2),
+    borderRadius: theme.spacing(1),
+    boxShadow: '0 0 20px rgba(0,0,0,.06)',
     height: '100%',
-  },
-  box1: {
-    color: '#8799a2',
-    '& .apexcharts-series path': {
-      stroke: '#5a8dee !important',
+    transition: 'box-shadow 0.3s ease',
+    '&:hover': {
+      boxShadow: '0 5px 25px rgba(0,0,0,.1)',
     },
   },
-  box2: {
-    color: '#8799a2',
-    '& .apexcharts-series path': {
-      stroke: '#ff8f00 !important',
-    },
-  },
-  box3: {
-    color: '#8799a2',
-    '& .apexcharts-series path': {
-      stroke: '#00d0bd !important',
+  statsBox: {
+    backgroundColor: '#fff',
+    padding: theme.spacing(2),
+    borderRadius: theme.spacing(1),
+    boxShadow: '0 0 20px rgba(0,0,0,.06)',
+    height: '100%',
+    transition: 'all 0.3s ease',
+    position: 'relative',
+    overflow: 'hidden',
+    '&:hover': {
+      boxShadow: '0 5px 25px rgba(0,0,0,.1)',
+      transform: 'translateY(-2px)',
     },
   },
   chartContainer: {
-    height: '350px',
+    height: '280px',
+  },
+  mapContainer: {
+    height: '450px',
+    position: 'relative',
   },
   filterContainer: {
-    padding: theme.spacing(0),
-    marginBottom: theme.spacing(1),
+    padding: theme.spacing(2),
+    marginBottom: theme.spacing(2),
     backgroundColor: '#fff',
-    boxShadow: '0 1px 20px 0 rgba(0,0,0,.1)',
+    borderRadius: theme.spacing(1),
+    boxShadow: '0 0 20px rgba(0,0,0,.06)',
   },
   filterFormControl: {
     margin: theme.spacing(1),
-    minWidth: 100,
+    minWidth: 120,
   },
   filterTitle: {
     marginBottom: theme.spacing(2),
     display: 'flex',
     alignItems: 'center',
+    color: theme.palette.text.primary,
+    fontWeight: 600,
   },
   filterIcon: {
     marginRight: theme.spacing(1),
+    color: theme.palette.primary.main,
   },
   filterActions: {
     display: 'flex',
     justifyContent: 'flex-end',
-    marginTop: theme.spacing(2),
-    marginRight: theme.spacing(2),
+    alignItems: 'center',
+    height: '100%',
+    paddingRight: theme.spacing(1),
   },
   select: {
-    '& > div': {
-      padding: theme.spacing(2),
+    '& .MuiOutlinedInput-root': {
+      borderRadius: theme.spacing(1),
     },
+  },
+  sectionTitle: {
+    marginBottom: theme.spacing(2),
+    marginTop: theme.spacing(3),
+    fontWeight: 600,
+    color: theme.palette.text.primary,
   },
 }));
 
@@ -335,25 +374,66 @@ function Dashboard() {
     stats && stats[item] && stats[item][field] ? Number(stats[item][field])?.toLocaleString('fr-FR') : 0
   );
 
+  // Calculate gender percentages
+  const maleCount = stats?.individualMale?.totalCount || 0;
+  const femaleCount = stats?.individualFemale?.totalCount || 0;
+  const totalIndividuals = maleCount + femaleCount || stats?.individualFiltered?.totalCount || 0;
+
+  // If gender data is not available, show N/A
+  const hasGenderData = (maleCount > 0 || femaleCount > 0) && stats?.individualMale !== undefined;
+  const malePercentage = hasGenderData && totalIndividuals > 0 ? Math.round((maleCount / totalIndividuals) * 100) : 0;
+  const femalePercentage = hasGenderData && totalIndividuals > 0 ? Math.round((femaleCount / totalIndividuals) * 100) : 0;
+
+  // Use different fallback messages based on whether the query is supported
+  let genderSubtitle;
+  if (!stats?.individualMale && !stats?.individualFemale) {
+    genderSubtitle = ''; // Query not supported yet, show nothing
+  } else if (hasGenderData) {
+    genderSubtitle = `♂ ${malePercentage}% | ♀ ${femalePercentage}%`;
+  } else {
+    genderSubtitle = 'Données de genre non disponibles';
+  }
+
+  // Calculate minority percentage
+  const minorityCount = stats?.minorityHouseholds?.totalCount || 0;
+  const totalHouseholds = stats?.groupFiltered?.totalCount || 0;
+  const hasMinorityData = (minorityCount > 0 || stats?.minorityHouseholds !== undefined) && stats?.minorityHouseholds !== null;
+  const minorityPercentage = totalHouseholds > 0 && hasMinorityData ? Math.round((minorityCount / totalHouseholds) * 100) : 0;
+
+  // Use different fallback messages based on whether the query is supported
+  let minoritySubtitle;
+  if (!stats?.minorityHouseholds) {
+    minoritySubtitle = ''; // Query not supported yet, show nothing
+  } else if (hasMinorityData && minorityCount > 0) {
+    minoritySubtitle = `Mutwa: ${minorityPercentage}% (${minorityCount.toLocaleString('fr-FR')})`;
+  } else {
+    minoritySubtitle = 'Données minoritaires non disponibles';
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <div className={classes.wrapper}>
         <Container maxWidth={false} className={classes.contentArea}>
           <div className="main">
             <Paper className={classes.filterContainer}>
-              <Grid container spacing={1}>
-                <Grid item xs={6} sm={3}>
-                  <FormControl variant="outlined" className={classes.filterFormControl} fullWidth>
+              <Typography className={classes.filterTitle}>
+                <FilterListIcon className={classes.filterIcon} />
+                Filtres du tableau de bord
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={3}>
+                  <FormControl variant="outlined" className={classes.filterFormControl} fullWidth size="small">
                     <InputLabel id="location-label">Province</InputLabel>
                     <Select
                       labelId="location-label"
                       name="locationId"
                       value={filters.locationId}
                       onChange={handleFilterChange}
-                      label="Localisation"
+                      label="Province"
+                      className={classes.select}
                     >
                       <MenuItem value="">
-                        <em>Toutes</em>
+                        <em>Toutes les provinces</em>
                       </MenuItem>
                       {locations.map(loc => (
                         <MenuItem key={loc.uuid} value={loc.uuid}>{loc.name}</MenuItem>
@@ -361,18 +441,19 @@ function Dashboard() {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={6} sm={4}>
-                  <FormControl variant="outlined" className={classes.filterFormControl} fullWidth>
+                <Grid item xs={12} sm={6} md={4}>
+                  <FormControl variant="outlined" className={classes.filterFormControl} fullWidth size="small">
                     <InputLabel id="benefit-plan-label">Intervention</InputLabel>
                     <Select
                       labelId="benefit-plan-label"
                       name="benefitPlanId"
                       value={filters.benefitPlanId}
                       onChange={handleFilterChange}
-                      label="Plan de bénéfice"
+                      label="Intervention"
+                      className={classes.select}
                     >
                       <MenuItem value="">
-                        <em>Tous</em>
+                        <em>Toutes les interventions</em>
                       </MenuItem>
                       {benefitPlans.map(plan => (
                         <MenuItem key={plan.id} value={plan.id}>{plan.name}</MenuItem>
@@ -380,8 +461,8 @@ function Dashboard() {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={2} sm={1}>
-                  <FormControl variant="outlined" className={classes.filterFormControl} fullWidth>
+                <Grid item xs={12} sm={6} md={2}>
+                  <FormControl variant="outlined" className={classes.filterFormControl} fullWidth size="small">
                     <InputLabel id="year-label">Année</InputLabel>
                     <Select
                       labelId="year-label"
@@ -389,9 +470,10 @@ function Dashboard() {
                       value={filters.year}
                       onChange={handleFilterChange}
                       label="Année"
+                      className={classes.select}
                     >
                       <MenuItem value="">
-                        <em>Tous</em>
+                        <em>Toutes</em>
                       </MenuItem>
                       {years.map(year => (
                         <MenuItem key={year} value={year}>{year}</MenuItem>
@@ -399,121 +481,163 @@ function Dashboard() {
                     </Select>
                   </FormControl>
                 </Grid>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={6} md={3}>
                   <div className={classes.filterActions}>
-                    <Button 
-                      variant="outlined" 
-                      color="secondary" 
+                    <Button
+                      variant="outlined"
+                      color="default"
                       onClick={handleResetFilters}
-                      style={{ marginRight: 4 }}
+                      style={{ marginRight: 8 }}
+                      size="small"
                     >
-                      Effacer
+                      Réinitialiser
                     </Button>
-                    <Button 
-                      variant="contained" 
-                      color="primary" 
+                    <Button
+                      variant="contained"
+                      color="primary"
                       onClick={handleApplyFilters}
+                      size="small"
                     >
-                      Filtrer
+                      Appliquer
                     </Button>
                   </div>
                 </Grid>
               </Grid>
             </Paper>
+            {/* Key Metrics Row */}
             <Grid container spacing={2}>
-              {/* Sparkboxes Row */}
-              <Grid item xs={12} md={4}>
+              <Grid item xs={6} sm={3}>
                 <BoxCard
                   label="Bénéficiaires"
                   value={getStat('groupBeneficiaryFiltered')}
-                  className={classes.box}
-                  icon={<Person fontSize="large" />}
+                  subtitle={genderSubtitle}
+                  className={classes.statsBox}
+                  icon={<Person />}
                   isLoading={isLoading}
+                  color="#5a8dee"
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid item xs={6} sm={3}>
+                <BoxCard
+                  label="Ménages"
+                  value={getStat('groupFiltered')}
+                  subtitle={minoritySubtitle}
+                  className={classes.statsBox}
+                  icon={<HomeIcon />}
+                  isLoading={isLoading}
+                  color="#ff8f00"
+                />
+              </Grid>
+              <Grid item xs={6} sm={3}>
                 <BoxCard
                   label="Paiements"
                   value={getStat('paymentCycleFiltered')}
-                  className={classes.box}
-                  icon={<ReceiptIcon fontSize="large" />}
+                  className={classes.statsBox}
+                  icon={<ReceiptIcon />}
                   isLoading={isLoading}
+                  color="#00d0bd"
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid item xs={6} sm={3}>
                 <BoxCard
-                  label="Montants"
+                  label="Montant Total"
                   value={`${getStat('benefitsSummaryFiltered', 'totalAmountDue')} BIF`}
-                  className={classes.box}
-                  valueVariant="h5"
-                  icon={<AttachMoneyIcon fontSize="large" />}
+                  className={classes.statsBox}
+                  valueVariant="h6"
+                  icon={<AttachMoneyIcon />}
                   isLoading={isLoading}
+                  color="#ff5b5c"
                 />
               </Grid>
             </Grid>
+
+            {/* Map and Stats Section */}
+            <Typography variant="h6" className={classes.sectionTitle}>
+              Vue d'ensemble
+            </Typography>
             <Grid container spacing={2}>
-              <MapComponent className={classes.box} isLoading={isLoading} />
-            </Grid>
-            <Grid container spacing={2} style={{ marginTop: '16px' }}>
-              <Grid item xs={12} md={4}>
-                <Paper className={classes.box}>
-                  <Typography variant="h6" gutterBottom style={{ display: 'flex', alignItems: 'center' }}>
-                    <AssignmentIcon style={{ marginRight: '8px' }} />
-                    Plaintes par statut
-                  </Typography>
-                  <TicketsPieChart
-                    data={stats?.ticketsByResolution || []}
-                    isLoading={isLoading}
-                  />
-                </Paper>
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TransfersChart filters={filters} />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <Paper className={classes.box}>
-                  <Typography variant="h6" gutterBottom style={{ display: 'flex', alignItems: 'center' }}>
-                    <BarChartIcon style={{ marginRight: '8px' }} />
-                    Activités
-                  </Typography>
-                  <ActivitiesBarChart
+              <Grid item xs={12} md={6}>
+                <Paper className={classes.box} style={{ padding: 0, overflow: 'hidden', height: 580 }}>
+                  <MapComponent
                     filters={filters}
                     isLoading={isLoading}
+                    fullMap={false}
                   />
                 </Paper>
               </Grid>
-            </Grid>
-            <Grid container spacing={2} style={{ marginTop: '16px' }}>
-              <Grid item xs={12}>
+              <Grid item xs={12} md={6}>
                 <Grid container spacing={2}>
-                  <Grid item xs={12} md={4}>
-                    <BoxCard
-                      label="Individus"
-                      value={getStat('individualFiltered')}
-                      className={classes.box}
-                      icon={<PeopleAltIcon fontSize="large" />}
-                      isLoading={isLoading}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <BoxCard
-                      label="Ménages"
-                      value={getStat('groupFiltered')}
-                      className={classes.box}
-                      icon={<HomeIcon fontSize="large" />}
-                      isLoading={isLoading}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <BoxCard
-                      label="Provinces"
-                      value={getStat('locationByBenefitPlan')}
-                      className={classes.box}
-                      icon={<PlaceIcon fontSize="large" />}
-                      isLoading={isLoading}
-                    />
+                  <Grid item xs={12}>
+                    <Paper className={classes.box}>
+                      <Typography variant="subtitle1" gutterBottom style={{ display: 'flex', alignItems: 'center', fontWeight: 600 }}>
+                        <AttachMoneyIcon style={{ marginRight: '8px', color: '#ff8f00' }} />
+                        Transferts Monétaires
+                      </Typography>
+                        <TransfersChart filters={filters} header={false} />
+                    </Paper>
                   </Grid>
                 </Grid>
+              </Grid>
+            </Grid>
+            {/* Analytics Row */}
+            <Typography variant="h6" className={classes.sectionTitle}>
+              Analyses et Tendances
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={4}>
+                <Paper className={classes.box}>
+                  <Typography variant="subtitle1" gutterBottom style={{ display: 'flex', alignItems: 'center', fontWeight: 600 }}>
+                    <AssignmentIcon style={{ marginRight: '8px', color: '#5a8dee' }} />
+                    Plaintes par statut
+                  </Typography>
+                  <div className={classes.chartContainer}>
+                    <TicketsPieChart
+                      data={stats?.ticketsByResolution || []}
+                      isLoading={isLoading}
+                    />
+                  </div>
+                </Paper>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <Paper className={classes.box}>
+                  <Typography variant="subtitle1" gutterBottom style={{ display: 'flex', alignItems: 'center', fontWeight: 600 }}>
+                    <BarChartIcon style={{ marginRight: '8px', color: '#00d0bd' }} />
+                    Activités M&E
+                  </Typography>
+                  <div className={classes.chartContainer}>
+                    <ActivitiesBarChart
+                      filters={filters}
+                      isLoading={isLoading}
+                      compact={true}
+                    />
+                  </div>
+                </Paper>
+              </Grid>
+
+              <Grid item xs={12} sm={6} md={4}>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <BoxCard
+                    label="Individus"
+                    value={getStat('individualFiltered')}
+                    subtitle={hasGenderData ? `♂ ${maleCount.toLocaleString('fr-FR')} | ♀ ${femaleCount.toLocaleString('fr-FR')}` : ''}
+                    className={classes.statsBox}
+                    icon={<PeopleAltIcon />}
+                    isLoading={isLoading}
+                    color="#7c4dff"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <BoxCard
+                    label="Provinces Actives"
+                    value={getStat('locationByBenefitPlan')}
+                    className={classes.statsBox}
+                    icon={<PlaceIcon />}
+                    isLoading={isLoading}
+                    color="#f44336"
+                  />
+                </Grid>
+              </Grid>
               </Grid>
             </Grid>
           </div>

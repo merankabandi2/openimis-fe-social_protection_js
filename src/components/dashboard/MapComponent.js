@@ -1,32 +1,88 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Grid,
   Box,
-  makeStyles, CircularProgress, Typography,
+  makeStyles, 
+  CircularProgress, 
+  Typography,
+  Paper,
+  Chip,
+  Fade,
 } from '@material-ui/core';
 import {
-  Map, TileLayer, GeoJSON,
+  Map, TileLayer, GeoJSON, Tooltip as LeafletTooltip,
 } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { baseApiUrl, apiHeaders } from '@openimis/fe-core';
+import { baseApiUrl, apiHeaders, decodeId } from '@openimis/fe-core';
 import L from 'leaflet';
-import BoxTable from './BoxTable';
+import LocationOnIcon from '@material-ui/icons/LocationOn';
+import GroupIcon from '@material-ui/icons/Group';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 
 // This is needed to fix Leaflet icon issues in React
 
 const REQUESTED_WITH = 'webapp';
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles((theme) => ({
   mapContainer: {
     width: '100%',
     height: '100%',
-    minHeight: '500px',
+    minHeight: '650px',
     position: 'relative',
+    borderRadius: theme.spacing(1),
+    overflow: 'hidden',
   },
   tiles: {
     '& img.leaflet-tile.leaflet-tile-loaded': {
-      filter: 'grayscale(1)',
+      filter: 'grayscale(0.8) brightness(1.1)',
     },
+  },
+  legendContainer: {
+    position: 'absolute',
+    bottom: theme.spacing(8),
+    right: theme.spacing(1),
+    zIndex: 1000,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: theme.spacing(1),
+    padding: theme.spacing(1),
+    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+    backdropFilter: 'blur(4px)',
+  },
+  legendTitle: {
+    fontWeight: 600,
+    marginBottom: theme.spacing(1),
+    display: 'flex',
+    alignItems: 'center',
+  },
+  legendItem: {
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: theme.spacing(0.5),
+    fontSize: '0.875rem',
+  },
+  legendColor: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    marginRight: theme.spacing(1),
+    border: '1px solid rgba(0,0,0,0.1)',
+  },
+  statsOverlay: {
+    position: 'absolute',
+    bottom: theme.spacing(2),
+    left: theme.spacing(2),
+    zIndex: 1000,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: theme.spacing(1),
+    padding: theme.spacing(1.5),
+    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+    backdropFilter: 'blur(4px)',
+  },
+  loadingContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '650px',
+    flexDirection: 'column',
   },
 }));
 
@@ -37,14 +93,39 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-const loadStats = async () => {
+const loadStats = async (filters = {}) => {
   const csrfToken = localStorage.getItem('csrfToken');
   const baseHeaders = apiHeaders();
+  
+  // Build filter string
+  const filterParts = [];
+  if (filters.benefitPlanId) {
+    filterParts.push(`benefitPlan_Id: \"${decodeId(filters.benefitPlanId)}\"`);
+  }
+  const filterString = filterParts.length > 0 ? `(${filterParts.join(', ')})` : '';
+  
+  const query = `{
+    locationByBenefitPlan ${filterString} { 
+      totalCount 
+      edges {
+        node { 
+          id, 
+          code, 
+          name,
+          countSelected,
+          countSuspended,
+          countActive
+        }
+      }
+    }
+  }`;
+  
   const response = await fetch(`${baseApiUrl}/graphql`, {
     method: 'post',
     headers: { ...baseHeaders, 'X-Requested-With': REQUESTED_WITH, 'X-CSRFToken': csrfToken },
-    body: JSON.stringify({ query: '{locationByBenefitPlan (benefitPlan_Id: \"452721c3-cc8a-49d9-81f0-a7c7a1a3bf82\") { totalCount edges{node{ id, code, name,countSelected,countSuspended,countActive}}}}' }),
+    body: JSON.stringify({ query }),
   });
+  
   if (!response.ok) {
     throw response;
   } else {
@@ -53,70 +134,29 @@ const loadStats = async () => {
   }
 };
 
-function MapComponent({ className, isLoading }) {
+function MapComponent({ filters, isLoading: parentLoading, fullMap = false }) {
   const classes = useStyles();
   const mapContainerRef = useRef(null);
-  // State for our data
   const [burundiGeoJSON, setBurundiGeoJSON] = useState(null);
   const [locationData, setLocationData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [mapDimensions, setMapDimensions] = useState({ width: '100%', height: '500px' });
-
-  // Create a lookup object for easy access
+  const [hoveredProvince, setHoveredProvince] = useState(null);
   const [locationLookup, setLocationLookup] = useState({});
 
-  // Set up resize observer to update map size when container resizes
+  // Load GeoJSON
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    fetch('/front/maps/provinces.geojson')
+      .then((response) => response.json())
+      .then((data) => setBurundiGeoJSON(data))
+      .catch((error) => console.error('Error loading GeoJSON:', error));
+  }, []);
 
-    const updateMapDimensions = () => {
-      if (mapContainerRef.current) {
-        const { offsetWidth, offsetHeight } = mapContainerRef.current.parentElement;
-        // Ensure minimum height
-        const height = Math.max(500, offsetHeight);
-        setMapDimensions({
-          width: '100%',
-          height: `${height}px`,
-        });
-      }
-    };
-
-    // Initial update
-    updateMapDimensions();
-
-    // Set up ResizeObserver
-    const resizeObserver = new ResizeObserver(updateMapDimensions);
-    resizeObserver.observe(mapContainerRef.current.parentElement);
-
-    // Cleanup
-    return () => {
-      if (mapContainerRef.current && mapContainerRef.current.parentElement) {
-        resizeObserver.unobserve(mapContainerRef.current.parentElement);
-      }
-      resizeObserver.disconnect();
-    };
-  }, [mapContainerRef]);
-
+  // Load location data
   useEffect(() => {
-    async function fetchData() {
-      try {
-        // Create lookup table by name
-        fetch('/front/maps/provinces.geojson') // Adjust the path to your GeoJSON file
-          .then((response) => response.json())
-          .then((data) => setBurundiGeoJSON(data))
-          .catch((error) => console.error('Error loading GeoJSON:', error));
-
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Failed to load data. Please try again later.');
-        setLoading(false);
-      }
-    }
-
-    loadStats().then(
-      (data) => {
+    setLoading(true);
+    loadStats(filters)
+      .then((data) => {
         const locations = data.locationByBenefitPlan.edges.map((edge) => edge.node);
         setLocationData(locations);
         const lookup = {};
@@ -124,11 +164,14 @@ function MapComponent({ className, isLoading }) {
           lookup[loc.name] = loc;
         });
         setLocationLookup(lookup);
-        fetchData();
-      },
-    )
-      .catch((error) => console.error('Failed to load stats', error));
-  }, []);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('Failed to load stats', error);
+        setError('Failed to load data');
+        setLoading(false);
+      });
+  }, [filters]);
 
   // Calculate total count for a location
   const getTotalCount = (location) => location.countSelected + location.countActive + location.countSuspended;
@@ -137,136 +180,203 @@ function MapComponent({ className, isLoading }) {
   const maxCount = locationData.length
     ? Math.max(...locationData.map(getTotalCount)) : 0;
 
-  // Style function for the GeoJSON layers
-  const getStyle = (feature) => {
+  // Enhanced style function with better colors
+  const getStyle = (feature, isHovered = false) => {
     const locationName = feature.properties.shapeName;
     const locationInfo = locationLookup[locationName];
 
     if (!locationInfo) {
       return {
-        fillColor: '#f0f0f0',
-        weight: 1,
-        opacity: 0.9,
-        color: '#c0c0c0',
-        fillOpacity: 0.6,
+        fillColor: '#e8eaf6',
+        weight: isHovered ? 2 : 1,
+        opacity: 1,
+        color: isHovered ? '#5a8dee' : '#90a4ae',
+        fillOpacity: 0.5,
+        transition: 'all 0.3s ease',
       };
     }
 
     const totalCount = getTotalCount(locationInfo);
     const colorIntensity = Math.min(1, totalCount / maxCount);
 
-    // Determine fill color based on active vs selected status
-    let fillColor = '#f0f0f0'; // Default light gray
-    let dashArray = null;
-    const opacity = 0.9;
-    const fillOpacity = 0.6 + (colorIntensity * 0.25); // More data = slightly more opaque
+    // Enhanced color scheme
+    let fillColor = '#e8eaf6';
+    let borderColor = '#90a4ae';
+    const baseOpacity = 0.7;
+    const fillOpacity = baseOpacity + (colorIntensity * 0.2);
 
     if (locationInfo.countActive > 0 && locationInfo.countSelected === 0) {
-      // Only active - use muted but visible green
-      fillColor = `rgb(180, ${Math.floor(205 + colorIntensity * 50)}, 180)`;
+      // Active only - Green gradient
+      const intensity = Math.floor(colorIntensity * 100);
+      fillColor = `hsl(120, ${40 + intensity}%, ${85 - intensity * 0.3}%)`;
+      borderColor = '#2e7d32';
     } else if (locationInfo.countSelected > 0 && locationInfo.countActive === 0) {
-      // Only selected - use muted but visible blue
-      fillColor = `rgb(180, 190, ${Math.floor(210 + colorIntensity * 45)})`;
+      // Selected only - Blue gradient
+      const intensity = Math.floor(colorIntensity * 100);
+      fillColor = `hsl(210, ${40 + intensity}%, ${85 - intensity * 0.3}%)`;
+      borderColor = '#1565c0';
     } else if (locationInfo.countActive > 0 && locationInfo.countSelected > 0) {
-      // Mixed - use muted but visible purple
-      fillColor = `rgb(${Math.floor(190 + colorIntensity * 30)}, 170, ${Math.floor(200 + colorIntensity * 55)})`;
-      dashArray = '3';
+      // Mixed - Purple gradient
+      const intensity = Math.floor(colorIntensity * 100);
+      fillColor = `hsl(270, ${40 + intensity}%, ${85 - intensity * 0.3}%)`;
+      borderColor = '#6a1b9a';
     }
 
     return {
       fillColor,
-      weight: 1,
-      opacity,
-      color: '#c0c0c0', // Lighter border color
-      fillOpacity,
-      dashArray,
+      weight: isHovered ? 3 : 1.5,
+      opacity: 1,
+      color: isHovered ? borderColor : borderColor,
+      fillOpacity: isHovered ? fillOpacity + 0.1 : fillOpacity,
+      transition: 'all 0.3s ease',
     };
   };
 
-  // Tooltip content for each region
+  // Enhanced interaction handlers
   const onEachFeature = (feature, layer) => {
     const locationName = feature.properties.shapeName;
     const locationInfo = locationLookup[locationName];
+    
+    layer.on({
+      mouseover: (e) => {
+        setHoveredProvince(locationName);
+        e.target.setStyle(getStyle(feature, true));
+        e.target.bringToFront();
+      },
+      mouseout: (e) => {
+        setHoveredProvince(null);
+        e.target.setStyle(getStyle(feature, false));
+      },
+    });
+    
     if (locationInfo) {
       layer.bindTooltip(`
-        <div style="min-width: 200px;">
-          <strong>${locationInfo.name}</strong><br />
-          Sélectionnés: ${locationInfo.countSelected.toLocaleString('fr-FR')}<br />
-          Actifs: ${locationInfo.countActive.toLocaleString('fr-FR')}<br />
-          Total: ${getTotalCount(locationInfo).toLocaleString('fr-FR')}
+        <div style="
+          min-width: 220px;
+          font-family: 'Titillium Web', sans-serif;
+          padding: 8px;
+          line-height: 1.5;
+        ">
+          <div style="font-weight: 600; font-size: 16px; margin-bottom: 8px; color: #1a237e;">
+            ${locationInfo.name}
+          </div>
+          <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+            <span style="color: #546e7a;">Sélectionnés:</span>
+            <span style="font-weight: 600; color: #1565c0;">${locationInfo.countSelected.toLocaleString('fr-FR')}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+            <span style="color: #546e7a;">Actifs:</span>
+            <span style="font-weight: 600; color: #2e7d32;">${locationInfo.countActive.toLocaleString('fr-FR')}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+            <span style="color: #546e7a;">Suspendus:</span>
+            <span style="font-weight: 600; color: #f44336;">${locationInfo.countSuspended.toLocaleString('fr-FR')}</span>
+          </div>
+          <div style="
+            border-top: 1px solid #e0e0e0;
+            margin-top: 8px;
+            padding-top: 8px;
+            display: flex;
+            justify-content: space-between;
+          ">
+            <span style="font-weight: 600; color: #37474f;">Total:</span>
+            <span style="font-weight: 600; color: #1a237e; font-size: 16px;">
+              ${getTotalCount(locationInfo).toLocaleString('fr-FR')}
+            </span>
+          </div>
         </div>
-      `);
+      `, {
+        sticky: false,
+        direction: 'auto',
+        className: 'custom-tooltip',
+      });
     }
   };
 
-  return (
-    <>
-      <Grid item xs={12} md={6}>
-        {(loading) && (
-        <Box className={className}>
-          <div
-            className={classes.chartContainer}
-            style={{
-              height: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '30px',
-            }}
-          >
-            <div style={{ textAlign: 'center' }}>
-              <CircularProgress size={60} />
-              <Typography style={{ marginTop: 16, marginBottom: 16 }}>Chargement des données...</Typography>
-            </div>
-          </div>
-        </Box>
-        )}
-        {(!loading) && (
-        <Box className={className} ref={mapContainerRef}>
-          <div className={classes.mapContainer}>
-            <Map
-              className={classes.tiles}
-              center={[-3.39, 29.90]} // Set the initial map center (latitude, longitude)
-              zoom={8.3} // Set the initial zoom level
-              style={{ height: mapDimensions.height, width: mapDimensions.width }}
-              scrollWheelZoom={false}
-              zoomSnap={0.1}
-              zoomDelta={0.5}
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              />
+  // Calculate statistics
+  const totalBeneficiaries = locationData.reduce((sum, loc) => sum + getTotalCount(loc), 0);
+  const activeProvinces = locationData.filter(loc => getTotalCount(loc) > 0).length;
+  
+  if (loading || parentLoading) {
+    return (
+      <Box className={classes.loadingContainer}>
+        <CircularProgress size={60} color="primary" />
+        <Typography style={{ marginTop: 16 }} color="textSecondary">
+          Chargement de la carte...
+        </Typography>
+      </Box>
+    );
+  }
 
-              {burundiGeoJSON && locationLookup && (
-              <GeoJSON
-                data={burundiGeoJSON}
-                style={getStyle}
-                onEachFeature={onEachFeature}
-              />
-              )}
-            </Map>
-          </div>
-        </Box>
-        )}
-      </Grid>
-      <Grid item xs={12} md={6}>
-        <Box className={className}>
-          {(loading) && (
-          <div
-            className={classes.chartContainer}
-            style={{
-              height: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '30px',
-            }}
-          >
-            <div style={{ textAlign: 'center' }}>
-              <CircularProgress size={60} />
-              <Typography style={{ marginTop: 16, marginBottom: 16 }}>Chargement des données...</Typography>
+  return (
+    <Box ref={mapContainerRef} style={{ position: 'relative', height: '100%' }}>
+      <div className={classes.mapContainer}>
+        <Map
+          className={classes.tiles}
+          center={[-3.39, 29.90]}
+          zoom={fullMap ? 8 : 8.3}
+          style={{ height: '100%', width: '100%' }}
+          scrollWheelZoom={true}
+          zoomSnap={0.1}
+          zoomDelta={0.5}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          />
+
+          {burundiGeoJSON && locationLookup && (
+            <GeoJSON
+              data={burundiGeoJSON}
+              style={getStyle}
+              onEachFeature={onEachFeature}
+            />
+          )}
+        </Map>
+        
+        {/* Legend */}
+        <Fade in={!loading}>
+          <Paper className={classes.legendContainer}>
+            <Typography className={classes.legendTitle}>
+              <LocationOnIcon fontSize="small" style={{ marginRight: 4 }} />
+              Légende
+            </Typography>
+            <div className={classes.legendItem}>
+              <div className={classes.legendColor} style={{ backgroundColor: 'hsl(210, 80%, 70%)' }} />
+              <span>Bénéficiaires sélectionnés</span>
             </div>
-          </div>
-          )}
-          {(!loading) && (
-          <BoxTable locationData={locationData} getTotalCount={getTotalCount} />
-          )}
-        </Box>
-      </Grid>
-    </>
+            <div className={classes.legendItem}>
+              <div className={classes.legendColor} style={{ backgroundColor: 'hsl(120, 80%, 70%)' }} />
+              <span>Bénéficiaires actifs</span>
+            </div>
+            <div className={classes.legendItem}>
+              <div className={classes.legendColor} style={{ backgroundColor: 'hsl(270, 80%, 70%)' }} />
+              <span>Mixte (sélectionnés + actifs)</span>
+            </div>
+          </Paper>
+        </Fade>
+        
+        {/* Stats Overlay */}
+        <Fade in={!loading}>
+          <Paper className={classes.statsOverlay}>
+            <Box display="flex" alignItems="center" gap={2}>
+              <Chip
+                icon={<GroupIcon />}
+                label={`${totalBeneficiaries.toLocaleString('fr-FR')} bénéficiaires`}
+                color="primary"
+                size="small"
+              />
+              <Chip
+                icon={<CheckCircleIcon />}
+                label={`${activeProvinces} provinces actives`}
+                color="secondary"
+                size="small"
+              />
+            </Box>
+          </Paper>
+        </Fade>
+      </div>
+    </Box>
   );
 }
 

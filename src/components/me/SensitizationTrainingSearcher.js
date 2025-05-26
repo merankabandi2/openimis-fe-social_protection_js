@@ -1,13 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect, useSelector } from 'react-redux';
+import { useIntl } from 'react-intl';
 
-import { IconButton, Tooltip, Chip } from '@material-ui/core';
+import { IconButton, Tooltip, Chip, Box, Typography, Paper } from '@material-ui/core';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import DeleteIcon from '@material-ui/icons/Delete';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import CancelIcon from '@material-ui/icons/Cancel';
 import HourglassEmptyIcon from '@material-ui/icons/HourglassEmpty';
+import FaceIcon from '@material-ui/icons/Face';
+import WcIcon from '@material-ui/icons/Wc';
+import AccessibilityIcon from '@material-ui/icons/Accessibility';
 
 import {
   Searcher,
@@ -52,12 +56,31 @@ function SensitizationTrainingSearcher({
   const modulesManager = useModulesManager();
   const { formatMessage, formatMessageWithValues } = useTranslations(MODULE_NAME, modulesManager);
   const rights = useSelector((store) => store.core.user.i_user.rights ?? []);
+  const intl = useIntl();
 
   const [sensitizationTrainingToDelete, setSensitizationTrainingToDelete] = useState(null);
   const [deletedSensitizationTrainingUuids, setDeletedSensitizationTrainingUuids] = useState([]);
   const [validationDialogOpen, setValidationDialogOpen] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState(null);
   const prevSubmittingMutationRef = useRef();
+
+  // Helper function to get category display label
+  const getCategoryLabel = (categoryKey) => {
+    if (!categoryKey) return '';
+    
+    // Try to get translation first - handle both lowercase and uppercase keys
+    const normalizedKey = categoryKey.toLowerCase();
+    const translationKey = `sensitizationTraining.category.${normalizedKey}`;
+    const translated = intl.formatMessage({ id: translationKey });
+    
+    // If translation exists (not same as key), return it
+    if (translated !== translationKey) {
+      return translated;
+    }
+    
+    // Otherwise return the original value
+    return categoryKey;
+  };
 
   const openDeleteSensitizationTrainingConfirmDialog = () => {
     coreConfirm(
@@ -136,12 +159,8 @@ function SensitizationTrainingSearcher({
     'location.locationType.1',
     'location.locationType.2',
     'sensitizationTraining.category',
-    'me.male_participants',
-    'me.female_participants',
-    'me.twa_participants',
+    'participants.label',
     'validation.status',
-    'emptyLabel',
-    'emptyLabel',
   ];
 
   const sorts = () => [
@@ -160,35 +179,39 @@ function SensitizationTrainingSearcher({
 
   const onDelete = (sensitizationTraining) => setSensitizationTrainingToDelete(sensitizationTraining);
 
+  const renderParticipants = (training) => (
+    <Box display="flex" alignItems="center" flexWrap="wrap" gap={0.5}>
+      <Chip
+        icon={<FaceIcon />}
+        label={training.maleParticipants}
+        size="small"
+        style={{ backgroundColor: '#e3f2fd' }}
+      />
+      <Chip
+        icon={<WcIcon />}
+        label={training.femaleParticipants}
+        size="small"
+        style={{ backgroundColor: '#fce4ec' }}
+      />
+      {training.twaParticipants > 0 && (
+        <Chip
+          icon={<AccessibilityIcon />}
+          label={`${training.twaParticipants} Twa`}
+          size="small"
+          style={{ backgroundColor: '#f3e5f5' }}
+        />
+      )}
+    </Box>
+  );
+
   const itemFormatters = () => [
     (sensitizationTraining) => sensitizationTraining.sensitizationDate,
     (sensitizationTraining) => sensitizationTraining.location.parent.parent.name,
     (sensitizationTraining) => sensitizationTraining.location.parent.name,
     (sensitizationTraining) => sensitizationTraining.location.name,
-    (sensitizationTraining) => sensitizationTraining.category,
-    (sensitizationTraining) => sensitizationTraining.maleParticipants,
-    (sensitizationTraining) => sensitizationTraining.femaleParticipants,
-    (sensitizationTraining) => sensitizationTraining.twaParticipants,
+    (sensitizationTraining) => getCategoryLabel(sensitizationTraining.category),
+    (sensitizationTraining) => renderParticipants(sensitizationTraining),
     (sensitizationTraining) => renderValidationStatus(sensitizationTraining),
-    (sensitizationTraining) => (
-      <Tooltip title={formatMessage('tooltip.viewDetails')}>
-        <IconButton
-          onClick={() => openSensitizationTraining(sensitizationTraining)}
-        >
-          <VisibilityIcon />
-        </IconButton>
-      </Tooltip>
-    ),
-    (sensitizationTraining) => (
-      <Tooltip title={formatMessage('tooltip.delete')}>
-        <IconButton
-          onClick={() => onDelete(sensitizationTraining)}
-          disabled={deletedSensitizationTrainingUuids.includes(sensitizationTraining.id)}
-        >
-          <DeleteIcon />
-        </IconButton>
-      </Tooltip>
-    ),
   ];
 
   const onDoubleClick = (sensitizationTraining) => openSensitizationTraining(sensitizationTraining);
@@ -200,6 +223,37 @@ function SensitizationTrainingSearcher({
   const defaultFilters = () => ({});
 
   const isRowDisabled = (_, sensitizationTraining) => deletedSensitizationTrainingUuids.includes(sensitizationTraining.id);
+
+  const renderLegend = () => (
+    <Paper style={{ padding: '12px 16px', marginBottom: 16, backgroundColor: '#f5f5f5' }}>
+      <Typography variant="subtitle2" style={{ fontWeight: 600, marginBottom: 8 }}>
+        {formatMessage('legend.title')}
+      </Typography>
+      <Box display="flex" alignItems="center" gap={0.5}>
+        <Typography variant="caption" style={{ fontWeight: 500 }}>
+          {formatMessage('legend.participants')}:
+        </Typography>
+        <Chip
+          icon={<FaceIcon />}
+          label={formatMessage('legend.male')}
+          size="small"
+          style={{ backgroundColor: '#e3f2fd' }}
+        />
+        <Chip
+          icon={<WcIcon />}
+          label={formatMessage('legend.female')}
+          size="small"
+          style={{ backgroundColor: '#fce4ec' }}
+        />
+        <Chip
+          icon={<AccessibilityIcon />}
+          label={formatMessage('legend.twa')}
+          size="small"
+          style={{ backgroundColor: '#f3e5f5' }}
+        />
+      </Box>
+    </Paper>
+  );
 
   const exportFields = [
     'sensitization_date',
@@ -249,6 +303,7 @@ function SensitizationTrainingSearcher({
 
   return (
     <>
+      {renderLegend()}
       <Searcher
         module="social_protection"
         fetch={fetchData}

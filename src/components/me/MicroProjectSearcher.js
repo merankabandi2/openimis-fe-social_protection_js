@@ -2,12 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect, useSelector } from 'react-redux';
 
-import { IconButton, Tooltip, Chip } from '@material-ui/core';
+import { IconButton, Tooltip, Chip, Box, Typography, Paper } from '@material-ui/core';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import DeleteIcon from '@material-ui/icons/Delete';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import CancelIcon from '@material-ui/icons/Cancel';
 import HourglassEmptyIcon from '@material-ui/icons/HourglassEmpty';
+import FaceIcon from '@material-ui/icons/Face';
+import WcIcon from '@material-ui/icons/Wc';
+import AccessibilityIcon from '@material-ui/icons/Accessibility';
+import AgricultureIcon from '@material-ui/icons/Eco';
+import PetsIcon from '@material-ui/icons/Pets';
+import StorefrontIcon from '@material-ui/icons/Storefront';
 
 import {
   Searcher,
@@ -143,12 +149,9 @@ function MicroProjectSearcher({
     'location.locationType.0',
     'location.locationType.1',
     'location.locationType.2',
-    'me.male_participants',
-    'me.female_participants',
-    'me.twa_participants',
+    'participants.label',
+    'projectTypes.label',
     'validation.status',
-    'emptyLabel',
-    'emptyLabel',
   ];
 
   const sorts = () => [
@@ -187,34 +190,68 @@ function MicroProjectSearcher({
     );
   };
 
+  const renderParticipants = (microProject) => (
+    <Box display="flex" alignItems="center" flexWrap="wrap" gap={0.5}>
+      <Chip
+        icon={<FaceIcon />}
+        label={microProject.maleParticipants}
+        size="small"
+        style={{ backgroundColor: '#e3f2fd' }}
+      />
+      <Chip
+        icon={<WcIcon />}
+        label={microProject.femaleParticipants}
+        size="small"
+        style={{ backgroundColor: '#fce4ec' }}
+      />
+      {microProject.twaParticipants > 0 && (
+        <Chip
+          icon={<AccessibilityIcon />}
+          label={`${microProject.twaParticipants} Twa`}
+          size="small"
+          style={{ backgroundColor: '#f3e5f5' }}
+        />
+      )}
+    </Box>
+  );
+
+  const renderProjectTypes = (microProject) => (
+    <Box display="flex" alignItems="center" flexWrap="wrap" gap={0.5}>
+      {microProject.agricultureBeneficiaries > 0 && (
+        <Chip
+          icon={<AgricultureIcon />}
+          label={microProject.agricultureBeneficiaries}
+          size="small"
+          color="primary"
+        />
+      )}
+      {microProject.livestockBeneficiaries > 0 && (
+        <Chip
+          icon={<PetsIcon />}
+          label={microProject.livestockBeneficiaries}
+          size="small"
+          color="secondary"
+        />
+      )}
+      {microProject.commerceServicesBeneficiaries > 0 && (
+        <Chip
+          icon={<StorefrontIcon />}
+          label={microProject.commerceServicesBeneficiaries}
+          size="small"
+          style={{ backgroundColor: '#ff9800', color: 'white' }}
+        />
+      )}
+    </Box>
+  );
+
   const itemFormatters = () => [
     (microProject) => microProject.reportDate,
     (microProject) => microProject.location.parent.parent.name,
     (microProject) => microProject.location.parent.name,
     (microProject) => microProject.location.name,
-    (microProject) => microProject.maleParticipants,
-    (microProject) => microProject.femaleParticipants,
-    (microProject) => microProject.twaParticipants,
+    (microProject) => renderParticipants(microProject),
+    (microProject) => renderProjectTypes(microProject),
     (microProject) => renderValidationStatus(microProject),
-    (microProject) => (
-      <Tooltip title={formatMessage('tooltip.viewDetails')}>
-        <IconButton
-          onClick={() => openMicroProject(microProject)}
-        >
-          <VisibilityIcon />
-        </IconButton>
-      </Tooltip>
-    ),
-    (microProject) => (
-      <Tooltip title={formatMessage('tooltip.delete')}>
-        <IconButton
-          onClick={() => onDelete(microProject)}
-          disabled={deletedMicroProjectUuids.includes(microProject.id)}
-        >
-          <DeleteIcon />
-        </IconButton>
-      </Tooltip>
-    ),
   ];
 
   const [indicatorsExport, setIndicatorsExport] = useState();
@@ -255,8 +292,65 @@ function MicroProjectSearcher({
 
   const isRowDisabled = (_, microProject) => deletedMicroProjectUuids.includes(microProject.id);
 
+  const renderLegend = () => (
+    <Paper style={{ padding: '12px 16px', marginBottom: 16, backgroundColor: '#f5f5f5' }}>
+      <Typography variant="subtitle2" style={{ fontWeight: 600, marginBottom: 8 }}>
+        {formatMessage('legend.title')}
+      </Typography>
+      <Box display="flex" flexWrap="wrap" gap={2}>
+        <Box display="flex" alignItems="center" gap={0.5}>
+          <Typography variant="caption" style={{ fontWeight: 500 }}>
+            {formatMessage('legend.participants')}:
+          </Typography>
+          <Chip
+            icon={<FaceIcon />}
+            label={formatMessage('legend.male')}
+            size="small"
+            style={{ backgroundColor: '#e3f2fd' }}
+          />
+          <Chip
+            icon={<WcIcon />}
+            label={formatMessage('legend.female')}
+            size="small"
+            style={{ backgroundColor: '#fce4ec' }}
+          />
+          <Chip
+            icon={<AccessibilityIcon />}
+            label={formatMessage('legend.twa')}
+            size="small"
+            style={{ backgroundColor: '#f3e5f5' }}
+          />
+        </Box>
+        <Box display="flex" alignItems="center" gap={0.5}>
+          <Typography variant="caption" style={{ fontWeight: 500 }}>
+            {formatMessage('legend.projectTypes')}:
+          </Typography>
+          <Chip
+            icon={<AgricultureIcon />}
+            label={formatMessage('legend.agriculture')}
+            size="small"
+            color="primary"
+          />
+          <Chip
+            icon={<PetsIcon />}
+            label={formatMessage('legend.livestock')}
+            size="small"
+            color="secondary"
+          />
+          <Chip
+            icon={<StorefrontIcon />}
+            label={formatMessage('legend.commerce')}
+            size="small"
+            style={{ backgroundColor: '#ff9800', color: 'white' }}
+          />
+        </Box>
+      </Box>
+    </Paper>
+  );
+
   return (
     <>
+      {renderLegend()}
       <Searcher
         module="socialProtection"
         fetch={fetchData}

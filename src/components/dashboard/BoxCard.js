@@ -9,12 +9,24 @@ import ReceiptIcon from '@material-ui/icons/Receipt';
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    // Add any custom styles here
+    height: '100%',
+    position: 'relative',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      height: 4,
+      backgroundColor: props => props.color || theme.palette.primary.main,
+      borderRadius: '4px 4px 0 0',
+    },
   },
   avatar: {
-    backgroundColor: theme.palette.primary.main,
-    height: 56,
-    width: 56,
+    backgroundColor: props => props.color ? `${props.color}20` : `${theme.palette.primary.main}20`,
+    color: props => props.color || theme.palette.primary.main,
+    height: props => props.compact ? 48 : 56,
+    width: props => props.compact ? 48 : 56,
   },
   contentWrapper: {
     display: 'flex',
@@ -22,43 +34,58 @@ const useStyles = makeStyles((theme) => ({
     justifyContent: 'space-between',
   },
   textWrapper: {
-    marginRight: theme.spacing(3),
+    marginRight: theme.spacing(2),
+    flex: 1,
+  },
+  value: {
+    fontWeight: 700,
+    color: theme.palette.text.primary,
+  },
+  label: {
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+  },
+  loadingContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: props => props.compact ? 80 : 100,
   },
 }));
 
 function BoxCard({
-  label, value, valueVariant = 'h4', className, icon = <ReceiptIcon fontSize="large" />, isLoading = false,
+  label, value, valueVariant = 'h4', className, icon = <ReceiptIcon fontSize="large" />, isLoading = false, color, compact = false, subtitle = null,
 }) {
-  const classes = useStyles();
+  const classes = useStyles({ color, compact });
 
   return (
-    <Card className={className}>
-      <CardContent>
-        {(isLoading) && (
-          <div
-            className={classes.chartContainer}
-            style={{
-              height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', marginTop: '20px',
-            }}
-          >
-            <div style={{ textAlign: 'center' }}>
-              <CircularProgress size={60} />
-              <Typography style={{ marginTop: 16, marginBottom: 16 }}>Chargement des données...</Typography>
-            </div>
+    <Card className={`${className} ${classes.root}`}>
+      <CardContent style={{ padding: compact ? '12px 16px' : '16px' }}>
+        {isLoading ? (
+          <div className={classes.loadingContainer}>
+            <CircularProgress size={40} style={{ color: color || 'inherit' }} />
           </div>
-        )}
-        {(!isLoading) && (
+        ) : (
           <Box className={classes.contentWrapper}>
             <Box className={classes.textWrapper}>
-              <Typography color="textSecondary" variant="overline">
+              <Typography className={classes.label} color="textSecondary" variant="overline">
                 {label}
               </Typography>
-              <Box mt={1}>
-                <Typography variant={valueVariant}>{value}</Typography>
+              <Box mt={compact ? 0.5 : 1}>
+                <Typography variant={compact ? 'h5' : valueVariant} className={classes.value}>
+                  {value}
+                </Typography>
+                {subtitle && subtitle.trim() !== '' && (
+                  <Typography variant="caption" style={{ color: 'rgba(0, 0, 0, 0.6)', marginTop: 4, display: 'block' }}>
+                    {subtitle}
+                  </Typography>
+                )}
               </Box>
             </Box>
             <Avatar className={classes.avatar}>
-              {icon}
+              {React.cloneElement(icon, { fontSize: compact ? 'default' : 'large' })}
             </Avatar>
           </Box>
         )}
