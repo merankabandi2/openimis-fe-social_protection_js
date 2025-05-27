@@ -1,50 +1,36 @@
 import React from 'react';
-import { injectIntl } from 'react-intl';
-import { Grid } from '@material-ui/core';
-import { TextInput } from '@openimis/fe-core';
-import { withTheme, withStyles } from '@material-ui/core/styles';
-import _debounce from 'lodash/debounce';
-import {
-  CONTAINS_LOOKUP,
-  DEFAULT_DEBOUNCE_TIME,
-  EMPTY_STRING,
-} from '../constants';
-import { defaultFilterStyles } from '../util/styles';
+import { Filter } from '@openimis/fe-core';
+import { CONTAINS_LOOKUP, MODULE_NAME } from '../constants';
+import ProjectStatusPicker from '../pickers/ProjectStatusPicker';
+import ActivityPicker from '../pickers/ActivityPicker';
 
-// TODO Wei: skeleton only, make it functional
-function BenefitPlanProjectsFilter({
-  classes, filters, onChangeFilters,
+function ProjectFilter({
+  filters, onChangeFilters,
 }) {
-  const debouncedOnChangeFilters = _debounce(onChangeFilters, DEFAULT_DEBOUNCE_TIME);
+  const filterFields = [
+    { name: 'name', label: 'project.name', lookup: CONTAINS_LOOKUP },
+  ];
 
-  const filterTextFieldValue = (filterName) => filters?.[filterName]?.value ?? EMPTY_STRING;
+  const pickerFields = [
+    { name: 'status', component: ProjectStatusPicker, props: { nullLabel: 'any', withNull: true } },
+    { name: 'activity', component: ActivityPicker },
+  ];
 
-  const onChangeStringFilter = (filterName, lookup = null) => (value) => {
-    const filter = lookup
-      ? `${filterName}_${lookup}: "${value}"`
-      : `${filterName}: "${value}"`;
-
-    debouncedOnChangeFilters([
-      {
-        id: filterName,
-        value,
-        filter,
-      },
-    ]);
-  };
+  const checkboxFields = [
+    { name: 'isDeleted', label: 'project.isDeleted' },
+  ];
 
   return (
-    <Grid container className={classes.form}>
-      <Grid item xs={3} className={classes.item}>
-        <TextInput
-          module="socialProtection"
-          label="project.name"
-          value={filterTextFieldValue('name')}
-          onChange={onChangeStringFilter('name', CONTAINS_LOOKUP)}
-        />
-      </Grid>
-    </Grid>
+    <Filter
+      moduleName={MODULE_NAME}
+      filters={filters}
+      onChangeFilters={onChangeFilters}
+      filterFields={filterFields}
+      pickerFields={pickerFields}
+      checkboxFields={checkboxFields}
+      withLocationFilter
+    />
   );
 }
 
-export default injectIntl(withTheme(withStyles(defaultFilterStyles)(BenefitPlanProjectsFilter)));
+export default ProjectFilter;

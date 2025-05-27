@@ -35,7 +35,7 @@ import {
   deleteProject,
   undoDeleteProject,
 } from '../actions';
-import BenefitPlanProjectsFilter from './BenefitPlanProjectsFilter';
+import ProjectFilter from './BenefitPlanProjectsFilter';
 import {
   LOC_LEVELS,
   locationFormatter,
@@ -80,7 +80,7 @@ function BenefitPlanProjectsSearcher({
 
   const openUndoProjectConfirmDialog = () => coreConfirm(
     formatMessageWithValues(intl, MODULE_NAME, 'project.undo.confirm.title', {
-      name: projectToUndo.firstName,
+      name: projectToUndo.name,
     }),
     formatMessage(intl, MODULE_NAME, 'project.undo.confirm.message'),
   );
@@ -113,7 +113,7 @@ function BenefitPlanProjectsSearcher({
       undoDeleteProject(
         projectToUndo,
         formatMessageWithValues(intl, MODULE_NAME, 'project.undo.mutationLabel', {
-          id: projectToUndo?.id,
+          name: projectToUndo?.name,
         }),
       );
       setUndoProjectUuids([...undoProjectUuids, projectToUndo.id]);
@@ -219,6 +219,10 @@ function BenefitPlanProjectsSearcher({
     ['workingDays', true],
   ];
 
+  // TODO (Wei): rework the UI to hide deleted row instead
+  const isRowDisabled = (_, project) => deletedProjectUuids.includes(project.id)
+      || undoProjectUuids.includes(project.id);
+
   const defaultFilters = () => ({
     isDeleted: {
       value: false,
@@ -233,7 +237,7 @@ function BenefitPlanProjectsSearcher({
   });
 
   const benefitPlanProjectsFilter = (props) => (
-    <BenefitPlanProjectsFilter
+    <ProjectFilter
       intl={props.intl}
       classes={props.classes}
       filters={props.filters}
@@ -277,6 +281,8 @@ function BenefitPlanProjectsSearcher({
       headers={headers}
       itemFormatters={itemFormatters}
       sorts={sorts}
+      rowDisabled={isRowDisabled}
+      rowLocked={isRowDisabled}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
       defaultPageSize={DEFAULT_PAGE_SIZE}
       defaultOrderBy="-name"

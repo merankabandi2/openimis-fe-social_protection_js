@@ -73,6 +73,7 @@ const PROJECT_FULL_PROJECTION = (modulesManager) => [
   'workingDays',
   'activity {id, name}',
   'location' + modulesManager.getProjection('location.Location.FlatProjection'),
+  'isDeleted',
 ];
 
 export function fetchBenefitPlans(params) {
