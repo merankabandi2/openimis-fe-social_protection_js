@@ -388,6 +388,46 @@ export function createProject(project, clientMutationLabel) {
   );
 }
 
+export function deleteProject(project, clientMutationLabel) {
+  const projectUuids = `ids: ["${project?.id}"]`;
+  const mutation = formatMutation('deleteProject', projectUuids, clientMutationLabel);
+  const requestedDateTime = new Date();
+  return graphql(
+    mutation.payload,
+    [
+      REQUEST(ACTION_TYPE.MUTATION),
+      SUCCESS(ACTION_TYPE.DELETE_PROJECT),
+      ERROR(ACTION_TYPE.MUTATION),
+    ],
+    {
+      actionType: ACTION_TYPE.DELETE_PROJECT,
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+    },
+  );
+}
+
+export function undoDeleteProject(project, clientMutationLabel) {
+  const projectUuids = `ids: ["${project?.id}"]`;
+  const mutation = formatMutation('undoDeleteProject', projectUuids, clientMutationLabel);
+  const requestedDateTime = new Date();
+  return graphql(
+    mutation.payload,
+    [
+      REQUEST(ACTION_TYPE.MUTATION),
+      SUCCESS(ACTION_TYPE.UNDO_DELETE_PROJECT),
+      ERROR(ACTION_TYPE.MUTATION),
+    ],
+    {
+      actionType: ACTION_TYPE.UNDO_DELETE_PROJECT,
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+    },
+  );
+}
+
 export function benefitPlanCodeValidationCheck(modulesManager, variables) {
   return graphqlWithVariables(
     `

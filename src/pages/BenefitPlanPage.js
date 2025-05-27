@@ -70,7 +70,7 @@ function BenefitPlanPage({
   }, [benefitPlanUuid]);
 
   useEffect(() => {
-    if (confirmed) confirmedAction();
+    if (confirmed && confirmedAction) confirmedAction();
     return () => confirmed && clearConfirm(null);
   }, [confirmed]);
 

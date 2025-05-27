@@ -46,6 +46,8 @@ export const ACTION_TYPE = {
   SEARCH_BENEFIT_PLANS_HISTORY: 'BENEFIT_PLAN_BENEFIT_PLANS_HISTORY',
   SEARCH_PROJECTS: 'BENEFIT_PLAN_PROJECTS',
   CREATE_PROJECT: 'BENEFIT_PLAN_CREATE_PROJECT',
+  DELETE_PROJECT: 'BENEFIT_PLAN_DELETE_PROJECT',
+  UNDO_DELETE_PROJECT: 'BENEFIT_PLAN_UNDO_DELETE_PROJECT',
   PROJECT_NAME_FIELDS_VALIDATION: 'PROJECT_NAME_FIELDS_VALIDATION',
   PROJECT_NAME_SET_VALID: 'PROJECT_NAME_SET_VALID',
 };
@@ -811,6 +813,10 @@ function reducer(
       return dispatchMutationResp(state, 'updateGroupBeneficiary', action);
     case SUCCESS(ACTION_TYPE.CREATE_PROJECT):
       return dispatchMutationResp(state, 'createProject', action);
+    case SUCCESS(ACTION_TYPE.DELETE_PROJECT):
+      return dispatchMutationResp(state, 'deleteProject', action);
+    case SUCCESS(ACTION_TYPE.UNDO_DELETE_PROJECT):
+      return dispatchMutationResp(state, 'undoDeleteProject', action);
     case SUCCESS(ACTION_TYPE.RESOLVE_TASK):
       return dispatchMutationResp(state, 'resolveTask', action);
     case REQUEST(ACTION_TYPE.TASK_MUTATION):

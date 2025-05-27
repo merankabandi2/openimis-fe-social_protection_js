@@ -166,7 +166,7 @@
   "social_protection.gql_schema_delete_perms": "Social Protection | Schema Delete",
   "social_protection.gql_activity_search_perms": "Social Protection | Activity Search",
   "social_protection.gql_project_search_perms": "Social Protection | Project Search",
-  "social_protection.gql_project_create_perms": "Social Protection | Project Create"
+  "social_protection.gql_project_create_perms": "Social Protection | Project Create",
   "socialProtection.projects.label": "Projects",
   "socialProtection.projects.searcherResultsTitle": "{projectsTotalCount} Projects",
   "socialProtection.projects.searcherAddAction": "Create Project",
@@ -184,5 +184,14 @@
   "socialProtection.project.statusPicker.IN PROGRESS": "In Progress",
   "socialProtection.project.statusPicker.COMPLETED": "Completed",
   "socialProtection.project.benefitPlan": "Program",
-  "socialProtection.project.create.mutationLabel": "Created project {name}"
+  "socialProtection.project.create.mutationLabel": "Created project {name}",
+  "project": {
+    "delete": {
+      "confirm": {
+        "title": "Delete project {name}?",
+        "message": "Deleting a project does not mean erasing it from OpenIMIS database. The project will only be deactivated and hidden in the default list view."
+      },
+      "mutationLabel": "Deleted project {name}"
+    }
+  }
 }

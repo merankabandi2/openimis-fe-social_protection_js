@@ -1,6 +1,7 @@
 // Disable due to core architecture
 /* eslint-disable camelcase */
 /* eslint-disable import/prefer-default-export */
+import flatten from 'flat';
 import React from 'react';
 import { Tune } from '@material-ui/icons';
 import { FormattedMessage } from '@openimis/fe-core';
@@ -82,7 +83,7 @@ const ROUTE_BENEFIT_PACKAGE = 'benefitPackage';
 const ROUTE_PROJECT = 'project';
 
 const DEFAULT_CONFIG = {
-  translations: [{ key: 'en', messages: messages_en }],
+  translations: [{ key: 'en', messages: flatten(messages_en) }],
   reducers: [{ key: 'socialProtection', reducer }],
   'core.MainMenu': [{ name: 'BenefitPlanMainMenu', component: BenefitPlanMainMenu }],
   'core.Router': [
@@ -96,7 +97,10 @@ const DEFAULT_CONFIG = {
       path: `${ROUTE_BENEFIT_PLAN}/:benefit_plan_uuid?/${ROUTE_BENEFIT_PACKAGE}/group/:group_beneficiaries_uuid?`,
       component: BenefitPackagePage,
     },
-    { path: `${ROUTE_BENEFIT_PLAN}/:benefit_plan_uuid?/${ROUTE_PROJECT}/:project_uuid?`, component: ProjectPage },
+    {
+      path: `${ROUTE_BENEFIT_PLAN}/:benefit_plan_uuid?/${ROUTE_PROJECT}/:project_uuid?`,
+      component: ProjectPage,
+    },
   ],
   refs: [
     { key: 'socialProtection.route.benefitPlan', ref: ROUTE_BENEFIT_PLAN },
