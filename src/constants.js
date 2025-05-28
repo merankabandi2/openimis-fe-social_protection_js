@@ -177,6 +177,12 @@ export const SECTION_LIST_ROUTE = 'socialProtection.route.sectionList';
 export const INDICATOR_ROUTE = 'socialProtection.route.indicator';
 export const INDICATOR_LIST_ROUTE = 'socialProtection.route.indicatorList';
 
+// Kobo ETL Rights
+export const RIGHT_KOBO_ETL_VIEW = '180001';
+export const RIGHT_KOBO_ETL_RUN = '180002';
+
+export const KOBO_ETL_ROUTE = 'socialProtection.route.koboETLAdmin';
+
 export const locationAtLevel = (lowestLevelLoc, level) => {
   let location = lowestLevelLoc;
   let levelDiff = level;

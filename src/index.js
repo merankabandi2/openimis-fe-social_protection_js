@@ -2,7 +2,7 @@
 /* eslint-disable camelcase */
 /* eslint-disable import/prefer-default-export */
 import React from 'react';
-import { Tune, Dashboard } from '@material-ui/icons';
+import { Tune, Dashboard, Sync } from '@material-ui/icons';
 import { FormattedMessage } from '@openimis/fe-core';
 import messages_en from './translations/en.json';
 import messages_fr from './translations/fr.json';
@@ -11,6 +11,7 @@ import BenefitPlanMainMenu from './menus/BenefitPlanMainMenu';
 import BenefitPlansPage from './pages/BenefitPlansPage';
 import BenefitPlanPage from './pages/BenefitPlanPage';
 import BenefitPackagePage from './pages/BenefitPackagePage';
+import KoboETLAdminPage from './pages/KoboETLAdminPage';
 import BeneficiaryStatusPicker from './pickers/BeneficiaryStatusPicker';
 import {
   BenefitPlanBeneficiariesListTabPanel,
@@ -71,6 +72,9 @@ import {
   MONETARY_TRANSFERS_ROUTE,
   RESULT_FRAMEWORK_ROUTE,
   RIGHT_MONETARY_TRANSFER_SEARCH,
+  RIGHT_KOBO_ETL_VIEW,
+  RIGHT_KOBO_ETL_RUN,
+  KOBO_ETL_ROUTE,
 } from './constants';
 import BeneficiaryPicker from './pickers/BeneficiaryPicker';
 import SectionPicker from './pickers/SectionPicker';
@@ -108,6 +112,7 @@ import MEResultFrameworkPage from './pages/MEResultFrameworkPage';
 import MEDashboard from './components/dashboards/MEDashboard';
 import ResultsFrameworkDashboard from './components/dashboard/ResultsFrameworkDashboard';
 import ActivitiesDashboard from './components/dashboard/ActivitiesDashboard';
+import ActivitiesDashboardEnhanced from './components/dashboard/ActivitiesDashboardEnhanced';
 
 const ROUTE_BENEFIT_PLANS = 'benefitPlans';
 const ROUTE_BENEFIT_PLAN = 'benefitPlans/benefitPlan';
@@ -120,6 +125,7 @@ const ROUTE_MONETARY_TRANSFER = `${ROUTE_ME}/monetary-transfers/monetary-transfe
 const ROUTE_ME_DASHBOARD = `${ROUTE_ME}/dashboard`;
 const ROUTE_RESULTS_FRAMEWORK_DASHBOARD = `${ROUTE_ME}/results-framework-dashboard`;
 const ROUTE_ACTIVITIES_DASHBOARD = `${ROUTE_ME}/activities-dashboard`;
+const ROUTE_KOBO_ETL_ADMIN = 'socialProtection/koboETLAdmin';
 
 const DEFAULT_CONFIG = {
   translations: [
@@ -174,6 +180,7 @@ const DEFAULT_CONFIG = {
     { path: ROUTE_ME_DASHBOARD, component: MEDashboard },
     { path: ROUTE_RESULTS_FRAMEWORK_DASHBOARD, component: ResultsFrameworkDashboard },
     { path: ROUTE_ACTIVITIES_DASHBOARD, component: ActivitiesDashboard },
+    { path: ROUTE_KOBO_ETL_ADMIN, component: KoboETLAdminPage },
   ],
   refs: [
     { key: 'socialProtection.route.benefitPlan', ref: ROUTE_BENEFIT_PLAN },
@@ -203,6 +210,7 @@ const DEFAULT_CONFIG = {
     { key: 'socialProtection.ResultsFrameworkDashboard', ref: ResultsFrameworkDashboard },
     { key: 'socialProtection.route.activitiesDashboard', ref: ROUTE_ACTIVITIES_DASHBOARD },
     { key: 'socialProtection.ActivitiesDashboard', ref: ActivitiesDashboard },
+    { key: 'socialProtection.route.koboETLAdmin', ref: ROUTE_KOBO_ETL_ADMIN },
   ],
   'benefitPlan.TabPanel.label': [
     BenefitPlanBeneficiariesListTabLabel,
@@ -282,6 +290,13 @@ const DEFAULT_CONFIG = {
       route: '/benefitPlans',
       filter: (rights) => rights.includes(RIGHT_BENEFIT_PLAN_SEARCH),
       id: 'socialProtection.benefitPlans',
+    },
+    {
+      text: <FormattedMessage module="socialProtection" id="menu.socialProtection.koboETLAdmin" />,
+      icon: <Sync />,
+      route: `/${ROUTE_KOBO_ETL_ADMIN}`,
+      filter: (rights) => rights.includes(RIGHT_KOBO_ETL_VIEW),
+      id: 'socialProtection.koboETLAdmin',
     },
   ],
   'me.MainMenu': [

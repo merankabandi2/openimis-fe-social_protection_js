@@ -235,19 +235,19 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
   // Create detail series only when seriesData is available
   const detailSeries = seriesData ? [
     {
-      name: 'Hommes Payés',
+      name: 'Paiements Hommes - Effectués',
       data: seriesData.map(item => item.malePaid),
     },
     {
-      name: 'Hommes Non Payés',
+      name: 'Paiements Hommes - En Attente',
       data: seriesData.map(item => item.maleUnpaid),
     },
     {
-      name: 'Femmes Payées',
+      name: 'Paiements Femmes - Effectués',
       data: seriesData.map(item => item.femalePaid),
     },
     {
-      name: 'Femmes Non Payées',
+      name: 'Paiements Femmes - En Attente',
       data: seriesData.map(item => item.femaleUnpaid),
     },
   ] : [];
@@ -365,7 +365,7 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
     },
     yaxis: {
       title: {
-        text: 'Nombre de bénéficiaires',
+        text: 'Nombre de paiements',
         style: {
           fontSize: '12px',
         },
@@ -377,7 +377,7 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
     tooltip: {
       y: {
         formatter: function (val) {
-          return val.toLocaleString('fr-FR') + " bénéficiaires";
+          return val.toLocaleString('fr-FR') + " paiements";
         },
       },
     },
@@ -396,7 +396,7 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
         {header && (
           <div className={classes.cardHeader}>
             <Typography variant="h6" className={classes.title}>
-              Transferts Monétaires
+              Enregistrements de Paiements
             </Typography>
           </div>
         )}
@@ -425,7 +425,7 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
                     {stats.totalBeneficiaries.toLocaleString('fr-FR')}
                   </Typography>
                   <Typography className={classes.statLabel}>
-                    Total Bénéficiaires
+                    Total Paiements
                   </Typography>
                 </div>
                 <div className={classes.statCard} style={{ borderColor: '#00E396' }}>
@@ -433,7 +433,7 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
                     {stats.totalPaid.toLocaleString('fr-FR')}
                   </Typography>
                   <Typography className={classes.statLabel}>
-                    Payés ({stats.overallPaidRate}%)
+                    Effectués ({stats.overallPaidRate}%)
                   </Typography>
                 </div>
                 <div className={classes.statCard} style={{ borderColor: '#FF4560' }}>
@@ -441,7 +441,7 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
                     {stats.totalUnpaid.toLocaleString('fr-FR')}
                   </Typography>
                   <Typography className={classes.statLabel}>
-                    Non Payés
+                    En Attente
                   </Typography>
                 </div>
               </div>
@@ -466,7 +466,7 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
                       </Typography>
                       <Chip
                         size="small"
-                        label={`${item.paidRate}% payé`}
+                        label={`${item.paidRate}% effectué`}
                         style={{
                           backgroundColor: parseFloat(item.paidRate) > 80 ? '#e8f5e9' : '#ffebee',
                           color: parseFloat(item.paidRate) > 80 ? '#2e7d32' : '#c62828',
@@ -476,7 +476,7 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
                     </Box>
                     <Box display="flex" gap={1} flexWrap="wrap">
                       <Typography variant="caption" color="textSecondary">
-                        Total: {item.total.toLocaleString('fr-FR')}
+                        Total paiements: {item.total.toLocaleString('fr-FR')}
                       </Typography>
                       <Typography variant="caption" color="textSecondary">
                         • Hommes: {((item.malePaid + item.maleUnpaid) / item.total * 100).toFixed(0)}%
