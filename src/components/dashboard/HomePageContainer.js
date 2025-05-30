@@ -7,7 +7,7 @@ import {
   useUserQuery,
   useModulesManager,
 } from '@openimis/fe-core';
-import EnhancedDashboard from './EnhancedDashboard';
+import Dashboard from './Dashboard';
 
 const useStyles = makeStyles((theme) => ({
   container: theme.page,
@@ -48,7 +48,7 @@ function HomePageContainer() {
     <Grid container className={classes.container} spacing={2}>
       <Grid item xs={12}>
         <Box mt={2}>
-          <EnhancedDashboard />
+          <Dashboard />
         </Box>
       </Grid>
     </Grid>

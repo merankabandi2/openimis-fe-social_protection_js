@@ -95,11 +95,33 @@ function MonetaryTransferPage({
       && editedMonetaryTransfer?.location
       && editedMonetaryTransfer?.programme
       && editedMonetaryTransfer?.paymentAgency
+      && editedMonetaryTransfer?.plannedAmount !== undefined
+      && editedMonetaryTransfer?.plannedAmount !== null
+      && editedMonetaryTransfer?.transferredAmount !== undefined
+      && editedMonetaryTransfer?.transferredAmount !== null
       && !editedMonetaryTransfer?.isDeleted) return false;
     return true;
   };
 
-  const canSave = () => !mandatoryFieldsEmpty();
+  const hasValidationErrors = () => {
+    const paidWomen = Number(editedMonetaryTransfer?.paidWomen || 0);
+    const plannedWomen = Number(editedMonetaryTransfer?.plannedWomen || 0);
+    const paidMen = Number(editedMonetaryTransfer?.paidMen || 0);
+    const plannedMen = Number(editedMonetaryTransfer?.plannedMen || 0);
+    const paidTwa = Number(editedMonetaryTransfer?.paidTwa || 0);
+    const plannedTwa = Number(editedMonetaryTransfer?.plannedTwa || 0);
+    const transferredAmount = Number(editedMonetaryTransfer?.transferredAmount || 0);
+    const plannedAmount = Number(editedMonetaryTransfer?.plannedAmount || 0);
+
+    return (
+      paidWomen > plannedWomen ||
+      paidMen > plannedMen ||
+      paidTwa > plannedTwa ||
+      transferredAmount > plannedAmount
+    );
+  };
+
+  const canSave = () => !mandatoryFieldsEmpty() && !hasValidationErrors();
 
   const handleSave = () => {
     if (monetaryTransfer?.id) {

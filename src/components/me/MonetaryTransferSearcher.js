@@ -2,10 +2,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect, useSelector } from 'react-redux';
 
-import { IconButton, Tooltip, Button } from '@material-ui/core';
+import { IconButton, Tooltip, Button, Chip, Box, Typography, Paper } from '@material-ui/core';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import DeleteIcon from '@material-ui/icons/Delete';
 import GetAppIcon from '@material-ui/icons/GetApp';
+import FaceIcon from '@material-ui/icons/Face';
+import WcIcon from '@material-ui/icons/Wc';
+import AccessibilityIcon from '@material-ui/icons/Accessibility';
+import CheckCircleIcon from '@material-ui/icons/CheckCircle';
+import CancelIcon from '@material-ui/icons/Cancel';
 
 import {
   Searcher,
@@ -96,9 +101,10 @@ function MonetaryTransferSearcher({
     'location',
     'programme',
     'paymentAgency',
-    'Women',
-    'Men',
-    'Twa',
+    'beneficiaries.planned',
+    'beneficiaries.paid',
+    'plannedAmount',
+    'transferredAmount',
     'emptyLabel',
     'emptyLabel',
   ];
@@ -120,14 +126,70 @@ function MonetaryTransferSearcher({
 
   const onDelete = (monetaryTransfer) => setMonetaryTransferToDelete(monetaryTransfer);
 
+  const renderBeneficiaries = (monetaryTransfer, type) => {
+    const isPlanned = type === 'planned';
+    const women = isPlanned ? monetaryTransfer.plannedWomen : monetaryTransfer.paidWomen;
+    const men = isPlanned ? monetaryTransfer.plannedMen : monetaryTransfer.paidMen;
+    const twa = isPlanned ? monetaryTransfer.plannedTwa : monetaryTransfer.paidTwa;
+    
+    // Calculate payment status for paid beneficiaries
+    const womenStatus = !isPlanned && monetaryTransfer.plannedWomen > 0 
+      ? monetaryTransfer.paidWomen >= monetaryTransfer.plannedWomen 
+      : null;
+    const menStatus = !isPlanned && monetaryTransfer.plannedMen > 0 
+      ? monetaryTransfer.paidMen >= monetaryTransfer.plannedMen 
+      : null;
+    const twaStatus = !isPlanned && monetaryTransfer.plannedTwa > 0 
+      ? monetaryTransfer.paidTwa >= monetaryTransfer.plannedTwa 
+      : null;
+    
+    return (
+      <Box display="flex" alignItems="center" flexWrap="wrap" gap={0.5}>
+        <Chip
+          icon={<WcIcon />}
+          label={women}
+          size="small"
+          style={{ 
+            backgroundColor: isPlanned ? '#fce4ec' : (womenStatus === true ? '#c8e6c9' : womenStatus === false ? '#ffcdd2' : '#fce4ec')
+          }}
+        />
+        <Chip
+          icon={<FaceIcon />}
+          label={men}
+          size="small"
+          style={{ 
+            backgroundColor: isPlanned ? '#e3f2fd' : (menStatus === true ? '#c8e6c9' : menStatus === false ? '#ffcdd2' : '#e3f2fd')
+          }}
+        />
+        {(twa > 0 || (!isPlanned && monetaryTransfer.plannedTwa > 0)) && (
+          <Chip
+            icon={<AccessibilityIcon />}
+            label={`${twa} Twa`}
+            size="small"
+            style={{ 
+              backgroundColor: isPlanned ? '#f3e5f5' : (twaStatus === true ? '#c8e6c9' : twaStatus === false ? '#ffcdd2' : '#f3e5f5')
+            }}
+          />
+        )}
+      </Box>
+    );
+  };
+
+  // Helper function to format currency amounts
+  const formatCurrency = (amount) => {
+    if (!amount && amount !== 0) return '0 BIF';
+    return `${Number(amount).toLocaleString('fr-FR')} BIF`;
+  };
+
   const itemFormatters = () => [
     (monetaryTransfer) => monetaryTransfer.transferDate,
     (monetaryTransfer) => monetaryTransfer.location?.name,
     (monetaryTransfer) => monetaryTransfer.programme?.name,
     (monetaryTransfer) => monetaryTransfer.paymentAgency?.name,
-    (monetaryTransfer) => `${monetaryTransfer?.paidWomen}/${monetaryTransfer.plannedWomen}`,
-    (monetaryTransfer) => `${monetaryTransfer?.paidMen}/${monetaryTransfer.plannedMen}`,
-    (monetaryTransfer) => `${monetaryTransfer?.paidTwa}/${monetaryTransfer.plannedTwa}`,
+    (monetaryTransfer) => renderBeneficiaries(monetaryTransfer, 'planned'),
+    (monetaryTransfer) => renderBeneficiaries(monetaryTransfer, 'paid'),
+    (monetaryTransfer) => formatCurrency(monetaryTransfer.plannedAmount),
+    (monetaryTransfer) => formatCurrency(monetaryTransfer.transferredAmount),
     (monetaryTransfer) => (
       <Tooltip title={formatMessage('tooltip.viewDetails')}>
         <IconButton
@@ -172,6 +234,8 @@ function MonetaryTransferSearcher({
     'paid_men',
     'planned_twa',
     'paid_twa',
+    'planned_amount',
+    'transferred_amount',
   ];
 
   const exportFieldsColumns = {
@@ -185,6 +249,8 @@ function MonetaryTransferSearcher({
     paid_men: formatMessage('paidMen'),
     planned_twa: formatMessage('plannedTwa'),
     paid_twa: formatMessage('paidTwa'),
+    planned_amount: formatMessage('plannedAmount'),
+    transferred_amount: formatMessage('transferredAmount'),
   };
 
   const [transfersExport, setTransfersExport] = useState();
@@ -270,8 +336,72 @@ function MonetaryTransferSearcher({
     fetchData(filters);
   };
 
+  const renderLegend = () => (
+    <Paper style={{ padding: '12px 16px', marginBottom: 16, backgroundColor: '#f5f5f5' }}>
+      <Typography variant="subtitle2" style={{ fontWeight: 600, marginBottom: 8 }}>
+        {formatMessage('legend.title')}
+      </Typography>
+      <Box display="flex" flexWrap="wrap" gap={2}>
+        <Box display="flex" alignItems="center" gap={0.5}>
+          <Typography variant="caption" style={{ fontWeight: 500 }}>
+            {formatMessage('legend.beneficiaries')}:
+          </Typography>
+          <Chip
+            icon={<WcIcon />}
+            label={formatMessage('legend.women')}
+            size="small"
+            style={{ backgroundColor: '#fce4ec' }}
+          />
+          <Chip
+            icon={<FaceIcon />}
+            label={formatMessage('legend.men')}
+            size="small"
+            style={{ backgroundColor: '#e3f2fd' }}
+          />
+          <Chip
+            icon={<AccessibilityIcon />}
+            label={formatMessage('legend.twa')}
+            size="small"
+            style={{ backgroundColor: '#f3e5f5' }}
+          />
+        </Box>
+        <Box display="flex" alignItems="center" gap={0.5}>
+          <Typography variant="caption" style={{ fontWeight: 500 }}>
+            {formatMessage('legend.paymentStatus')}:
+          </Typography>
+          <Chip
+            icon={<CheckCircleIcon />}
+            label={formatMessage('legend.fullyPaid')}
+            size="small"
+            style={{ backgroundColor: '#c8e6c9' }}
+          />
+          <Chip
+            icon={<CancelIcon />}
+            label={formatMessage('legend.partiallyPaid')}
+            size="small"
+            style={{ backgroundColor: '#ffcdd2' }}
+          />
+        </Box>
+      </Box>
+    </Paper>
+  );
+
   return (
     <>
+      <Box display="flex" justifyContent="flex-end" marginBottom={2} gap={1}>
+        <MonetaryTransferUploadDialog 
+          onUploadSuccess={onRefresh}
+        />
+        <Button
+          variant="contained"
+          color="default"
+          startIcon={<GetAppIcon />}
+          onClick={downloadExcel}
+        >
+          {formatMessage('monetaryTransfer.export.excel')}
+        </Button>
+      </Box>
+      {renderLegend()}
       <Searcher
         module="social_protection"
         fetch={fetchData}
@@ -297,22 +427,6 @@ function MonetaryTransferSearcher({
         exportFieldsColumns={exportFieldsColumns}
         exportFieldLabel={formatMessage('export.label')}
         FilterPane={monetaryTransferFilter}
-        actions={[
-          <MonetaryTransferUploadDialog 
-            key="upload"
-            onUploadSuccess={onRefresh}
-          />,
-          <Button
-            key="excel-export"
-            variant="contained"
-            color="default"
-            startIcon={<GetAppIcon />}
-            onClick={downloadExcel}
-            style={{ marginLeft: 8 }}
-          >
-            {formatMessage('monetaryTransfer.export.excel')}
-          </Button>
-        ]}
       />
     </>
   );

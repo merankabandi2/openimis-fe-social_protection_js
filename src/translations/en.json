@@ -379,5 +379,34 @@
   "monetaryTransfer.upload.selectValidFile": "Please select an Excel (.xlsx, .xls) or CSV (.csv) file",
   "monetaryTransfer.upload.templateError": "Error downloading template",
   "monetaryTransfer.upload.noFile": "No file selected",
-  "monetaryTransfer.upload.error": "Error during import"
+  "monetaryTransfer.upload.error": "Error during import",
+  
+  "beneficiaries.planned": "Planned Beneficiaries",
+  "beneficiaries.paid": "Paid Beneficiaries",
+  "legend.title": "Legend",
+  "legend.beneficiaries": "Beneficiaries",
+  "legend.women": "Women",
+  "legend.men": "Men",
+  "legend.twa": "Twa",
+  "legend.paymentStatus": "Payment Status",
+  "legend.fullyPaid": "Fully Paid",
+  "legend.partiallyPaid": "Partially Paid",
+  
+  "plannedAmount": "Planned Amount",
+  "transferredAmount": "Transferred Amount",
+  
+  "monetaryTransfer.form.basicInfo": "Basic Information",
+  "monetaryTransfer.form.plannedBeneficiaries": "Planned Beneficiaries",
+  "monetaryTransfer.form.paidBeneficiaries": "Paid Beneficiaries",
+  "monetaryTransfer.form.financialAmounts": "Financial Amounts",
+  "monetaryTransfer.form.transferSummary": "Transfer Summary",
+  "monetaryTransfer.form.totalPlanned": "Total Planned",
+  "monetaryTransfer.form.totalPaid": "Total Paid",
+  "monetaryTransfer.form.paymentRate": "Payment Rate",
+  "monetaryTransfer.form.transferRate": "Transfer Rate",
+  "monetaryTransfer.form.validation.exceedsPlanned": "Cannot exceed planned amount",
+  "monetaryTransfer.form.validation.exceedsPlannedBeneficiaries": "Cannot exceed planned beneficiaries",
+  
+  "monetaryTransfer.list.page.title": "Monetary Transfers List",
+  "monetaryTransfer.dashboard.page.title": "Monetary Transfers Dashboard"
 }

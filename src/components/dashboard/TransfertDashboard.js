@@ -236,7 +236,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 // Dashboard component
-function MonetaryTransfertDashboard() {
+function TransfertDashboard() {
   const [locations, setLocations] = useState([]);
   const [benefitPlans, setBenefitPlans] = useState([]);
   const [filters, setFilters] = useState({
@@ -352,7 +352,7 @@ function MonetaryTransfertDashboard() {
           <div className={classes.pageHeader}>
             <Typography className={classes.pageTitle}>
               <AccountBalanceIcon className={classes.titleIcon} />
-              Tableau de Bord - Transferts Monétaires
+              Tableau de Bord - Transferts
             </Typography>
             <Tooltip title="Actualiser les données">
               <IconButton 
@@ -614,4 +614,4 @@ const mapStateToProps = () => ({});
 
 const mapDispatchToProps = (dispatch) => bindActionCreators({}, dispatch);
 
-export default connect(mapStateToProps, mapDispatchToProps)(MonetaryTransfertDashboard);
+export default connect(mapStateToProps, mapDispatchToProps)(TransfertDashboard);

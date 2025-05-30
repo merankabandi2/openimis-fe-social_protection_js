@@ -217,6 +217,20 @@
   "monetaryTransfer.upload.noFile": "Aucun fichier sélectionné",
   "monetaryTransfer.upload.error": "Erreur lors de l'importation",
   
+  "beneficiaries.planned": "Bénéficiaires prévus",
+  "beneficiaries.paid": "Bénéficiaires payés",
+  "legend.title": "Légende",
+  "legend.beneficiaries": "Bénéficiaires",
+  "legend.women": "Femmes",
+  "legend.men": "Hommes",
+  "legend.twa": "Twa",
+  "legend.paymentStatus": "Statut de paiement",
+  "legend.fullyPaid": "Entièrement payé",
+  "legend.partiallyPaid": "Partiellement payé",
+  
+  "monetaryTransfer.list.page.title": "Liste des Transferts Monétaires",
+  "monetaryTransfer.dashboard.page.title": "Tableau de Bord - Transferts Monétaires",
+  
   "section.label": "Section",
   "section.picker.none": "Aucune",
   "section.page.title": "Sections",

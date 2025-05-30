@@ -108,6 +108,8 @@ import SectionPage from './pages/SectionPage';
 import HomePageContainer from './components/dashboard/HomePageContainer';
 import MonetaryTransferPage from './pages/MonetaryTransferPage';
 import MonetaryTransfersPage from './pages/MonetaryTransfersPage';
+import MonetaryTransfersListPage from './pages/MonetaryTransfersListPage';
+import MonetaryTransfersDashboardPage from './pages/MonetaryTransfersDashboardPage';
 import MEResultFrameworkPage from './pages/MEResultFrameworkPage';
 import MEDashboard from './components/dashboards/MEDashboard';
 import OptimizedMEDashboard from './components/dashboards/OptimizedMEDashboard';
@@ -123,6 +125,8 @@ const ROUTE_ME = 'me';
 
 const ROUTE_RESULT_FRAMEWORK = `${ROUTE_ME}/result-framework`;
 const ROUTE_MONETARY_TRANSFERS = `${ROUTE_ME}/monetary-transfers`;
+const ROUTE_MONETARY_TRANSFERS_LIST = `${ROUTE_ME}/monetary-transfers-list`;
+const ROUTE_MONETARY_TRANSFERS_DASHBOARD = `${ROUTE_ME}/monetary-transfers-dashboard`;
 const ROUTE_MONETARY_TRANSFER = `${ROUTE_ME}/monetary-transfers/monetary-transfer`;
 const ROUTE_ME_DASHBOARD = `${ROUTE_ME}/dashboard`;
 const ROUTE_RESULTS_FRAMEWORK_DASHBOARD = `${ROUTE_ME}/results-framework-dashboard`;
@@ -177,6 +181,8 @@ const DEFAULT_CONFIG = {
     },
     { path: ROUTE_MONETARY_TRANSFERS, component: MonetaryTransfersPage },
     { path: 'socialProtection/monetaryTransfers', component: MonetaryTransfersPage },
+    { path: ROUTE_MONETARY_TRANSFERS_LIST, component: MonetaryTransfersListPage },
+    { path: ROUTE_MONETARY_TRANSFERS_DASHBOARD, component: MonetaryTransfersDashboardPage },
     { path: ROUTE_RESULT_FRAMEWORK, component: MEResultFrameworkPage },
     { path: `${ROUTE_MONETARY_TRANSFER}/:monetary_transfer_uuid?`, component: MonetaryTransferPage },
     { path: ROUTE_ME_DASHBOARD, component: MEDashboard },
