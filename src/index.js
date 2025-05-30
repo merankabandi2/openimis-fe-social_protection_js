@@ -156,38 +156,33 @@ const DEFAULT_CONFIG = {
       component: BenefitPackagePage,
     },
     {
-      path: `${ROUTE_ME}/indicators`,
-      component: MEIndicatorsPage,
-    },
-    {
       path: `${ROUTE_ME}/rf/indicators`,
       component: IndicatorsPage,
     },
     {
-      path: 'socialProtection/indicators',
-      component: IndicatorsPage,
-    },
-    {
-      path: 'socialProtection/indicators/indicator/:indicator_id?',
+      path: `${ROUTE_ME}/rf/indicators/indicator/:indicator_id?`,
       component: IndicatorPage,
     },
     {
-      path: 'socialProtection/sections',
+      path: `${ROUTE_ME}/rf/sections`,
       component: SectionsPage,
     },
     {
-      path: 'socialProtection/sections/section/:section_id?',
+      path: `${ROUTE_ME}/rf/sections/section/:section_id?`,
       component: SectionPage,
     },
     { path: ROUTE_MONETARY_TRANSFERS, component: MonetaryTransfersPage },
-    { path: 'socialProtection/monetaryTransfers', component: MonetaryTransfersPage },
     { path: ROUTE_MONETARY_TRANSFERS_LIST, component: MonetaryTransfersListPage },
     { path: ROUTE_MONETARY_TRANSFERS_DASHBOARD, component: MonetaryTransfersDashboardPage },
     { path: ROUTE_RESULT_FRAMEWORK, component: MEResultFrameworkPage },
     { path: `${ROUTE_MONETARY_TRANSFER}/:monetary_transfer_uuid?`, component: MonetaryTransferPage },
     { path: ROUTE_ME_DASHBOARD, component: MEDashboard },
     { path: ROUTE_RESULTS_FRAMEWORK_DASHBOARD, component: ResultsFrameworkDashboard },
-    { path: ROUTE_ACTIVITIES_DASHBOARD, component: ActivitiesDashboard },
+    {
+      path: `${ROUTE_ME}/activities`,
+      component: MEIndicatorsPage,
+    },
+    { path: ROUTE_ACTIVITIES_DASHBOARD, component: ActivitiesDashboardEnhanced },
     { path: ROUTE_KOBO_ETL_ADMIN, component: KoboETLAdminPage },
   ],
   refs: [

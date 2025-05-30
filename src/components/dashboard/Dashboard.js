@@ -6,30 +6,23 @@ import {
   Grid,
   makeStyles,
   ThemeProvider,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Paper,
   Typography,
-  Button,
   IconButton,
   Tooltip,
   CircularProgress,
+  Box,
 } from '@material-ui/core';
 import { createTheme } from '@material-ui/core/styles';
-import { baseApiUrl, apiHeaders, decodeId, useGraphqlQuery } from '@openimis/fe-core';
+import { decodeId } from '@openimis/fe-core';
 import HomeIcon from '@material-ui/icons/Home';
 import Person from '@material-ui/icons/Person';
 import PeopleAltIcon from '@material-ui/icons/PeopleAlt';
 import AttachMoneyIcon from '@material-ui/icons/AttachMoney';
 import ReceiptIcon from '@material-ui/icons/Receipt';
 import PlaceIcon from '@material-ui/icons/Place';
-import FilterListIcon from '@material-ui/icons/FilterList';
 import AssignmentIcon from '@material-ui/icons/Assignment';
 import BarChartIcon from '@material-ui/icons/BarChart';
-import FaceIcon from '@material-ui/icons/Face';
-import AccessibilityIcon from '@material-ui/icons/Accessibility';
 import RefreshIcon from '@material-ui/icons/Refresh';
 import MapComponent from './MapComponent';
 import BoxCard from './BoxCard';
@@ -37,6 +30,7 @@ import TicketsPieChart from './TicketsPieChart';
 import TransfersChart from './TransfersChart';
 import ActivitiesBarChart from './ActivitiesBarChart';
 import { useOptimizedDashboard } from '../../hooks/useOptimizedDashboard';
+import ModernDashboardFilters from '../filters/ModernDashboardFilters';
 
 // Create a custom theme
 const theme = createTheme({
@@ -52,6 +46,7 @@ const theme = createTheme({
     },
   },
 });
+
 
 // Custom styles
 const useStyles = makeStyles((theme) => ({
@@ -94,40 +89,6 @@ const useStyles = makeStyles((theme) => ({
     height: '450px',
     position: 'relative',
   },
-  filterContainer: {
-    padding: theme.spacing(2),
-    marginBottom: theme.spacing(2),
-    backgroundColor: '#fff',
-    borderRadius: theme.spacing(1),
-    boxShadow: '0 0 20px rgba(0,0,0,.06)',
-  },
-  filterFormControl: {
-    margin: theme.spacing(1),
-    minWidth: 120,
-  },
-  filterTitle: {
-    marginBottom: theme.spacing(2),
-    display: 'flex',
-    alignItems: 'center',
-    color: theme.palette.text.primary,
-    fontWeight: 600,
-  },
-  filterIcon: {
-    marginRight: theme.spacing(1),
-    color: theme.palette.primary.main,
-  },
-  filterActions: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    height: '100%',
-    paddingRight: theme.spacing(1),
-  },
-  select: {
-    '& .MuiOutlinedInput-root': {
-      borderRadius: theme.spacing(1),
-    },
-  },
   sectionTitle: {
     marginBottom: theme.spacing(2),
     marginTop: theme.spacing(3),
@@ -136,46 +97,25 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-// GraphQL query for locations and benefit plans
-const LOCATIONS_AND_PLANS_QUERY = `
-  query LocationsAndPlans {
-    locations(type: "D") {
-      edges {
-        node {
-          id
-          uuid
-          name
-          code
-          type
-        }
-      }
-    }
-    benefitPlan(isDeleted: false) {
-      edges {
-        node {
-          id
-          name
-          code
-        }
-      }
-    }
-  }
-`;
 
 // Dashboard component
 function Dashboard() {
   const [filters, setFilters] = useState({
-    locationId: '',
-    benefitPlanId: '',
-    year: '',
+    provinces: [],
+    districts: [],
+    benefitPlans: [],
+    year: new Date().getFullYear(),
+    yearRange: [2020, new Date().getFullYear()],
+    status: [],
+    dateRange: { start: null, end: null },
   });
-  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
   // Convert filters to optimized dashboard format
   const optimizedFilters = useMemo(() => ({
-    provinceId: filters.locationId ? parseInt(decodeId(filters.locationId)) : undefined,
+    provinceId: Array.isArray(filters.provinces) && filters.provinces.length > 0 ? parseInt(decodeId(filters.provinces[0])) : undefined,
+    districtId: Array.isArray(filters.districts) && filters.districts.length > 0 ? parseInt(decodeId(filters.districts[0])) : undefined,
     year: filters.year ? parseInt(filters.year) : undefined,
-    benefitPlanId: filters.benefitPlanId ? decodeId(filters.benefitPlanId) : undefined,
+    benefitPlanId: Array.isArray(filters.benefitPlans) && filters.benefitPlans.length > 0 ? decodeId(filters.benefitPlans[0]) : undefined,
   }), [filters]);
 
   // Use optimized dashboard hook
@@ -194,42 +134,9 @@ function Dashboard() {
     includeTransfers: true,
   });
 
-  // Query for locations and benefit plans
-  const { data: locationsAndPlans } = useGraphqlQuery(
-    LOCATIONS_AND_PLANS_QUERY,
-    {},
-    {}
-  );
 
-  const locations = useMemo(() => {
-    if (!locationsAndPlans?.locations) return [];
-    return locationsAndPlans.locations.edges.map(edge => edge.node)
-      .filter(node => node.type === 'R' || node.type === 'D');
-  }, [locationsAndPlans]);
-
-  const benefitPlans = useMemo(() => {
-    if (!locationsAndPlans?.benefitPlan) return [];
-    return locationsAndPlans.benefitPlan.edges.map(edge => edge.node);
-  }, [locationsAndPlans]);
-
-  const handleFilterChange = (event) => {
-    const { name, value } = event.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleApplyFilters = () => {
-    // Filters are applied automatically through the hook
-  };
-
-  const handleResetFilters = () => {
-    setFilters({
-      locationId: '',
-      benefitPlanId: '',
-      year: '',
-    });
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
   };
 
   const handleRefresh = async () => {
@@ -252,7 +159,6 @@ function Dashboard() {
   const locationData = breakdown?.locationBreakdown || [];
   const transferMetrics = performance?.overallMetrics || {};
   const grievanceData = grievances?.summary || {};
-  const grievanceStatus = grievances?.statusDistribution || [];
 
   // Separate data for different entities
   const totalBeneficiaries = summaryData.totalBeneficiaries || 0; // groupbeneficiary count
@@ -284,6 +190,9 @@ function Dashboard() {
     return `${formatNumber(amount)} BIF`;
   };
 
+  // Use grievance data from the main dashboard hook (respects dashboard filters)
+  const grievanceStatus = grievances?.statusDistribution || [];
+  
   // Prepare grievance data for pie chart
   const ticketsData = grievanceStatus.map(item => ({
     status: item.category,
@@ -295,102 +204,27 @@ function Dashboard() {
       <div className={classes.wrapper}>
         <Container maxWidth={false} className={classes.contentArea}>
           <div className="main">
-            <Paper className={classes.filterContainer}>
-              <Grid container alignItems="center" spacing={2}>
-                <Grid item xs>
-                  <Typography className={classes.filterTitle}>
-                    <FilterListIcon className={classes.filterIcon} />
-                    Filtres du tableau de bord
-                  </Typography>
-                </Grid>
-                <Grid item>
-                  <Tooltip title={lastRefresh ? `Dernière mise à jour: ${new Date(lastRefresh).toLocaleString('fr-FR')}` : 'Actualiser les données'}>
-                    <IconButton 
-                      onClick={handleRefresh} 
-                      disabled={isRefreshing}
-                      size="small"
-                      color="primary"
-                    >
-                      {isRefreshing ? <CircularProgress size={20} /> : <RefreshIcon />}
-                    </IconButton>
-                  </Tooltip>
-                </Grid>
-              </Grid>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6} md={3}>
-                  <FormControl variant="outlined" className={classes.filterFormControl} fullWidth size="small">
-                    <InputLabel id="location-label">Province</InputLabel>
-                    <Select
-                      labelId="location-label"
-                      name="locationId"
-                      value={filters.locationId}
-                      onChange={handleFilterChange}
-                      label="Province"
-                      className={classes.select}
-                    >
-                      <MenuItem value="">
-                        <em>Toutes les provinces</em>
-                      </MenuItem>
-                      {locations.map(loc => (
-                        <MenuItem key={loc.uuid} value={loc.uuid}>{loc.name}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6} md={4}>
-                  <FormControl variant="outlined" className={classes.filterFormControl} fullWidth size="small">
-                    <InputLabel id="benefit-plan-label">Intervention</InputLabel>
-                    <Select
-                      labelId="benefit-plan-label"
-                      name="benefitPlanId"
-                      value={filters.benefitPlanId}
-                      onChange={handleFilterChange}
-                      label="Intervention"
-                      className={classes.select}
-                    >
-                      <MenuItem value="">
-                        <em>Toutes les interventions</em>
-                      </MenuItem>
-                      {benefitPlans.map(plan => (
-                        <MenuItem key={plan.id} value={plan.id}>{plan.name}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6} md={2}>
-                  <FormControl variant="outlined" className={classes.filterFormControl} fullWidth size="small">
-                    <InputLabel id="year-label">Année</InputLabel>
-                    <Select
-                      labelId="year-label"
-                      name="year"
-                      value={filters.year}
-                      onChange={handleFilterChange}
-                      label="Année"
-                      className={classes.select}
-                    >
-                      <MenuItem value="">
-                        <em>Toutes</em>
-                      </MenuItem>
-                      {years.map(year => (
-                        <MenuItem key={year} value={year}>{year}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                  <div className={classes.filterActions}>
-                    <Button
-                      variant="outlined"
-                      color="default"
-                      onClick={handleResetFilters}
-                      style={{ marginRight: 8 }}
-                      size="small"
-                    >
-                      Réinitialiser
-                    </Button>
-                  </div>
-                </Grid>
-              </Grid>
+            {/* Modern Dashboard Filters */}
+            <ModernDashboardFilters
+              onFiltersChange={handleFilterChange}
+              defaultFilters={filters}
+              filterTypes={['location', 'benefitPlan', 'year']}
+            />
+            
+            {/* Refresh Button */}
+            <Paper className={classes.refreshContainer}>
+              <Box display="flex" justifyContent="flex-end" p={1}>
+                <Tooltip title={lastRefresh ? `Dernière mise à jour: ${new Date(lastRefresh).toLocaleString('fr-FR')}` : 'Actualiser les données'}>
+                  <IconButton 
+                    onClick={handleRefresh} 
+                    disabled={isRefreshing}
+                    size="small"
+                    color="primary"
+                  >
+                    {isRefreshing ? <CircularProgress size={20} /> : <RefreshIcon />}
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </Paper>
             {/* Key Metrics Row */}
             <Grid container spacing={2}>

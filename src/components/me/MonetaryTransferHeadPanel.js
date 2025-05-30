@@ -1,15 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { injectIntl } from 'react-intl';
 
 import { 
   Grid, 
   Paper, 
   Typography, 
-  Divider, 
   Box,
   Chip,
   Tooltip,
-  InputAdornment 
+  InputAdornment,
+  Button,
+  Switch,
+  FormControlLabel,
+  Collapse
 } from '@material-ui/core';
 import { withTheme, withStyles } from '@material-ui/core/styles';
 import InfoIcon from '@material-ui/icons/Info';
@@ -17,6 +20,10 @@ import PersonIcon from '@material-ui/icons/Person';
 import WcIcon from '@material-ui/icons/Wc';
 import AccessibilityIcon from '@material-ui/icons/Accessibility';
 import AttachMoneyIcon from '@material-ui/icons/AttachMoney';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ExpandLessIcon from '@material-ui/icons/ExpandLess';
+import ViewComfyIcon from '@material-ui/icons/ViewComfy';
+import ViewListIcon from '@material-ui/icons/ViewList';
 
 import {
   FormPanel,
@@ -36,6 +43,138 @@ const styles = (theme) => ({
   fullHeight: {
     height: '100%',
   },
+  // Simple view styles (default) - Modern UI/UX with reduced spacing
+  simpleView: {
+    backgroundColor: '#fafafa',
+    padding: theme.spacing(2),
+    borderRadius: theme.spacing(1.5),
+    border: '1px solid #e8e8e8',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+    
+    // Target both outlined and underlined inputs
+    '& .MuiOutlinedInput-root, & .MuiInput-root': {
+      border: '1px solid #d1d5db !important',
+      borderRadius: '8px !important',
+      backgroundColor: '#ffffff !important',
+      transition: 'all 0.2s ease-in-out !important',
+      '&:hover': {
+        border: '1px solid #3b82f6 !important',
+        backgroundColor: '#ffffff !important',
+        transform: 'translateY(-1px)',
+        boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15) !important',
+      },
+      '&.Mui-focused': {
+        border: '2px solid #3b82f6 !important',
+        backgroundColor: '#ffffff !important',
+        boxShadow: '0 0 0 2px rgba(59, 130, 246, 0.1), 0 2px 8px rgba(59, 130, 246, 0.15) !important',
+        transform: 'translateY(-1px)',
+      },
+      '&.Mui-error': {
+        border: '1px solid #ef4444 !important',
+        backgroundColor: '#fef2f2 !important',
+        '&:hover': {
+          border: '1px solid #ef4444 !important',
+          backgroundColor: '#fef2f2 !important',
+          boxShadow: '0 2px 8px rgba(239, 68, 68, 0.15) !important',
+        },
+        '&.Mui-focused': {
+          border: '2px solid #ef4444 !important',
+          backgroundColor: '#ffffff !important',
+          boxShadow: '0 0 0 2px rgba(239, 68, 68, 0.1), 0 2px 8px rgba(239, 68, 68, 0.15) !important',
+        },
+      },
+    },
+    
+    // Hide default underlines and outlines since we're adding custom borders
+    '& .MuiOutlinedInput-notchedOutline': {
+      border: 'none !important',
+    },
+    '& .MuiInput-underline:before, & .MuiInput-underline:after': {
+      display: 'none !important',
+    },
+    
+    // Always visible labels - force shrink state
+    '& .MuiInputLabel-root': {
+      color: '#6b7280 !important',
+      fontWeight: '500 !important',
+      fontSize: '0.75rem !important',
+      transform: 'translate(14px, -6px) scale(1) !important',
+      transformOrigin: 'top left !important',
+      background: 'transparent !important',
+      padding: '0 4px !important',
+      '&.Mui-focused': {
+        color: '#3b82f6 !important',
+        fontWeight: '600 !important',
+      },
+      '&.Mui-error': {
+        color: '#ef4444 !important',
+        fontWeight: '600 !important',
+      },
+    },
+    
+    // Override any auto-shrinking behavior
+    '& .MuiInputLabel-outlined': {
+      transform: 'translate(14px, -6px) scale(1) !important',
+      background: 'linear-gradient(to bottom, transparent 40%, #fafafa 40%, #fafafa 60%, transparent 60%) !important',
+    },
+    
+    // Helper text styling
+    '& .MuiFormHelperText-root': {
+      fontSize: '0.6875rem !important',
+      marginTop: '2px !important',
+      marginLeft: '2px !important',
+      '&.Mui-error': {
+        color: '#ef4444 !important',
+        fontWeight: '500 !important',
+      },
+    },
+    
+    // Input text styling with adjusted padding for visible labels
+    '& .MuiInputBase-input': {
+      padding: '18px 14px 10px 14px !important',
+      fontSize: '0.875rem !important',
+      fontWeight: '500 !important',
+      color: '#1f2937 !important',
+      '&::placeholder': {
+        color: '#9ca3af !important',
+        opacity: 1,
+      },
+    },
+  },
+  
+  // Section headers styling with reduced spacing
+  sectionHeader: {
+    color: '#374151',
+    fontWeight: '600',
+    fontSize: '0.9rem',
+    marginBottom: theme.spacing(1.5),
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.75),
+    '&::before': {
+      content: '""',
+      width: '3px',
+      height: '16px',
+      backgroundColor: '#3b82f6',
+      borderRadius: '2px',
+    },
+  },
+  
+  // Reduced field container spacing
+  fieldContainer: {
+    marginBottom: theme.spacing(1.5),
+  },
+  compactField: {
+    marginBottom: theme.spacing(1),
+  },
+  inlineFields: {
+    display: 'flex',
+    gap: theme.spacing(1),
+    '& > *': {
+      flex: 1,
+    },
+  },
+  // Detailed view styles
   sectionPaper: {
     padding: theme.spacing(2),
     marginBottom: theme.spacing(2),
@@ -66,21 +205,40 @@ const styles = (theme) => ({
       marginBottom: 0,
     },
   },
+  // Common styles
   validationError: {
-    borderColor: theme.palette.error.main,
     '& .MuiOutlinedInput-root': {
       borderColor: theme.palette.error.main,
     },
   },
   validationSuccess: {
-    borderColor: theme.palette.success.main,
     '& .MuiOutlinedInput-root': {
       borderColor: theme.palette.success.main,
     },
   },
-  fieldWithIcon: {
-    '& .MuiInputBase-root': {
-      paddingLeft: theme.spacing(1),
+  viewToggle: {
+    marginBottom: theme.spacing(2),
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  quickSummary: {
+    padding: theme.spacing(1.5),
+    backgroundColor: '#f8fafc',
+    border: '1px solid #e2e8f0',
+    borderRadius: '12px',
+    marginTop: theme.spacing(2),
+    display: 'flex',
+    justifyContent: 'space-around',
+    gap: theme.spacing(1.5),
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    '& > *': {
+      textAlign: 'center',
+      flex: 1,
+      padding: theme.spacing(0.75),
+      borderRadius: '6px',
+      backgroundColor: '#ffffff',
+      border: '1px solid #f1f5f9',
     },
   },
 });
@@ -88,6 +246,13 @@ const styles = (theme) => ({
 const isEmptyObject = (obj) => Object.keys(obj).length === 0;
 
 class MonetaryTransferHeadPanel extends FormPanel {
+  constructor(props) {
+    super(props);
+    this.state = {
+      detailedView: false, // Start with simple view
+    };
+  }
+
   // Helper function to format currency
   formatCurrency = (amount) => {
     if (!amount && amount !== 0) return '0';
@@ -132,13 +297,231 @@ class MonetaryTransferHeadPanel extends FormPanel {
     return plannedAmount > 0 ? Math.round((transferredAmount / plannedAmount) * 100) : 0;
   };
 
-  render() {
-    const {
-      edited,
-      classes,
-      readOnly,
-      intl,
-    } = this.props;
+  toggleView = () => {
+    this.setState(prevState => ({
+      detailedView: !prevState.detailedView
+    }));
+  };
+
+  renderSimpleView = () => {
+    const { edited, classes, readOnly, intl } = this.props;
+    const monetaryTransfer = { ...edited };
+
+    // Validation states
+    const womenValid = this.validatePaidVsPlanned(monetaryTransfer?.paidWomen, monetaryTransfer?.plannedWomen);
+    const menValid = this.validatePaidVsPlanned(monetaryTransfer?.paidMen, monetaryTransfer?.plannedMen);
+    const twaValid = this.validatePaidVsPlanned(monetaryTransfer?.paidTwa, monetaryTransfer?.plannedTwa);
+    const amountValid = this.validateAmountVsPlanned(monetaryTransfer?.transferredAmount, monetaryTransfer?.plannedAmount);
+
+    return (
+      <div className={classes.simpleView}>
+        <Grid container spacing={2}>
+          {/* Row 1: Basic Information */}
+          <Grid item xs={12}>
+            <div className={classes.sectionHeader}>
+              Informations de base
+            </div>
+          </Grid>
+          <Grid item xs={12} md={6} className={classes.fieldContainer}>
+            <PublishedComponent
+              pubRef="location.CommuneLocation"
+              withNull
+              required
+              readOnly={readOnly}
+              filterLabels={false}
+              value={monetaryTransfer?.location}
+              onChange={(locations) => this.updateAttribute('location', locations)}
+            />
+          </Grid>
+          <Grid item xs={12} md={6} className={classes.fieldContainer}>
+            <PublishedComponent
+              readOnly={readOnly}
+              pubRef="core.DatePicker"
+              required
+              value={monetaryTransfer?.transferDate}
+              onChange={(transferDate) => this.updateAttribute('transferDate', transferDate)}
+              label={formatMessage(intl, 'social_protection', 'monetaryTransfer.transferDate')}
+            />
+          </Grid>
+          <Grid item xs={12} md={6} className={classes.fieldContainer}>
+            <PublishedComponent
+              pubRef="socialProtection.BenefitPlanPicker"
+              value={
+                monetaryTransfer.programme && !isEmptyObject(monetaryTransfer.programme)
+                  ? monetaryTransfer.programme
+                  : null
+              }
+              readOnly={readOnly}
+              label={formatMessage(intl, 'paymentPlan', 'benefitPlan')}
+              required
+              onChange={(programme) => this.updateAttribute('programme', programme)}
+              type={BENEFIT_PLAN_TYPE.GROUP}
+            />
+          </Grid>
+          <Grid item xs={12} md={6} className={classes.fieldContainer}>
+            <PublishedComponent
+              pubRef="payroll.PaymentPointPicker"
+              required
+              withNull={false}
+              readOnly={readOnly}
+              value={!!monetaryTransfer?.paymentAgency && monetaryTransfer.paymentAgency}
+              onChange={(paymentAgency) => this.updateAttribute('paymentAgency', paymentAgency)}
+              label={formatMessage(intl, 'payroll', 'paymentPoint')}
+            />
+          </Grid>
+
+          {/* Row 2: Beneficiaries - Full width layout for better data entry */}
+          <Grid item xs={12} style={{ marginTop: 12 }}>
+            <div className={classes.sectionHeader}>
+              Bénéficiaires
+            </div>
+          </Grid>
+          
+          {/* Planned beneficiaries in full-width grid */}
+          <Grid item xs={12} md={4} className={classes.fieldContainer}>
+            <NumberInput
+              module="socialProtection"
+              label="plannedWomen"
+              onChange={(v) => this.updateAttribute('plannedWomen', v)}
+              value={monetaryTransfer?.plannedWomen ?? ''}
+              readOnly={readOnly}
+              required
+              min={0}
+            />
+          </Grid>
+          <Grid item xs={12} md={4} className={classes.fieldContainer}>
+            <NumberInput
+              module="socialProtection"
+              label="plannedMen"
+              onChange={(v) => this.updateAttribute('plannedMen', v)}
+              value={monetaryTransfer?.plannedMen ?? ''}
+              readOnly={readOnly}
+              required
+              min={0}
+            />
+          </Grid>
+          <Grid item xs={12} md={4} className={classes.fieldContainer}>
+            <NumberInput
+              module="socialProtection"
+              label="plannedTwa"
+              onChange={(v) => this.updateAttribute('plannedTwa', v)}
+              value={monetaryTransfer?.plannedTwa ?? ''}
+              readOnly={readOnly}
+              required
+              min={0}
+            />
+          </Grid>
+          
+          {/* Paid beneficiaries in full-width grid */}
+          <Grid item xs={12} md={4} className={classes.fieldContainer}>
+            <NumberInput
+              module="socialProtection"
+              label="paidWomen"
+              onChange={(v) => this.updateAttribute('paidWomen', v)}
+              value={monetaryTransfer?.paidWomen ?? ''}
+              readOnly={readOnly}
+              required
+              min={0}
+              error={!womenValid}
+              helperText={!womenValid ? 'Ne peut pas dépasser le nombre prévu' : ''}
+            />
+          </Grid>
+          <Grid item xs={12} md={4} className={classes.fieldContainer}>
+            <NumberInput
+              module="socialProtection"
+              label="paidMen"
+              onChange={(v) => this.updateAttribute('paidMen', v)}
+              value={monetaryTransfer?.paidMen ?? ''}
+              readOnly={readOnly}
+              required
+              min={0}
+              error={!menValid}
+              helperText={!menValid ? 'Ne peut pas dépasser le nombre prévu' : ''}
+            />
+          </Grid>
+          <Grid item xs={12} md={4} className={classes.fieldContainer}>
+            <NumberInput
+              module="socialProtection"
+              label="paidTwa"
+              onChange={(v) => this.updateAttribute('paidTwa', v)}
+              value={monetaryTransfer?.paidTwa ?? ''}
+              readOnly={readOnly}
+              required
+              min={0}
+              error={!twaValid}
+              helperText={!twaValid ? 'Ne peut pas dépasser le nombre prévu' : ''}
+            />
+          </Grid>
+
+          {/* Row 3: Amounts */}
+          <Grid item xs={12} style={{ marginTop: 12 }}>
+            <div className={classes.sectionHeader}>
+              Montants (BIF)
+            </div>
+          </Grid>
+          <Grid item xs={12} md={6} className={classes.fieldContainer}>
+            <AmountInput
+              module="socialProtection"
+              label="plannedAmount"
+              onChange={(v) => this.updateAttribute('plannedAmount', v)}
+              value={monetaryTransfer?.plannedAmount ?? ''}
+              readOnly={readOnly}
+              required
+              displayZero
+            />
+          </Grid>
+          <Grid item xs={12} md={6} className={classes.fieldContainer}>
+            <AmountInput
+              module="socialProtection"
+              label="transferredAmount"
+              onChange={(v) => this.updateAttribute('transferredAmount', v)}
+              value={monetaryTransfer?.transferredAmount ?? ''}
+              readOnly={readOnly}
+              required
+              displayZero
+              error={!amountValid}
+              helperText={!amountValid ? 'Ne peut pas dépasser le montant prévu' : ''}
+            />
+          </Grid>
+
+          {/* Quick Summary */}
+          {(this.getTotalPlanned(monetaryTransfer) > 0 || monetaryTransfer?.plannedAmount) && (
+            <Grid item xs={12}>
+              <div className={classes.quickSummary}>
+                <div>
+                  <Typography variant="caption" color="textSecondary">Total Prévu</Typography>
+                  <Typography variant="body2" style={{ fontWeight: 600 }}>
+                    {this.getTotalPlanned(monetaryTransfer)} bénéf.
+                  </Typography>
+                </div>
+                <div>
+                  <Typography variant="caption" color="textSecondary">Total Payé</Typography>
+                  <Typography variant="body2" style={{ fontWeight: 600 }}>
+                    {this.getTotalPaid(monetaryTransfer)} bénéf.
+                  </Typography>
+                </div>
+                <div>
+                  <Typography variant="caption" color="textSecondary">Montant Prévu</Typography>
+                  <Typography variant="body2" style={{ fontWeight: 600 }}>
+                    {this.formatCurrency(monetaryTransfer?.plannedAmount)} BIF
+                  </Typography>
+                </div>
+                <div>
+                  <Typography variant="caption" color="textSecondary">Montant Transféré</Typography>
+                  <Typography variant="body2" style={{ fontWeight: 600 }}>
+                    {this.formatCurrency(monetaryTransfer?.transferredAmount)} BIF
+                  </Typography>
+                </div>
+              </div>
+            </Grid>
+          )}
+        </Grid>
+      </div>
+    );
+  };
+
+  renderDetailedView = () => {
+    const { edited, classes, readOnly, intl } = this.props;
     const monetaryTransfer = { ...edited };
 
     // Validation states
@@ -519,6 +902,40 @@ class MonetaryTransferHeadPanel extends FormPanel {
           </Grid>
         )}
       </Grid>
+    );
+  };
+
+  render() {
+    const { classes } = this.props;
+    const { detailedView } = this.state;
+
+    return (
+      <div>
+        {/* View Toggle */}
+        <div className={classes.viewToggle}>
+          <Typography variant="h6">
+            Transfert Monétaire
+          </Typography>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={detailedView}
+                onChange={this.toggleView}
+                color="primary"
+              />
+            }
+            label={
+              <Box display="flex" alignItems="center" gap={0.5}>
+                {detailedView ? <ViewComfyIcon /> : <ViewListIcon />}
+                {detailedView ? 'Vue détaillée' : 'Vue simple'}
+              </Box>
+            }
+          />
+        </div>
+
+        {/* Render appropriate view */}
+        {detailedView ? this.renderDetailedView() : this.renderSimpleView()}
+      </div>
     );
   }
 }

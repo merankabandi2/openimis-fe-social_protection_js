@@ -18,7 +18,7 @@ import {
   RIGHT_MONETARY_TRANSFER_SEARCH,
 } from '../constants';
 import MonetaryTransferSearcher from '../components/me/MonetaryTransferSearcher';
-import MonetaryTransfertDashboard from '../components/dashboard/MonetaryTransfertDashboard';
+import TransfertDashboard from '../components/dashboard/TransfertDashboard';
 
 const useStyles = makeStyles((theme) => ({
   page: {
@@ -68,7 +68,7 @@ function MonetaryTransfersPage() {
       
       {/* Dashboard Section */}
       <Box className={classes.dashboardSection} data-testid="dashboard-section">
-        <MonetaryTransfertDashboard />
+        <TransfertDashboard />
       </Box>
 
       {/* Searcher Section */}

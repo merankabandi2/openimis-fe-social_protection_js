@@ -415,5 +415,29 @@
   "socialProtection.activities.category.crafts": "Artisanat",
   "socialProtection.activities.category.services": "Services",
   "socialProtection.gender.male": "Homme",
-  "socialProtection.gender.female": "Femme"
+  "socialProtection.gender.female": "Femme",
+  
+  "socialProtection.filter.title": "Filtres",
+  "socialProtection.filter.clearAll": "Effacer tout",
+  "socialProtection.filter.location": "Localisation",
+  "socialProtection.filter.provinces": "Provinces",
+  "socialProtection.filter.districts": "Communes",
+  "socialProtection.filter.benefitPlans": "Plans de prestations",
+  "socialProtection.filter.selectBenefitPlans": "Sélectionner les plans de prestations",
+  "socialProtection.filter.temporal": "Filtres temporels",
+  "socialProtection.filter.year": "Année",
+  "socialProtection.filter.startDate": "Date de début",
+  "socialProtection.filter.endDate": "Date de fin",
+  "socialProtection.filter.clear": "Effacer",
+  "socialProtection.filter.apply": "Appliquer",
+  
+  "cascading.mainCategory": "Catégorie principale",
+  "cascading.subcategory": "Sous-catégorie", 
+  "cascading.details": "Détails",
+  "cascading.selectMainCategory": "Sélectionner la catégorie principale",
+  "cascading.selectSubcategory": "Sélectionner la sous-catégorie",
+  "cascading.selectDetails": "Sélectionner les détails (optionnel)",
+  "cascading.selected": "Sélectionné",
+  "cascading.addCategory": "Ajouter une catégorie",
+  "cascading.addAnother": "Ajouter une autre catégorie"
 }

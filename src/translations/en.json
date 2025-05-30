@@ -408,5 +408,19 @@
   "monetaryTransfer.form.validation.exceedsPlannedBeneficiaries": "Cannot exceed planned beneficiaries",
   
   "monetaryTransfer.list.page.title": "Monetary Transfers List",
-  "monetaryTransfer.dashboard.page.title": "Monetary Transfers Dashboard"
+  "monetaryTransfer.dashboard.page.title": "Monetary Transfers Dashboard",
+  
+  "socialProtection.filter.title": "Filters",
+  "socialProtection.filter.clearAll": "Clear All",
+  "socialProtection.filter.location": "Location",
+  "socialProtection.filter.provinces": "Provinces",
+  "socialProtection.filter.districts": "Districts",
+  "socialProtection.filter.benefitPlans": "Benefit Plans",
+  "socialProtection.filter.selectBenefitPlans": "Select Benefit Plans",
+  "socialProtection.filter.temporal": "Temporal Filters",
+  "socialProtection.filter.year": "Year",
+  "socialProtection.filter.startDate": "Start Date",
+  "socialProtection.filter.endDate": "End Date",
+  "socialProtection.filter.clear": "Clear",
+  "socialProtection.filter.apply": "Apply"
 }

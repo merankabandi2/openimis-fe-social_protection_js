@@ -61,11 +61,11 @@ const useStyles = makeStyles((theme) => ({
 
 const KOBO_ETL_STATUS_QUERY = `
   query KoboETLStatus {
-    koboEtlStatus {
-      isConfigured
-      hasToken
-      availableScopes
-      lastSyncDate
+    koboEtlStatus: kobo_etl_status {
+      isConfigured: is_configured
+      hasToken: has_token
+      availableScopes: available_scopes
+      lastSyncDate: last_sync_date
     }
   }
 `;
