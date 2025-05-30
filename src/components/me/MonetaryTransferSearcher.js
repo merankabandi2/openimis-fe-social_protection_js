@@ -2,9 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect, useSelector } from 'react-redux';
 
-import { IconButton, Tooltip } from '@material-ui/core';
+import { IconButton, Tooltip, Button } from '@material-ui/core';
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import DeleteIcon from '@material-ui/icons/Delete';
+import GetAppIcon from '@material-ui/icons/GetApp';
 
 import {
   Searcher,
@@ -29,6 +30,7 @@ import {
   ROWS_PER_PAGE_OPTIONS,
 } from '../../constants';
 import MonetaryTransferFilter from './MonetaryTransferFilter';
+import MonetaryTransferUploadDialog from '../dialogs/MonetaryTransferUploadDialog';
 import { mutationLabel, pageTitle } from '../../util/string-utils';
 
 function MonetaryTransferSearcher({
@@ -53,6 +55,7 @@ function MonetaryTransferSearcher({
 
   const [monetaryTransferToDelete, setMonetaryTransferToDelete] = useState(null);
   const [deletedMonetaryTransferUuids, setDeletedMonetaryTransferUuids] = useState([]);
+  const [filters, setFilters] = useState({});
   const prevSubmittingMutationRef = useRef();
 
   const openDeleteMonetaryTransferConfirmDialog = () => {
@@ -148,9 +151,11 @@ function MonetaryTransferSearcher({
 
   const onDoubleClick = (monetaryTransfer) => openMonetaryTransfer(monetaryTransfer);
 
-  const monetaryTransferFilter = ({ filters, onChangeFilters }) => (
-    <MonetaryTransferFilter filters={filters} onChangeFilters={onChangeFilters} />
-  );
+  const monetaryTransferFilter = ({ filters, onChangeFilters }) => {
+    // Update internal filters state when filters change
+    setFilters(filters);
+    return <MonetaryTransferFilter filters={filters} onChangeFilters={onChangeFilters} />;
+  };
 
   const defaultFilters = () => ({});
 
@@ -210,32 +215,106 @@ function MonetaryTransferSearcher({
     }
   };
 
+  const downloadExcel = async () => {
+    try {
+      // Build query params from current filters
+      const queryParams = new URLSearchParams();
+      
+      if (filters.transferDate_Gte) {
+        queryParams.append('start_date', filters.transferDate_Gte);
+      }
+      if (filters.transferDate_Lte) {
+        queryParams.append('end_date', filters.transferDate_Lte);
+      }
+      if (filters.location) {
+        queryParams.append('location_id', filters.location);
+      }
+      if (filters.programme) {
+        queryParams.append('programme_id', filters.programme);
+      }
+      if (filters.paymentAgency) {
+        queryParams.append('payment_agency_id', filters.paymentAgency);
+      }
+
+      const response = await fetch(
+        `${baseApiUrl}/merankabandi/monetary-transfers/export/?${queryParams.toString()}`,
+        {
+          method: 'GET',
+          headers: apiHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to download Excel file');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      link.download = `transferts_monetaires_${timestamp}.xlsx`;
+      
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading Excel file:', error);
+    }
+  };
+
+  const onRefresh = () => {
+    fetchData(filters);
+  };
+
   return (
-    <Searcher
-      module="social_protection"
-      fetch={fetchData}
-      items={monetaryTransfers}
-      itemsPageInfo={pageInfo}
-      fetchedItems={fetchedMonetaryTransfers}
-      fetchingItems={fetchingMonetaryTransfers}
-      errorItems={errorMonetaryTransfers}
-      tableTitle={formatMessageWithValues('MonetaryTransferSearcher.results', { totalCount })}
-      headers={headers}
-      itemFormatters={itemFormatters}
-      sorts={sorts}
-      rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
-      defaultPageSize={DEFAULT_PAGE_SIZE}
-      rowIdentifier={rowIdentifier}
-      onDoubleClick={onDoubleClick}
-      defaultFilters={defaultFilters()}
-      rowDisabled={isRowDisabled}
-      rowLocked={isRowDisabled}
-      exportable
-      exportFetch={downloadMonetaryTransfers}
-      exportFields={exportFields}
-      exportFieldsColumns={exportFieldsColumns}
-      exportFieldLabel={formatMessage('export.label')}
-    />
+    <>
+      <Searcher
+        module="social_protection"
+        fetch={fetchData}
+        items={monetaryTransfers}
+        itemsPageInfo={pageInfo}
+        fetchedItems={fetchedMonetaryTransfers}
+        fetchingItems={fetchingMonetaryTransfers}
+        errorItems={errorMonetaryTransfers}
+        tableTitle={formatMessageWithValues('MonetaryTransferSearcher.results', { totalCount })}
+        headers={headers}
+        itemFormatters={itemFormatters}
+        sorts={sorts}
+        rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+        defaultPageSize={DEFAULT_PAGE_SIZE}
+        rowIdentifier={rowIdentifier}
+        onDoubleClick={onDoubleClick}
+        defaultFilters={defaultFilters()}
+        rowDisabled={isRowDisabled}
+        rowLocked={isRowDisabled}
+        exportable
+        exportFetch={downloadMonetaryTransfers}
+        exportFields={exportFields}
+        exportFieldsColumns={exportFieldsColumns}
+        exportFieldLabel={formatMessage('export.label')}
+        FilterPane={monetaryTransferFilter}
+        actions={[
+          <MonetaryTransferUploadDialog 
+            key="upload"
+            onUploadSuccess={onRefresh}
+          />,
+          <Button
+            key="excel-export"
+            variant="contained"
+            color="default"
+            startIcon={<GetAppIcon />}
+            onClick={downloadExcel}
+            style={{ marginLeft: 8 }}
+          >
+            {formatMessage('monetaryTransfer.export.excel')}
+          </Button>
+        ]}
+      />
+    </>
   );
 }
 

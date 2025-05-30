@@ -360,5 +360,24 @@
   "socialProtection.activities.category.crafts": "Crafts",
   "socialProtection.activities.category.services": "Services",
   "socialProtection.gender.male": "Male",
-  "socialProtection.gender.female": "Female"
+  "socialProtection.gender.female": "Female",
+  
+  "monetaryTransfer.page.title": "Monetary Transfers",
+  "monetaryTransfer.export.excel": "Export Excel",
+  "monetaryTransfer.upload.button": "Import Excel",
+  "monetaryTransfer.upload.title": "Import Monetary Transfers",
+  "monetaryTransfer.upload.description": "Upload an Excel or CSV file containing monetary transfer data. The file must include columns: Transfer Date, Commune, Colline, Programme, Payment Agency, and planned/paid beneficiary numbers.",
+  "monetaryTransfer.upload.downloadTemplate": "Download Excel Template",
+  "monetaryTransfer.upload.selectFile": "Select File",
+  "monetaryTransfer.upload.selectedFile": "Selected file",
+  "monetaryTransfer.upload.uploading": "Uploading...",
+  "monetaryTransfer.upload.import": "Import",
+  "monetaryTransfer.upload.success": "Import successful: {imported} records imported, {failed} failed",
+  "monetaryTransfer.upload.errors": "Import errors",
+  "monetaryTransfer.upload.failed": "Import failed",
+  "monetaryTransfer.upload.invalidFileType": "Invalid file type",
+  "monetaryTransfer.upload.selectValidFile": "Please select an Excel (.xlsx, .xls) or CSV (.csv) file",
+  "monetaryTransfer.upload.templateError": "Error downloading template",
+  "monetaryTransfer.upload.noFile": "No file selected",
+  "monetaryTransfer.upload.error": "Error during import"
 }

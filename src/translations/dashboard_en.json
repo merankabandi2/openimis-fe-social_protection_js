@@ -1,0 +1,37 @@
+{
+  "socialProtection.dashboard.title": "Social Protection Dashboard",
+  "socialProtection.dashboard.refresh": "Refresh Dashboard",
+  "socialProtection.dashboard.totalBeneficiaries": "Total Beneficiaries",
+  "socialProtection.dashboard.activeBeneficiaries": "Active Beneficiaries",
+  "socialProtection.dashboard.totalTransfers": "Total Transfers",
+  "socialProtection.dashboard.averageTransfer": "Average Transfer",
+  
+  "socialProtection.filter.title": "Filter Dashboard",
+  "socialProtection.filter.location": "Location",
+  "socialProtection.filter.provinces": "Provinces",
+  "socialProtection.filter.districts": "Districts",
+  "socialProtection.filter.benefitPlans": "Benefit Plans",
+  "socialProtection.filter.selectBenefitPlans": "Select Benefit Plans",
+  "socialProtection.filter.temporal": "Time Period",
+  "socialProtection.filter.year": "Year",
+  "socialProtection.filter.startDate": "Start Date",
+  "socialProtection.filter.endDate": "End Date",
+  "socialProtection.filter.clear": "Clear Filters",
+  "socialProtection.filter.clearAll": "Clear All",
+  "socialProtection.filter.apply": "Apply Filters",
+  "socialProtection.filter.activeFilters": "Active Filters",
+  
+  "socialProtection.dashboard.beneficiariesByProvince": "Beneficiaries by Province",
+  "socialProtection.dashboard.benefitPlanDistribution": "Benefit Plan Distribution",
+  "socialProtection.dashboard.monthlyTransfers": "Monthly Transfers",
+  "socialProtection.dashboard.demographicBreakdown": "Demographic Breakdown",
+  "socialProtection.dashboard.paymentStatus": "Payment Status",
+  
+  "socialProtection.dashboard.loading": "Loading dashboard data...",
+  "socialProtection.dashboard.error": "Error loading dashboard data",
+  "socialProtection.dashboard.noData": "No data available for selected filters",
+  
+  "socialProtection.performance.cached": "Cached Data",
+  "socialProtection.performance.loadTime": "Load Time",
+  "socialProtection.performance.lastUpdated": "Last Updated"
+}

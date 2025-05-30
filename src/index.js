@@ -110,9 +110,11 @@ import MonetaryTransferPage from './pages/MonetaryTransferPage';
 import MonetaryTransfersPage from './pages/MonetaryTransfersPage';
 import MEResultFrameworkPage from './pages/MEResultFrameworkPage';
 import MEDashboard from './components/dashboards/MEDashboard';
+import OptimizedMEDashboard from './components/dashboards/OptimizedMEDashboard';
 import ResultsFrameworkDashboard from './components/dashboard/ResultsFrameworkDashboard';
 import ActivitiesDashboard from './components/dashboard/ActivitiesDashboard';
 import ActivitiesDashboardEnhanced from './components/dashboard/ActivitiesDashboardEnhanced';
+import { useOptimizedDashboard, useDashboardSystem, useOptimizedDashboardComponent } from './hooks/useOptimizedDashboard';
 
 const ROUTE_BENEFIT_PLANS = 'benefitPlans';
 const ROUTE_BENEFIT_PLAN = 'benefitPlans/benefitPlan';
@@ -211,6 +213,10 @@ const DEFAULT_CONFIG = {
     { key: 'socialProtection.route.activitiesDashboard', ref: ROUTE_ACTIVITIES_DASHBOARD },
     { key: 'socialProtection.ActivitiesDashboard', ref: ActivitiesDashboard },
     { key: 'socialProtection.route.koboETLAdmin', ref: ROUTE_KOBO_ETL_ADMIN },
+    { key: 'socialProtection.OptimizedMEDashboard', ref: OptimizedMEDashboard },
+    { key: 'socialProtection.useOptimizedDashboard', ref: useOptimizedDashboard },
+    { key: 'socialProtection.useDashboardSystem', ref: useDashboardSystem },
+    { key: 'socialProtection.useOptimizedDashboardComponent', ref: useOptimizedDashboardComponent },
   ],
   'benefitPlan.TabPanel.label': [
     BenefitPlanBeneficiariesListTabLabel,

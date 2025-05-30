@@ -16,8 +16,15 @@
     "format": "prettier src -w",
     "prepare": "npm run build"
   },
-  "peerDependency": {
-    "react-intl": "^5.8.1"
+  "peerDependencies": {
+    "react": "^16.8.0 || ^17.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0",
+    "react-intl": "^5.8.1",
+    "@openimis/fe-core": ">=0.1.0",
+    "@material-ui/core": "^4.12.0",
+    "@material-ui/icons": "^4.11.0",
+    "react-redux": "^7.2.0",
+    "redux": "^4.0.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
@@ -48,6 +55,7 @@
     "leaflet": "^1.9.4",
     "react-apexcharts": "1.4.1",
     "react-leaflet": "2",
+    "react-query": "^3.39.3",
     "recharts": "^2.15.3"
   }
 }

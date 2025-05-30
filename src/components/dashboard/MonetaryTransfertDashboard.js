@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import {
@@ -42,171 +42,9 @@ import MonetaryTransferChart from './MonetaryTransferChart';
 import MonetaryTransferChartBeneficiaires from './MonetaryTransferChartBeneficiaires';
 import BenefitConsumptionByProvinces from './BenefitConsumptionByProvinces';
 import TransfersChart from './TransfersChart';
+import { useMonetaryTransfersDashboard } from '../../hooks/useMonetaryTransfersDashboard';
 
-const buildFilter = (itemName, filters) => {
-  const { locationId, benefitPlanId, year } = filters;
-
-  // Helper function to create date range filters for a given year
-  const createYearDateRange = (year, field = 'dateValidFrom') => {
-    if (!year) return [];
-    const startDate = `${year}-01-01T00:00:00.000Z`;
-    const endDate = `${year}-12-31T23:59:59.999Z`;
-    return [
-      `${field}_Lte: "${endDate}"`,
-      `${field}_Gte: "${startDate}"`,
-    ];
-  };
-
-  // Define which filters apply to which items and how they should be formatted
-  const filterMap = {
-    benefitsSummary: {
-      year: (val) => `year: ${val}`,
-      locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
-      benefitPlanId: (val) => `benefitPlanUuid: "${decodeId(val)}"`,
-    },
-    monetaryTransferBeneficiaryData: {
-      year: (val) => `year: ${val}`,
-      locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
-    },
-    monetaryTransfer: {
-      year: (val) => createYearDateRange(val, 'transferDate'),
-      locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
-    },
-    paymentCycle: {
-      year: (val) => `year: ${val}`,
-    },
-    group: {
-      locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
-      year: (val) => createYearDateRange(val, 'dateCreated'),
-    },
-    individual: {
-      locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
-      year: (val) => createYearDateRange(val, 'dateCreated'),
-    },
-    groupBeneficiary: {
-      locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
-      benefitPlanId: (val) => `benefitPlan_Id: "${decodeId(val)}"`,
-      year: (val) => createYearDateRange(val),
-    },
-    locationByBenefitPlan: {
-      benefitPlanId: (val) => `benefitPlan_Id: "${decodeId(val)}"`,
-    },
-  };
-
-  // Get the filter config for this item
-  const itemFilters = filterMap[itemName];
-  if (!itemFilters) return '';
-
-  // Build the filter string
-  const filterParts = [];
-
-  // Process year filter (special handling for array results)
-  if (itemFilters.year && year) {
-    const yearFilter = itemFilters.year(year);
-    if (Array.isArray(yearFilter)) {
-      filterParts.push(...yearFilter);
-    } else {
-      filterParts.push(yearFilter);
-    }
-  }
-
-  if (itemFilters.locationId && locationId) {
-    filterParts.push(itemFilters.locationId(locationId));
-  }
-
-  if (itemFilters.benefitPlanId && benefitPlanId) {
-    filterParts.push(itemFilters.benefitPlanId(benefitPlanId));
-  }
-  return filterParts.length ? `(${filterParts.join(', ')})` : '';
-};
-
-const REQUESTED_WITH = 'webapp';
-
-const loadStatsAll = async (filters = {}) => {
-  const csrfToken = localStorage.getItem('csrfToken');
-  const baseHeaders = apiHeaders();
-
-  const response = await fetch(`${baseApiUrl}/graphql`, {
-    method: 'post',
-    headers: { ...baseHeaders, 'X-Requested-With': REQUESTED_WITH, 'X-CSRFToken': csrfToken },
-    body: JSON.stringify(
-      {
-        query: `
-          {
-            benefitsSummaryFiltered ${buildFilter('benefitsSummary', filters)} {
-              totalAmountReceived,
-              totalAmountDue
-            },
-            monetaryTransferBeneficiaryData ${buildFilter('monetaryTransferBeneficiaryData', filters)} {
-              transferType
-              malePaid
-              maleUnpaid
-              femalePaid
-              femaleUnpaid
-              totalPaid
-              totalUnpaid
-            },
-            monetaryTransfer ${buildFilter('monetaryTransfer', filters)} {
-              totalCount
-            },
-            paymentCycleFiltered ${buildFilter('paymentCycle', filters)} {
-              totalCount
-            },
-            groupFiltered ${buildFilter('group', filters)} {
-              totalCount
-            },
-            individualFiltered ${buildFilter('individual', filters)} {
-              totalCount
-            },
-            groupBeneficiaryFiltered ${buildFilter('groupBeneficiary', filters)} {
-              totalCount
-            },
-            locationByBenefitPlan ${buildFilter('locationByBenefitPlan', filters)} {
-              totalCount,
-              edges {
-                node {
-                  id,
-                  code,
-                  name,
-                  countSelected,
-                  countSuspended,
-                  countActive
-                }
-              }
-            }
-            ${filters.locationId ? '' : `
-            locations (type: "D") {
-              edges {
-                node {
-                  id,
-                  uuid,
-                  name,
-                  code,
-                  type
-                }
-              }
-            }`}
-            benefitPlan (isDeleted: false) {
-              edges {
-                node {
-                  id,
-                  name,
-                  code
-                }
-              }
-            }
-          }
-        `,
-      },
-    ),
-  });
-  if (!response.ok) {
-    throw response;
-  } else {
-    const { data } = await response.json();
-    return data;
-  }
-};
+// Remove the old buildFilter and loadStatsAll functions as we'll use the optimized hook
 
 // Create a custom theme
 const theme = createTheme({
@@ -399,8 +237,6 @@ const useStyles = makeStyles((theme) => ({
 
 // Dashboard component
 function MonetaryTransfertDashboard() {
-  const [stats, setStats] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
   const [locations, setLocations] = useState([]);
   const [benefitPlans, setBenefitPlans] = useState([]);
   const [filters, setFilters] = useState({
@@ -410,30 +246,69 @@ function MonetaryTransfertDashboard() {
   });
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
-  const loadFilteredData = () => {
-    setIsLoading(true);
-    loadStatsAll(filters)
-      .then((data) => {
-        setStats({ ...data });
-        // Set location and benefit plan options if available
-        if (data.locations && !locations.length) {
-          setLocations(data.locations.edges.map(edge => edge.node)
-            .filter(node => node.type === 'R' || node.type === 'D'));
-        }
-        if (data.benefitPlan && !benefitPlans.length) {
-          setBenefitPlans(data.benefitPlan.edges.map(edge => edge.node));
-        }
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error('Failed to load stats', error);
-        setIsLoading(false);
-      });
-  };
+  // Use the monetary transfers dashboard hook
+  const {
+    totalBeneficiaries,
+    totalPayments,
+    totalAmount,
+    totalAmountReceived,
+    totalHouseholds,
+    totalIndividuals,
+    monetaryTransferData,
+    isLoading,
+    error,
+    refetch
+  } = useMonetaryTransfersDashboard(filters);
 
+  // Load locations and benefit plans on mount
   useEffect(() => {
-    loadFilteredData();
-  }, [filters]);
+    const csrfToken = localStorage.getItem('csrfToken');
+    const headers = apiHeaders();
+    
+    // Fetch locations
+    fetch(`${baseApiUrl}/graphql`, {
+      method: 'post',
+      headers: { 
+        ...headers, 
+        'X-Requested-With': 'webapp',
+        'X-CSRFToken': csrfToken 
+      },
+      body: JSON.stringify({
+        query: `{
+          locations (type: "R") {
+            edges {
+              node {
+                id
+                uuid
+                name
+                code
+                type
+              }
+            }
+          }
+          benefitPlan (isDeleted: false) {
+            edges {
+              node {
+                id
+                name
+                code
+              }
+            }
+          }
+        }`
+      })
+    })
+    .then(res => res.json())
+    .then(({ data }) => {
+      if (data.locations) {
+        setLocations(data.locations.edges.map(edge => edge.node));
+      }
+      if (data.benefitPlan) {
+        setBenefitPlans(data.benefitPlan.edges.map(edge => edge.node));
+      }
+    })
+    .catch(err => console.error('Failed to load filters data', err));
+  }, []);
 
   const handleFilterChange = (event) => {
     const { name, value } = event.target;
@@ -444,7 +319,7 @@ function MonetaryTransfertDashboard() {
   };
 
   const handleApplyFilters = () => {
-    loadFilteredData();
+    refetch();
   };
 
   const handleResetFilters = () => {
@@ -453,44 +328,20 @@ function MonetaryTransfertDashboard() {
       benefitPlanId: '',
       year: '',
     });
-    // Load with reset filters
-    setTimeout(loadFilteredData, 0);
   };
 
   const classes = useStyles();
 
-  const getStat = (item, field = 'totalCount') => {
-    if (!stats || !stats[item]) return 0;
-    
-    // Handle array responses (like monetaryTransferBeneficiaryData)
-    if (Array.isArray(stats[item])) {
-      // Sum up the field from all items in the array
-      const total = stats[item].reduce((sum, curr) => {
-        const value = curr[field] || 0;
-        return sum + (typeof value === 'number' ? value : Number(value));
-      }, 0);
-      return total.toLocaleString('fr-FR');
-    }
-    
-    // Handle regular object responses
-    const value = stats[item][field];
-    return value ? Number(value).toLocaleString('fr-FR') : 0;
+  // Helper function to format numbers
+  const formatNumber = (value) => {
+    if (!value && value !== 0) return '0';
+    return Number(value).toLocaleString('fr-FR');
   };
 
-  // Calculate summary statistics
-  const totalBeneficiaries = getStat('monetaryTransferBeneficiaryData', 'totalPaid') || getStat('groupBeneficiaryFiltered');
-  const totalPayments = getStat('monetaryTransfer') || getStat('paymentCycleFiltered');
-  const totalAmount = getStat('benefitsSummaryFiltered', 'totalAmountDue');
-  const totalAmountReceived = getStat('benefitsSummaryFiltered', 'totalAmountReceived');
   
   // Calculate payment rate
-  const parseNumber = (value) => {
-    if (!value) return 0;
-    return Number(String(value).replace(/\s/g, '').replace(/,/g, ''));
-  };
-  
-  const paymentRate = totalAmount && totalAmountReceived 
-    ? Math.round((parseNumber(totalAmountReceived) / parseNumber(totalAmount)) * 100)
+  const paymentRate = totalAmount > 0 
+    ? Math.round((totalAmountReceived / totalAmount) * 100)
     : 0;
 
   return (
@@ -506,7 +357,7 @@ function MonetaryTransfertDashboard() {
             <Tooltip title="Actualiser les données">
               <IconButton 
                 className={classes.refreshButton}
-                onClick={loadFilteredData}
+                onClick={refetch}
                 disabled={isLoading}
               >
                 <RefreshIcon />
@@ -613,7 +464,7 @@ function MonetaryTransfertDashboard() {
                         Total Bénéficiaires
                       </Typography>
                       <Typography className={classes.summaryValue}>
-                        {totalBeneficiaries}
+                        {formatNumber(totalBeneficiaries)}
                       </Typography>
                       <Typography className={classes.summarySubtitle}>
                         Ménages enregistrés
@@ -624,7 +475,7 @@ function MonetaryTransfertDashboard() {
                         Montant Total
                       </Typography>
                       <Typography className={classes.summaryValue}>
-                        {totalAmount}
+                        {formatNumber(totalAmount)}
                       </Typography>
                       <Typography className={classes.summarySubtitle}>
                         BIF à distribuer
@@ -635,7 +486,7 @@ function MonetaryTransfertDashboard() {
                         Montant Distribué
                       </Typography>
                       <Typography className={classes.summaryValue}>
-                        {totalAmountReceived}
+                        {formatNumber(totalAmountReceived)}
                       </Typography>
                       <Typography className={classes.summarySubtitle}>
                         BIF déjà payés
@@ -670,7 +521,7 @@ function MonetaryTransfertDashboard() {
             <Grid item xs={6} sm={3}>
               <BoxCard
                 label="Bénéficiaires"
-                value={totalBeneficiaries}
+                value={formatNumber(totalBeneficiaries)}
                 className={classes.statsBox}
                 icon={<Person />}
                 isLoading={isLoading}
@@ -680,7 +531,7 @@ function MonetaryTransfertDashboard() {
             <Grid item xs={6} sm={3}>
               <BoxCard
                 label="Paiements"
-                value={totalPayments}
+                value={formatNumber(totalPayments)}
                 className={classes.statsBox}
                 icon={<ReceiptIcon />}
                 isLoading={isLoading}
@@ -690,7 +541,7 @@ function MonetaryTransfertDashboard() {
             <Grid item xs={6} sm={3}>
               <BoxCard
                 label="Ménages"
-                value={getStat('groupFiltered')}
+                value={formatNumber(totalHouseholds)}
                 className={classes.statsBox}
                 icon={<HomeIcon />}
                 isLoading={isLoading}
@@ -700,7 +551,7 @@ function MonetaryTransfertDashboard() {
             <Grid item xs={6} sm={3}>
               <BoxCard
                 label="Individus"
-                value={getStat('individualFiltered')}
+                value={formatNumber(totalIndividuals)}
                 className={classes.statsBox}
                 icon={<PeopleAltIcon />}
                 isLoading={isLoading}

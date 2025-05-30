@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import {
@@ -13,9 +13,12 @@ import {
   Paper,
   Typography,
   Button,
+  IconButton,
+  Tooltip,
+  CircularProgress,
 } from '@material-ui/core';
 import { createTheme } from '@material-ui/core/styles';
-import { baseApiUrl, apiHeaders, decodeId } from '@openimis/fe-core';
+import { baseApiUrl, apiHeaders, decodeId, useGraphqlQuery } from '@openimis/fe-core';
 import HomeIcon from '@material-ui/icons/Home';
 import Person from '@material-ui/icons/Person';
 import PeopleAltIcon from '@material-ui/icons/PeopleAlt';
@@ -27,188 +30,13 @@ import AssignmentIcon from '@material-ui/icons/Assignment';
 import BarChartIcon from '@material-ui/icons/BarChart';
 import FaceIcon from '@material-ui/icons/Face';
 import AccessibilityIcon from '@material-ui/icons/Accessibility';
+import RefreshIcon from '@material-ui/icons/Refresh';
 import MapComponent from './MapComponent';
 import BoxCard from './BoxCard';
 import TicketsPieChart from './TicketsPieChart';
 import TransfersChart from './TransfersChart';
 import ActivitiesBarChart from './ActivitiesBarChart';
-
-const REQUESTED_WITH = 'webapp';
-
-const buildFilter = (itemName, filters) => {
-  const { locationId, benefitPlanId, year } = filters;
-
-  // Helper function to create date range filters for a given year
-  const createYearDateRange = (year, field = 'dateValidFrom') => {
-    if (!year) return [];
-    const startDate = `${year}-01-01T00:00:00.000Z`;
-    const endDate = `${year}-12-31T23:59:59.999Z`;
-    return [
-      `${field}_Lte: "${endDate}"`,
-      `${field}_Gte: "${startDate}"`,
-    ];
-  };
-
-  // Define which filters apply to which items and how they should be formatted
-  const filterMap = {
-    benefitsSummary: {
-      year: (val) => `year: ${val}`,
-      locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
-      benefitPlanId: (val) => `benefitPlanUuid: "${decodeId(val)}"`,
-    },
-    paymentCycle: {
-      year: (val) => `year: ${val}`,
-      // benefitPlanId: (val) => `payroll: "${decodeId(val)}"`,
-    },
-    group: {
-      locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
-      year: (val) => createYearDateRange(val, 'dateCreated'),
-    },
-    individual: {
-      locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
-      year: (val) => createYearDateRange(val, 'dateCreated'),
-    },
-    groupBeneficiary: {
-      locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
-      benefitPlanId: (val) => `benefitPlan_Id: "${decodeId(val)}"`,
-      year: (val) => createYearDateRange(val),
-    },
-    locationByBenefitPlan: {
-      benefitPlanId: (val) => `benefitPlan_Id: "${decodeId(val)}"`,
-    },
-    ticketsByResolution: {
-      locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
-      year: (val) => `year: ${val}`,
-      benefitPlanId: (val) => `benefitPlan_Id: "${decodeId(val)}"`,
-    },
-  };
-
-  // Get the filter config for this item
-  const itemFilters = filterMap[itemName];
-  if (!itemFilters) return '';
-
-  // Build the filter string
-  const filterParts = [];
-
-  // Process year filter (special handling for array results)
-  if (itemFilters.year && year) {
-    const yearFilter = itemFilters.year(year);
-    if (Array.isArray(yearFilter)) {
-      filterParts.push(...yearFilter);
-    } else {
-      filterParts.push(yearFilter);
-    }
-  }
-
-  if (itemFilters.locationId && locationId) {
-    filterParts.push(itemFilters.locationId(locationId));
-  }
-
-  if (itemFilters.benefitPlanId && benefitPlanId) {
-    filterParts.push(itemFilters.benefitPlanId(benefitPlanId));
-  }
-  return filterParts.length ? `(${filterParts.join(', ')})` : '';
-};
-
-const loadStatsAll = async (filters = {}) => {
-  const csrfToken = localStorage.getItem('csrfToken');
-  const baseHeaders = apiHeaders();
-
-  // Build gender and minority filters
-  const genderFilterParts = [];
-  if (filters.locationId) {
-    genderFilterParts.push(`parentLocation: "${filters.locationId}", parentLocationLevel: 0`);
-  }
-  if (filters.year) {
-    const startDate = `${filters.year}-01-01T00:00:00.000Z`;
-    const endDate = `${filters.year}-12-31T23:59:59.999Z`;
-    genderFilterParts.push(`dateCreated_Lte: "${endDate}"`);
-    genderFilterParts.push(`dateCreated_Gte: "${startDate}"`);
-  }
-  const genderFilter = genderFilterParts.length ? `(${genderFilterParts.join(', ')})` : '';
-
-  const response = await fetch(`${baseApiUrl}/graphql`, {
-    method: 'post',
-    headers: { ...baseHeaders, 'X-Requested-With': REQUESTED_WITH, 'X-CSRFToken': csrfToken },
-    body: JSON.stringify(
-      {
-        query: `
-          {
-            benefitsSummaryFiltered ${buildFilter('benefitsSummary', filters)} {
-              totalAmountReceived,
-              totalAmountDue
-            },
-            paymentCycleFiltered ${buildFilter('paymentCycle', filters)} {
-              totalCount
-            },
-            groupFiltered ${buildFilter('group', filters)} {
-              totalCount
-            },
-            individualFiltered ${buildFilter('individual', filters)} {
-              totalCount
-            },
-            groupBeneficiaryFiltered ${buildFilter('groupBeneficiary', filters)} {
-              totalCount
-            },
-            individualMale ${genderFilter} {
-              totalCount
-            },
-            individualFemale ${genderFilter} {
-              totalCount
-            },
-            minorityHouseholds ${genderFilter} {
-              totalCount
-            },
-            ticketsByResolution ${buildFilter('ticketsByResolution', filters)} {
-              status,
-              count
-            },
-            locationByBenefitPlan ${buildFilter('locationByBenefitPlan', filters)} {
-              totalCount,
-              edges {
-                node {
-                  id,
-                  code,
-                  name,
-                  countSelected,
-                  countSuspended,
-                  countActive
-                }
-              }
-            }
-            ${filters.locationId ? '' : `
-            locations (type: "D") {
-              edges {
-                node {
-                  id,
-                  uuid
-                  name,
-                  code,
-                  type
-                }
-              }
-            }`}
-            benefitPlan (isDeleted: false) {
-              edges {
-                node {
-                  id,
-                  name,
-                  code
-                }
-              }
-            }
-          }
-        `,
-      },
-    ),
-  });
-  if (!response.ok) {
-    throw response;
-  } else {
-    const { data } = await response.json();
-    return data;
-  }
-};
+import { useOptimizedDashboard } from '../../hooks/useOptimizedDashboard';
 
 // Create a custom theme
 const theme = createTheme({
@@ -308,12 +136,34 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+// GraphQL query for locations and benefit plans
+const LOCATIONS_AND_PLANS_QUERY = `
+  query LocationsAndPlans {
+    locations(type: "D") {
+      edges {
+        node {
+          id
+          uuid
+          name
+          code
+          type
+        }
+      }
+    }
+    benefitPlan(isDeleted: false) {
+      edges {
+        node {
+          id
+          name
+          code
+        }
+      }
+    }
+  }
+`;
+
 // Dashboard component
 function Dashboard() {
-  const [stats, setStats] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [locations, setLocations] = useState([]);
-  const [benefitPlans, setBenefitPlans] = useState([]);
   const [filters, setFilters] = useState({
     locationId: '',
     benefitPlanId: '',
@@ -321,30 +171,46 @@ function Dashboard() {
   });
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
-  useEffect(() => {
-    loadFilteredData();
-  }, [filters]);
+  // Convert filters to optimized dashboard format
+  const optimizedFilters = useMemo(() => ({
+    provinceId: filters.locationId ? parseInt(decodeId(filters.locationId)) : undefined,
+    year: filters.year ? parseInt(filters.year) : undefined,
+    benefitPlanId: filters.benefitPlanId ? decodeId(filters.benefitPlanId) : undefined,
+  }), [filters]);
 
-  const loadFilteredData = () => {
-    setIsLoading(true);
-    loadStatsAll(filters)
-      .then((data) => {
-        setStats({ ...data });
-        // Set location and benefit plan options if available
-        if (data.locations && !locations.length) {
-          setLocations(data.locations.edges.map(edge => edge.node)
-            .filter(node => node.type === 'R' || node.type === 'D'));
-        }
-        if (data.benefitPlan && !benefitPlans.length) {
-          setBenefitPlans(data.benefitPlan.edges.map(edge => edge.node));
-        }
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error('Failed to load stats', error);
-        setIsLoading(false);
-      });
-  };
+  // Use optimized dashboard hook
+  const {
+    summary,
+    breakdown,
+    performance,
+    grievances,
+    isLoading,
+    isRefreshing,
+    error,
+    refetchAll,
+    lastRefresh,
+  } = useOptimizedDashboard(optimizedFilters, {
+    includeGrievances: true,
+    includeTransfers: true,
+  });
+
+  // Query for locations and benefit plans
+  const { data: locationsAndPlans } = useGraphqlQuery(
+    LOCATIONS_AND_PLANS_QUERY,
+    {},
+    {}
+  );
+
+  const locations = useMemo(() => {
+    if (!locationsAndPlans?.locations) return [];
+    return locationsAndPlans.locations.edges.map(edge => edge.node)
+      .filter(node => node.type === 'R' || node.type === 'D');
+  }, [locationsAndPlans]);
+
+  const benefitPlans = useMemo(() => {
+    if (!locationsAndPlans?.benefitPlan) return [];
+    return locationsAndPlans.benefitPlan.edges.map(edge => edge.node);
+  }, [locationsAndPlans]);
 
   const handleFilterChange = (event) => {
     const { name, value } = event.target;
@@ -355,7 +221,7 @@ function Dashboard() {
   };
 
   const handleApplyFilters = () => {
-    loadFilteredData();
+    // Filters are applied automatically through the hook
   };
 
   const handleResetFilters = () => {
@@ -364,51 +230,65 @@ function Dashboard() {
       benefitPlanId: '',
       year: '',
     });
-    // Load with reset filters
-    setTimeout(loadFilteredData, 0);
+  };
+
+  const handleRefresh = async () => {
+    await refetchAll();
   };
 
   const classes = useStyles();
 
-  const getStat = (item, field = 'totalCount') => (
-    stats && stats[item] && stats[item][field] ? Number(stats[item][field])?.toLocaleString('fr-FR') : 0
-  );
+  // Helper function to format numbers
+  const formatNumber = (num) => {
+    if (num === null || num === undefined) return '0';
+    return Number(num).toLocaleString('fr-FR');
+  };
 
-  // Calculate gender percentages
-  const maleCount = stats?.individualMale?.totalCount || 0;
-  const femaleCount = stats?.individualFemale?.totalCount || 0;
-  const totalIndividuals = maleCount + femaleCount || stats?.individualFiltered?.totalCount || 0;
+  // Extract data from optimized queries
+  const summaryData = summary?.summary || {};
+  const communityData = summary?.communityBreakdown || [];
+  const genderData = breakdown?.genderBreakdown || {};
+  const statusData = breakdown?.statusBreakdown || [];
+  const locationData = breakdown?.locationBreakdown || [];
+  const transferMetrics = performance?.overallMetrics || {};
+  const grievanceData = grievances?.summary || {};
+  const grievanceStatus = grievances?.statusDistribution || [];
 
-  // If gender data is not available, show N/A
-  const hasGenderData = (maleCount > 0 || femaleCount > 0) && stats?.individualMale !== undefined;
-  const malePercentage = hasGenderData && totalIndividuals > 0 ? Math.round((maleCount / totalIndividuals) * 100) : 0;
-  const femalePercentage = hasGenderData && totalIndividuals > 0 ? Math.round((femaleCount / totalIndividuals) * 100) : 0;
+  // Separate data for different entities
+  const totalBeneficiaries = summaryData.totalBeneficiaries || 0; // groupbeneficiary count
+  const totalIndividuals = genderData.total || 0; // individual_individual count 
+  const maleCount = genderData.male || 0;
+  const femaleCount = genderData.female || 0;
+  const twaCount = genderData.twa || 0;
 
-  // Use different fallback messages based on whether the query is supported
-  let genderSubtitle;
-  if (!stats?.individualMale && !stats?.individualFemale) {
-    genderSubtitle = ''; // Query not supported yet, show nothing
-  } else if (hasGenderData) {
-    genderSubtitle = `♂ ${malePercentage}% | ♀ ${femalePercentage}%`;
-  } else {
-    genderSubtitle = 'Données de genre non disponibles';
-  }
+  // Gender percentages for individuals (from breakdown data)
+  const malePercentage = genderData.malePercentage || 0;
+  const femalePercentage = genderData.femalePercentage || 0;
+  const genderSubtitle = totalIndividuals > 0 
+    ? `♂ ${Math.round(malePercentage)}% | ♀ ${Math.round(femalePercentage)}%`
+    : '';
 
-  // Calculate minority percentage
-  const minorityCount = stats?.minorityHouseholds?.totalCount || 0;
-  const totalHouseholds = stats?.groupFiltered?.totalCount || 0;
-  const hasMinorityData = (minorityCount > 0 || stats?.minorityHouseholds !== undefined) && stats?.minorityHouseholds !== null;
-  const minorityPercentage = totalHouseholds > 0 && hasMinorityData ? Math.round((minorityCount / totalHouseholds) * 100) : 0;
+  // Twa minority group subtitle (separate from gender)
+  const twaSubtitle = twaCount > 0
+    ? `Mutwa: ${genderData.twaPercentage || 0}% (${formatNumber(twaCount)})`
+    : '';
 
-  // Use different fallback messages based on whether the query is supported
-  let minoritySubtitle;
-  if (!stats?.minorityHouseholds) {
-    minoritySubtitle = ''; // Query not supported yet, show nothing
-  } else if (hasMinorityData && minorityCount > 0) {
-    minoritySubtitle = `Mutwa: ${minorityPercentage}% (${minorityCount.toLocaleString('fr-FR')})`;
-  } else {
-    minoritySubtitle = 'Données minoritaires non disponibles';
-  }
+  // Get correct data from appropriate sources
+  const totalHouseholds = breakdown?.householdBreakdown?.totalHouseholds || 0; // household count
+  const totalTransfers = summaryData.totalTransfers || 0; // payment cycles count  
+  const totalAmountPaid = summaryData.totalAmountPaid || 0; // total benefit consumption amount
+
+  // Helper function to format currency
+  const formatCurrency = (amount) => {
+    if (!amount || amount === 0) return '0 BIF';
+    return `${formatNumber(amount)} BIF`;
+  };
+
+  // Prepare grievance data for pie chart
+  const ticketsData = grievanceStatus.map(item => ({
+    status: item.category,
+    count: item.count
+  }));
 
   return (
     <ThemeProvider theme={theme}>
@@ -416,10 +296,26 @@ function Dashboard() {
         <Container maxWidth={false} className={classes.contentArea}>
           <div className="main">
             <Paper className={classes.filterContainer}>
-              <Typography className={classes.filterTitle}>
-                <FilterListIcon className={classes.filterIcon} />
-                Filtres du tableau de bord
-              </Typography>
+              <Grid container alignItems="center" spacing={2}>
+                <Grid item xs>
+                  <Typography className={classes.filterTitle}>
+                    <FilterListIcon className={classes.filterIcon} />
+                    Filtres du tableau de bord
+                  </Typography>
+                </Grid>
+                <Grid item>
+                  <Tooltip title={lastRefresh ? `Dernière mise à jour: ${new Date(lastRefresh).toLocaleString('fr-FR')}` : 'Actualiser les données'}>
+                    <IconButton 
+                      onClick={handleRefresh} 
+                      disabled={isRefreshing}
+                      size="small"
+                      color="primary"
+                    >
+                      {isRefreshing ? <CircularProgress size={20} /> : <RefreshIcon />}
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
+              </Grid>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6} md={3}>
                   <FormControl variant="outlined" className={classes.filterFormControl} fullWidth size="small">
@@ -492,14 +388,6 @@ function Dashboard() {
                     >
                       Réinitialiser
                     </Button>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleApplyFilters}
-                      size="small"
-                    >
-                      Appliquer
-                    </Button>
                   </div>
                 </Grid>
               </Grid>
@@ -509,7 +397,7 @@ function Dashboard() {
               <Grid item xs={6} sm={3}>
                 <BoxCard
                   label="Bénéficiaires"
-                  value={getStat('groupBeneficiaryFiltered')}
+                  value={formatNumber(summaryData.totalBeneficiaries)}
                   subtitle={genderSubtitle}
                   className={classes.statsBox}
                   icon={<Person />}
@@ -520,8 +408,8 @@ function Dashboard() {
               <Grid item xs={6} sm={3}>
                 <BoxCard
                   label="Ménages"
-                  value={getStat('groupFiltered')}
-                  subtitle={minoritySubtitle}
+                  value={formatNumber(totalHouseholds)}
+                  subtitle={twaSubtitle}
                   className={classes.statsBox}
                   icon={<HomeIcon />}
                   isLoading={isLoading}
@@ -530,8 +418,8 @@ function Dashboard() {
               </Grid>
               <Grid item xs={6} sm={3}>
                 <BoxCard
-                  label="Paiements"
-                  value={getStat('paymentCycleFiltered')}
+                  label="Transferts"
+                  value={formatNumber(totalTransfers)}
                   className={classes.statsBox}
                   icon={<ReceiptIcon />}
                   isLoading={isLoading}
@@ -541,7 +429,7 @@ function Dashboard() {
               <Grid item xs={6} sm={3}>
                 <BoxCard
                   label="Montant Total"
-                  value={`${getStat('benefitsSummaryFiltered', 'totalAmountDue')} BIF`}
+                  value={formatCurrency(totalAmountPaid)}
                   className={classes.statsBox}
                   valueVariant="h6"
                   icon={<AttachMoneyIcon />}
@@ -562,6 +450,7 @@ function Dashboard() {
                     filters={filters}
                     isLoading={isLoading}
                     fullMap={false}
+                    optimizedData={locationData}
                   />
                 </Paper>
               </Grid>
@@ -573,7 +462,7 @@ function Dashboard() {
                         <AttachMoneyIcon style={{ marginRight: '8px', color: '#ff8f00' }} />
                         Transferts Monétaires
                       </Typography>
-                        <TransfersChart filters={filters} header={false} />
+                        <TransfersChart filters={filters} header={false} optimizedData={performance?.overallMetrics} />
                     </Paper>
                   </Grid>
                 </Grid>
@@ -592,7 +481,7 @@ function Dashboard() {
                   </Typography>
                   <div className={classes.chartContainer}>
                     <TicketsPieChart
-                      data={stats?.ticketsByResolution || []}
+                      data={ticketsData}
                       isLoading={isLoading}
                     />
                   </div>
@@ -609,6 +498,7 @@ function Dashboard() {
                       filters={filters}
                       isLoading={isLoading}
                       compact={true}
+                      optimizedData={communityData}
                     />
                   </div>
                 </Paper>
@@ -619,8 +509,8 @@ function Dashboard() {
                 <Grid item xs={12}>
                   <BoxCard
                     label="Individus"
-                    value={getStat('individualFiltered')}
-                    subtitle={hasGenderData ? `♂ ${maleCount.toLocaleString('fr-FR')} | ♀ ${femaleCount.toLocaleString('fr-FR')}` : ''}
+                    value={formatNumber(totalIndividuals)}
+                    subtitle={totalIndividuals > 0 ? `♂ ${formatNumber(maleCount)} | ♀ ${formatNumber(femaleCount)}` : ''}
                     className={classes.statsBox}
                     icon={<PeopleAltIcon />}
                     isLoading={isLoading}
@@ -630,7 +520,7 @@ function Dashboard() {
                 <Grid item xs={12}>
                   <BoxCard
                     label="Provinces Actives"
-                    value={getStat('locationByBenefitPlan')}
+                    value={formatNumber(summaryData.provincesCovered || locationData.length)}
                     className={classes.statsBox}
                     icon={<PlaceIcon />}
                     isLoading={isLoading}
