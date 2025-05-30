@@ -70,6 +70,7 @@ function BenefitPlanProjectsSearcher({
   const [deletedProjectUuids, setDeletedProjectUuids] = useState([]);
   const [undoProjectUuids, setUndoProjectUuids] = useState([]);
   const prevSubmittingMutationRef = useRef();
+  const [activeFilters, setActiveFilters] = useState([]);
 
   const openDeleteProjectConfirmDialog = () => coreConfirm(
     formatMessageWithValues(intl, MODULE_NAME, 'project.delete.confirm.title', {
@@ -86,7 +87,6 @@ function BenefitPlanProjectsSearcher({
   );
 
   const onDoubleClick = (project, newTab = false) => rights.includes(RIGHT_PROJECT_UPDATE)
-  && !deletedProjectUuids.includes(project.id)
   && historyPush(modulesManager, history, 'socialProtection.route.project', [project?.id], newTab);
 
   function projectUpdatePageUrl(project) {
@@ -219,10 +219,6 @@ function BenefitPlanProjectsSearcher({
     ['workingDays', true],
   ];
 
-  // TODO (Wei): rework the UI to hide deleted row instead
-  const isRowDisabled = (_, project) => deletedProjectUuids.includes(project.id)
-      || undoProjectUuids.includes(project.id);
-
   const defaultFilters = () => ({
     isDeleted: {
       value: false,
@@ -265,12 +261,17 @@ function BenefitPlanProjectsSearcher({
     },
   ];
 
+  const isDeletedFilterActive = !!activeFilters?.isDeleted?.value;
+  const items = projects.filter((p) => (
+    isDeletedFilterActive ? !undoProjectUuids.includes(p.id) : !deletedProjectUuids.includes(p.id)
+  ));
+
   return (
     <Searcher
       module={MODULE_NAME}
       FilterPane={benefitPlanProjectsFilter}
       fetch={fetch}
-      items={projects}
+      items={items}
       itemsPageInfo={projectsPageInfo}
       fetchingItems={fetchingProjects}
       fetchedItems={fetchedProjects}
@@ -281,8 +282,6 @@ function BenefitPlanProjectsSearcher({
       headers={headers}
       itemFormatters={itemFormatters}
       sorts={sorts}
-      rowDisabled={isRowDisabled}
-      rowLocked={isRowDisabled}
       rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
       defaultPageSize={DEFAULT_PAGE_SIZE}
       defaultOrderBy="-name"
@@ -293,6 +292,7 @@ function BenefitPlanProjectsSearcher({
       searcherActionsPosition="header-right"
       exportable
       exportFieldLabel={formatMessage(intl, MODULE_NAME, 'export.label')}
+      onFiltersApplied={setActiveFilters}
     />
   );
 }
