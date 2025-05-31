@@ -55,7 +55,7 @@ function ActivityPicker({
       readOnly={readOnly}
       options={activities}
       isLoading={isLoading}
-      value={value}
+      value={value ?? null}
       getOptionLabel={(option) => option.name}
       onChange={(v) => onChange(v, v ? v.name : null)}
       filterOptions={filter}
