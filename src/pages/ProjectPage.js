@@ -14,8 +14,9 @@ import { withTheme, withStyles } from '@material-ui/core/styles';
 
 import {
   fetchBenefitPlan,
-  fetchBenefitPlanProjects,
+  fetchProject,
   createProject,
+  updateProject,
 } from '../actions';
 import ProjectHeadPanel from '../components/ProjectHeadPanel';
 import { RIGHT_BENEFIT_PLAN_UPDATE } from '../constants';
@@ -34,8 +35,9 @@ function ProjectPage({
   modulesManager,
   projectUuid,
   project,
-  fetchBenefitPlanProjects,
+  fetchProject,
   createProject,
+  updateProject,
   submittingMutation,
   mutation,
   journalize,
@@ -87,7 +89,7 @@ function ProjectPage({
 
   useEffect(() => {
     if (projectUuid) {
-      fetchBenefitPlanProjects(modulesManager, [`id: "${projectUuid}"`]);
+      fetchProject(modulesManager, [`id: "${projectUuid}"`]);
     }
   }, [projectUuid]);
 
@@ -123,12 +125,18 @@ function ProjectPage({
   const canSave = () => !isMandatoryFieldsEmpty() && isValid();
 
   const handleSave = () => {
-    createProject(
+    const mutationLabelKey = projectUuid
+      ? 'project.update.mutationLabel'
+      : 'project.create.mutationLabel';
+
+    const action = projectUuid ? updateProject : createProject;
+
+    action(
       editedProject,
       formatMessageWithValues(
         intl,
         'socialProtection',
-        'project.create.mutationLabel',
+        mutationLabelKey,
         editedProject,
       ),
     );
@@ -138,10 +146,8 @@ function ProjectPage({
     <div className={classes.page}>
       <Form
         module="socialProtection"
-        classes={classes.form}
-        title={
-          formatMessage(intl, 'socialProtection', 'project.pageTitle')
-        }
+        className={classes.form}
+        title="project.pageTitle"
         openDirty
         edited={editedProject}
         onEditedChanged={setEditedProject}
@@ -153,7 +159,7 @@ function ProjectPage({
         HeadPanel={ProjectHeadPanel}
         Panels={[]}
         rights={rights}
-        readOnly={!!projectUuid}
+        readOnly={editedProject?.isDeleted}
         saveTooltip={
           formatMessage(intl, 'socialProtection', 'project.saveButton.tooltip')
         }
@@ -173,8 +179,9 @@ const mapStateToProps = (state, props) => ({
 
 const mapDispatchToProps = (dispatch) => bindActionCreators(
   {
-    fetchBenefitPlanProjects,
+    fetchProject,
     createProject,
+    updateProject,
     journalize,
   },
   dispatch,

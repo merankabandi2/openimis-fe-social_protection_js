@@ -7,7 +7,6 @@ import {
   withModulesManager,
   useModulesManager,
   useHistory,
-  historyPush,
   coreConfirm,
   clearConfirm,
   journalize,
@@ -86,12 +85,10 @@ function BenefitPlanProjectsSearcher({
     formatMessage(intl, MODULE_NAME, 'project.undo.confirm.message'),
   );
 
-  const onDoubleClick = (project, newTab = false) => rights.includes(RIGHT_PROJECT_UPDATE)
-  && historyPush(modulesManager, history, 'socialProtection.route.project', [project?.id], newTab);
-
-  function projectUpdatePageUrl(project) {
-    return `${modulesManager.getRef('socialProtection.route.project')}/${project?.id}`;
-  }
+  const openProject = (project) => rights.includes(RIGHT_PROJECT_UPDATE)
+    && history.push(`${benefitPlanId}/`
+    + `${modulesManager.getRef('socialProtection.route.project')}`
+    + `/${project?.id}`);
 
   const onDelete = (project) => setProjectToDelete(project);
   const onUndo = (project) => setProjectToUndo(project);
@@ -175,8 +172,7 @@ function BenefitPlanProjectsSearcher({
       formatters.push((project) => (
         <Tooltip title={formatMessage(intl, 'project', 'editButtonTooltip')}>
           <IconButton
-            href={projectUpdatePageUrl(project)}
-            onClick={(e) => e.stopPropagation() && onDoubleClick(project)}
+            onClick={() => openProject(project)}
             disabled={deletedProjectUuids.includes(project.id)}
           >
             <EditIcon />
@@ -292,6 +288,7 @@ function BenefitPlanProjectsSearcher({
       searcherActionsPosition="header-right"
       exportable
       exportFieldLabel={formatMessage(intl, MODULE_NAME, 'export.label')}
+      onDoubleClick={openProject}
       onFiltersApplied={setActiveFilters}
     />
   );

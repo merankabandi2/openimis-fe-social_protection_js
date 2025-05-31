@@ -45,7 +45,9 @@ export const ACTION_TYPE = {
   RESOLVE_TASK: 'TASK_MANAGEMENT_RESOLVE_TASK',
   SEARCH_BENEFIT_PLANS_HISTORY: 'BENEFIT_PLAN_BENEFIT_PLANS_HISTORY',
   SEARCH_PROJECTS: 'BENEFIT_PLAN_PROJECTS',
+  GET_PROJECT: 'BENEFIT_PLAN_PROJECT',
   CREATE_PROJECT: 'BENEFIT_PLAN_CREATE_PROJECT',
+  UPDATE_PROJECT: 'BENEFIT_PLAN_UPDATE_PROJECT',
   DELETE_PROJECT: 'BENEFIT_PLAN_DELETE_PROJECT',
   UNDO_DELETE_PROJECT: 'BENEFIT_PLAN_UNDO_DELETE_PROJECT',
   PROJECT_NAME_FIELDS_VALIDATION: 'PROJECT_NAME_FIELDS_VALIDATION',
@@ -205,6 +207,13 @@ function reducer(
         projectsTotalCount: 0,
         errorProjects: null,
       };
+    case REQUEST(ACTION_TYPE.GET_PROJECT):
+      return {
+        ...state,
+        fetchingProject: true,
+        fetchedProject: false,
+        project: null,
+      };
     case SUCCESS(ACTION_TYPE.SEARCH_BENEFIT_PLANS):
       return {
         ...state,
@@ -309,6 +318,25 @@ function reducer(
         projectsTotalCount: action.payload.data.project ? action.payload.data.project.totalCount : null,
         errorProjects: formatGraphQLError(action.payload),
       };
+    case SUCCESS(ACTION_TYPE.GET_PROJECT):
+      return {
+        ...state,
+        fetchingProject: false,
+        fetchedProject: true,
+        project: parseData(action.payload.data.project)?.map((project) => ({
+          ...project,
+          benefitPlan: {
+            ...project?.benefitPlan,
+            id: project?.benefitPlan?.id ? decodeId(project.benefitPlan.id) : null,
+          },
+          activity: {
+            ...project?.activity,
+            id: project?.activity?.id ? decodeId(project.activity.id) : null,
+          },
+          id: decodeId(project.id),
+        }))?.[0],
+        errorProject: null,
+      };
     case ERROR(ACTION_TYPE.GET_FIELDS_FROM_BF_SCHEMA):
       return {
         ...state,
@@ -356,6 +384,12 @@ function reducer(
         ...state,
         fetchingProjects: false,
         errorProjects: formatServerError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.GET_PROJECT):
+      return {
+        ...state,
+        fetchingProject: false,
+        errorProject: formatServerError(action.payload),
       };
     case REQUEST(ACTION_TYPE.BENEFIT_PLAN_CODE_FIELDS_VALIDATION):
       return {
@@ -813,6 +847,8 @@ function reducer(
       return dispatchMutationResp(state, 'updateGroupBeneficiary', action);
     case SUCCESS(ACTION_TYPE.CREATE_PROJECT):
       return dispatchMutationResp(state, 'createProject', action);
+    case SUCCESS(ACTION_TYPE.UPDATE_PROJECT):
+      return dispatchMutationResp(state, 'updateProject', action);
     case SUCCESS(ACTION_TYPE.DELETE_PROJECT):
       return dispatchMutationResp(state, 'deleteProject', action);
     case SUCCESS(ACTION_TYPE.UNDO_DELETE_PROJECT):

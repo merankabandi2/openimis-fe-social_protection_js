@@ -171,6 +171,7 @@
   "socialProtection.projects.searcherResultsTitle": "{projectsTotalCount} Projects",
   "socialProtection.projects.searcherAddAction": "Create Project",
   "socialProtection.project.name": "Name",
+  "socialProtection.project.name.alreadyTaken": "The name is already taken",
   "socialProtection.project.status": "Status",
   "socialProtection.project.activity": "Activity",
   "socialProtection.project.targetBeneficiaries": "Target Beneficiaries",
@@ -183,25 +184,30 @@
   "socialProtection.project.statusPicker.IN_PROGRESS": "In Progress",
   "socialProtection.project.statusPicker.COMPLETED": "Completed",
   "socialProtection.project.benefitPlan": "Program",
-  "socialProtection.project.create.mutationLabel": "Created project {name}",
   "project": {
     "activityPicker" : {
       "label": "Activity",
       "null": ""
+    },
+    "create": {
+      "mutationLabel": "Create project {name}"
+    },
+    "update": {
+      "mutationLabel": "Update project {name}"
     },
     "delete": {
       "confirm": {
         "title": "Delete project {name}?",
         "message": "Deleting a project does not mean erasing it from OpenIMIS database. The project will only be deactivated and hidden in the default list view."
       },
-      "mutationLabel": "Deleted project {name}"
+      "mutationLabel": "Delete project {name}"
     },
     "undo": {
       "confirm": {
         "title": "Restore project {name}?",
         "message": "This will undo the deletion and make the project active again. Do you want to continue?"
       },
-      "mutationLabel": "Restored project {name}"
+      "mutationLabel": "Restore project {name}"
     },
     "isDeleted": "Show Deleted"
   }

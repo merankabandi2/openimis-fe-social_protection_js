@@ -25,8 +25,7 @@ const styles = (theme) => ({
 
 class ProjectHeadPanel extends FormPanel {
   shouldValidate(inputValue, savedValue) {
-    const { project } = this.props;
-    return !project?.id || inputValue !== savedValue;
+    return !this.props.edited?.id || inputValue !== savedValue;
   }
 
   render() {
@@ -118,11 +117,11 @@ class ProjectHeadPanel extends FormPanel {
 
         <Grid item xs={4} className={classes.item}>
           <ProjectStatusPicker
-            label="project.status"
             required
             readOnly={readOnly || isNewProject}
             value={project?.status || 'PREPARATION'}
             onChange={(v) => this.updateAttribute('status', v)}
+            withNull={false}
           />
         </Grid>
 
