@@ -263,34 +263,36 @@ function BenefitPlanProjectsSearcher({
   ));
 
   return (
-    <Searcher
-      module={MODULE_NAME}
-      FilterPane={benefitPlanProjectsFilter}
-      fetch={fetch}
-      items={items}
-      itemsPageInfo={projectsPageInfo}
-      fetchingItems={fetchingProjects}
-      fetchedItems={fetchedProjects}
-      errorItems={errorProjects}
-      tableTitle={formatMessageWithValues(intl, MODULE_NAME, 'projects.searcherResultsTitle', {
-        projectsTotalCount,
-      })}
-      headers={headers}
-      itemFormatters={itemFormatters}
-      sorts={sorts}
-      rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
-      defaultPageSize={DEFAULT_PAGE_SIZE}
-      defaultOrderBy="-name"
-      rowIdentifier={rowIdentifier}
-      defaultFilters={defaultFilters()}
-      searcherActions={searcherActions}
-      enableActionButtons
-      searcherActionsPosition="header-right"
-      exportable
-      exportFieldLabel={formatMessage(intl, MODULE_NAME, 'export.label')}
-      onDoubleClick={openProject}
-      onFiltersApplied={setActiveFilters}
-    />
+    !!benefitPlanId && (
+      <Searcher
+        module={MODULE_NAME}
+        FilterPane={benefitPlanProjectsFilter}
+        fetch={fetch}
+        items={items}
+        itemsPageInfo={projectsPageInfo}
+        fetchingItems={fetchingProjects}
+        fetchedItems={fetchedProjects}
+        errorItems={errorProjects}
+        tableTitle={formatMessageWithValues(intl, MODULE_NAME, 'projects.searcherResultsTitle', {
+          projectsTotalCount,
+        })}
+        headers={headers}
+        itemFormatters={itemFormatters}
+        sorts={sorts}
+        rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
+        defaultPageSize={DEFAULT_PAGE_SIZE}
+        defaultOrderBy="-name"
+        rowIdentifier={rowIdentifier}
+        defaultFilters={defaultFilters()}
+        searcherActions={searcherActions}
+        enableActionButtons
+        searcherActionsPosition="header-right"
+        exportable
+        exportFieldLabel={formatMessage(intl, MODULE_NAME, 'export.label')}
+        onDoubleClick={openProject}
+        onFiltersApplied={setActiveFilters}
+      />
+    )
   );
 }
 
