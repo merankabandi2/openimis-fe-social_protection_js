@@ -239,7 +239,7 @@ function BenefitPlanProjectsSearcher({
 
   const onAdd = () => {
     history.push({
-      pathname: `/${modulesManager.getRef('socialProtection.route.benefitPlan')}/${benefitPlanId}/`
+      pathname: `${benefitPlanId}/`
         + `${modulesManager.getRef('socialProtection.route.project')}`,
       state: {
         benefitPlanId,
