@@ -157,7 +157,7 @@ function BenefitPlanProjectsSearcher({
   const itemFormatters = () => {
     const baseFormatters = [
       (project) => project.name,
-      (project) => project.status,
+      (project) => formatMessage(intl, MODULE_NAME, `project.statusPicker.${project.status}`),
       (project) => project.activity?.name ?? '',
       (project) => project.targetBeneficiaries,
       (project) => project.workingDays,
