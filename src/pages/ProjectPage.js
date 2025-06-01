@@ -11,6 +11,7 @@ import { injectIntl } from 'react-intl';
 import { bindActionCreators } from 'redux';
 import { connect, useDispatch } from 'react-redux';
 import { withTheme, withStyles } from '@material-ui/core/styles';
+import _ from 'lodash';
 
 import {
   fetchBenefitPlan,
@@ -122,7 +123,12 @@ function ProjectPage({
 
   const isValid = () => (project?.name ? isProjectNameValid : true);
 
-  const canSave = () => !isMandatoryFieldsEmpty() && isValid();
+  const doesProjectChange = () => {
+    if (_.isEqual(project, editedProject)) return false;
+    return true;
+  };
+
+  const canSave = () => !isMandatoryFieldsEmpty() && isValid() && doesProjectChange();
 
   const handleSave = () => {
     const mutationLabelKey = projectUuid
