@@ -248,6 +248,12 @@ function BenefitPlanProjectsSearcher({
     });
   };
 
+  const onFiltersApplied = (appliedFilters) => {
+    setActiveFilters(appliedFilters);
+    setDeletedProjectUuids([]);
+    setUndoProjectUuids([]);
+  };
+
   const searcherActions = [
     {
       label: formatMessage(intl, MODULE_NAME, 'projects.searcherAddAction'),
@@ -290,7 +296,7 @@ function BenefitPlanProjectsSearcher({
         exportable
         exportFieldLabel={formatMessage(intl, MODULE_NAME, 'export.label')}
         onDoubleClick={openProject}
-        onFiltersApplied={setActiveFilters}
+        onFiltersApplied={onFiltersApplied}
       />
     )
   );
