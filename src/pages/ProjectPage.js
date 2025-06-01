@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Form,
   formatMessage,
   formatMessageWithValues,
   withModulesManager,
+  coreConfirm,
+  clearConfirm,
   journalize,
   useHistory,
 } from '@openimis/fe-core';
@@ -11,6 +13,7 @@ import { injectIntl } from 'react-intl';
 import { bindActionCreators } from 'redux';
 import { connect, useDispatch } from 'react-redux';
 import { withTheme, withStyles } from '@material-ui/core/styles';
+import DeleteIcon from '@material-ui/icons/Delete';
 import _ from 'lodash';
 
 import {
@@ -18,7 +21,9 @@ import {
   fetchProject,
   createProject,
   updateProject,
+  deleteProject,
 } from '../actions';
+import { ACTION_TYPE } from '../reducer';
 import ProjectHeadPanel from '../components/ProjectHeadPanel';
 import { RIGHT_BENEFIT_PLAN_UPDATE } from '../constants';
 
@@ -39,8 +44,12 @@ function ProjectPage({
   fetchProject,
   createProject,
   updateProject,
+  deleteProject,
   submittingMutation,
   mutation,
+  coreConfirm,
+  clearConfirm,
+  confirmed,
   journalize,
   isProjectNameValid,
 }) {
@@ -56,6 +65,7 @@ function ProjectPage({
   const benefitPlanId = benefitPlanIdFromState || benefitPlanIdFromPath;
 
   const [benefitPlanName, setBenefitPlanName] = useState(benefitPlanNameFromState);
+  const [confirmedAction, setConfirmedAction] = useState(() => null);
 
   const [editedProject, setEditedProject] = useState({
     benefitPlan: { id: benefitPlanId, name: benefitPlanName },
@@ -64,6 +74,8 @@ function ProjectPage({
   const [reset, setReset] = useState(() => false);
 
   const dispatch = useDispatch();
+
+  const prevSubmittingMutationRef = useRef();
 
   useEffect(() => {
     // Only fetch benefit plan name if project creation URL is visited directly
@@ -106,12 +118,27 @@ function ProjectPage({
   }, [project]);
 
   useEffect(() => {
-    if (mutation?.clientMutationId && !submittingMutation) {
+    if (confirmed && confirmedAction) confirmedAction();
+    return () => confirmed && clearConfirm(null);
+  }, [confirmed]);
+
+  const back = () => history.goBack();
+
+  useEffect(() => {
+    if (prevSubmittingMutationRef.current && !submittingMutation) {
       journalize(mutation);
+      if (mutation?.actionType === ACTION_TYPE.DELETE_PROJECT) {
+        back();
+      }
+    }
+    if (mutation?.clientMutationId && !projectUuid) {
+      fetchProject(modulesManager, [`clientMutationId: "${mutation.clientMutationId}"`]);
     }
   }, [submittingMutation]);
 
-  const back = () => history.goBack();
+  useEffect(() => {
+    prevSubmittingMutationRef.current = submittingMutation;
+  });
 
   const isMandatoryFieldsEmpty = () => (
     !editedProject?.name
@@ -148,6 +175,31 @@ function ProjectPage({
     );
   };
 
+  const deleteProjectCallback = () => deleteProject(
+    project,
+    formatMessageWithValues(intl, 'socialProtection', 'project.delete.mutationLabel', {
+      name: project?.name,
+    }),
+  );
+
+  const openDeleteConfirmDialog = () => {
+    setConfirmedAction(() => deleteProjectCallback);
+    coreConfirm(
+      formatMessageWithValues(intl, 'socialProtection', 'project.delete.confirm.title', {
+        name: project?.name,
+      }),
+      formatMessage(intl, 'socialProtection', 'project.delete.confirm.message'),
+    );
+  };
+
+  const actions = [
+    !!project && {
+      doIt: openDeleteConfirmDialog,
+      icon: <DeleteIcon />,
+      tooltip: formatMessage(intl, 'socialProtection', 'deleteButtonTooltip'),
+    },
+  ];
+
   return rights.includes(RIGHT_BENEFIT_PLAN_UPDATE) && (
     <div className={classes.page}>
       <Form
@@ -165,6 +217,7 @@ function ProjectPage({
         HeadPanel={ProjectHeadPanel}
         Panels={[]}
         rights={rights}
+        actions={actions}
         readOnly={editedProject?.isDeleted}
         saveTooltip={
           formatMessage(intl, 'socialProtection', 'project.saveButton.tooltip')
@@ -178,6 +231,7 @@ const mapStateToProps = (state, props) => ({
   rights: state.core?.user?.i_user?.rights ?? [],
   projectUuid: props.match.params.project_uuid,
   project: state.socialProtection.project,
+  confirmed: state.core.confirmed,
   submittingMutation: state.socialProtection.submittingMutation,
   mutation: state.socialProtection.mutation,
   isProjectNameValid: state.socialProtection.validationFields?.projectName?.isValid,
@@ -188,6 +242,9 @@ const mapDispatchToProps = (dispatch) => bindActionCreators(
     fetchProject,
     createProject,
     updateProject,
+    deleteProject,
+    coreConfirm,
+    clearConfirm,
     journalize,
   },
   dispatch,
