@@ -105,7 +105,7 @@ function ProjectPage({
   }, [project]);
 
   useEffect(() => {
-    if (mutation && !submittingMutation) {
+    if (mutation?.clientMutationId && !submittingMutation) {
       journalize(mutation);
     }
   }, [submittingMutation]);
