@@ -37,11 +37,9 @@ const styles = (theme) => ({
 });
 
 class BenefitPlanHeadPanel extends FormPanel {
-  shouldValidate(inputValue, fieldToValidate) {
-    const { benefitPlan } = this.props;
-    if ((!!benefitPlan?.id && inputValue === fieldToValidate)
-            || (!fieldToValidate && !!benefitPlan?.id)) { return false; }
-    return true;
+  shouldValidate(inputValue, savedValue) {
+    if (!savedValue) return false;
+    return !this.props.edited?.id || inputValue !== savedValue;
   }
 
   render() {

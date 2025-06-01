@@ -25,6 +25,7 @@ const styles = (theme) => ({
 
 class ProjectHeadPanel extends FormPanel {
   shouldValidate(inputValue, savedValue) {
+    if (!savedValue) return false;
     return !this.props.edited?.id || inputValue !== savedValue;
   }
 
