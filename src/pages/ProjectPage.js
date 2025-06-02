@@ -14,6 +14,7 @@ import { bindActionCreators } from 'redux';
 import { connect, useDispatch } from 'react-redux';
 import { withTheme, withStyles } from '@material-ui/core/styles';
 import DeleteIcon from '@material-ui/icons/Delete';
+import UndoIcon from '@material-ui/icons/Undo';
 import _ from 'lodash';
 
 import {
@@ -22,6 +23,7 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  undoDeleteProject,
 } from '../actions';
 import { ACTION_TYPE } from '../reducer';
 import ProjectHeadPanel from '../components/ProjectHeadPanel';
@@ -45,6 +47,7 @@ function ProjectPage({
   createProject,
   updateProject,
   deleteProject,
+  undoDeleteProject,
   submittingMutation,
   mutation,
   coreConfirm,
@@ -127,7 +130,10 @@ function ProjectPage({
   useEffect(() => {
     if (prevSubmittingMutationRef.current && !submittingMutation) {
       journalize(mutation);
-      if (mutation?.actionType === ACTION_TYPE.DELETE_PROJECT) {
+      if ([
+        ACTION_TYPE.DELETE_PROJECT,
+        ACTION_TYPE.UNDO_DELETE_PROJECT,
+      ].includes(mutation?.actionType)) {
         back();
       }
     }
@@ -192,12 +198,34 @@ function ProjectPage({
     );
   };
 
+  const undoProjectCallback = () => undoDeleteProject(
+    project,
+    formatMessageWithValues(intl, 'socialProtection', 'project.undo.mutationLabel', {
+      name: project?.name,
+    }),
+  );
+
+  const openUndoConfirmDialog = () => {
+    setConfirmedAction(() => undoProjectCallback);
+    coreConfirm(
+      formatMessageWithValues(intl, 'socialProtection', 'project.undo.confirm.title', {
+        name: project?.name,
+      }),
+      formatMessage(intl, 'socialProtection', 'project.undo.confirm.message'),
+    );
+  };
+
   const actions = [
-    !!project && {
-      doIt: openDeleteConfirmDialog,
-      icon: <DeleteIcon />,
-      tooltip: formatMessage(intl, 'socialProtection', 'deleteButtonTooltip'),
-    },
+    !!project && (
+      project.isDeleted ? {
+        doIt: openUndoConfirmDialog,
+        icon: <UndoIcon />,
+        tooltip: formatMessage(intl, 'socialProtection', 'undoButtonTooltip'),
+      } : {
+        doIt: openDeleteConfirmDialog,
+        icon: <DeleteIcon />,
+        tooltip: formatMessage(intl, 'socialProtection', 'deleteButtonTooltip'),
+      }),
   ];
 
   return rights.includes(RIGHT_BENEFIT_PLAN_UPDATE) && (
@@ -243,6 +271,7 @@ const mapDispatchToProps = (dispatch) => bindActionCreators(
     createProject,
     updateProject,
     deleteProject,
+    undoDeleteProject,
     coreConfirm,
     clearConfirm,
     journalize,
