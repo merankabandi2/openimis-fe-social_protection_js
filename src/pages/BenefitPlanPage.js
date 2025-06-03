@@ -70,7 +70,7 @@ function BenefitPlanPage({
   }, [benefitPlanUuid]);
 
   useEffect(() => {
-    if (confirmed) confirmedAction();
+    if (confirmed && confirmedAction) confirmedAction();
     return () => confirmed && clearConfirm(null);
   }, [confirmed]);
 
@@ -212,8 +212,8 @@ function BenefitPlanPage({
     <div className={classes.page}>
       <Form
         module="socialProtection"
-        classes={classes}
-        title={formatMessageWithValues(intl, 'socialProtection', 'benefitPlan.pageTitle', titleParams(benefitPlan))}
+        className={classes}
+        title="benefitPlan.pageTitle"
         titleParams={titleParams(benefitPlan)}
         openDirty
         benefitPlan={benefitPlan}

@@ -9,10 +9,8 @@ import BeneficiaryStatusPicker from '../pickers/BeneficiaryStatusPicker';
 import { DEFAULT_DEBOUNCE_TIME, EMPTY_STRING } from '../constants';
 
 function BenefitPlanGroupBeneficiariesFilter({
-  intl, classes, filters, onChangeFilters, readOnly, status,
+  classes, filters, onChangeFilters, readOnly, status,
 }) {
-  const any = formatMessage(intl, 'socialProtection', 'any');
-
   const debouncedOnChangeFilters = _debounce(onChangeFilters, DEFAULT_DEBOUNCE_TIME);
 
   const filterTextFieldValue = (filterName) => filters?.[filterName]?.value ?? EMPTY_STRING;
@@ -44,7 +42,7 @@ function BenefitPlanGroupBeneficiariesFilter({
           label="beneficiary.beneficiaryStatusPicker"
           withNull
           readOnly={readOnly}
-          nullLabel={any}
+          nullLabel="any"
           value={status || filterValue('status')}
           onChange={(value) => onChangeFilters([
             {
@@ -62,7 +60,7 @@ function BenefitPlanGroupBeneficiariesFilter({
             label="beneficiary.isEligible"
             constants={['true', 'false']}
             withNull
-            nullLabel={any}
+            nullLabel="any"
             value={filterValue('isEligible')}
             onChange={(value) => onChangeFilters([
               {
@@ -87,6 +85,6 @@ function BenefitPlanGroupBeneficiariesFilter({
   );
 }
 
-export default injectIntl(withTheme(withStyles(defaultFilterStyles)(
+export default withTheme(withStyles(defaultFilterStyles)(
   BenefitPlanGroupBeneficiariesFilter,
-)));
+));

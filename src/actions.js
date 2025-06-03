@@ -73,6 +73,7 @@ const PROJECT_FULL_PROJECTION = (modulesManager) => [
   'workingDays',
   'activity {id, name}',
   'location' + modulesManager.getProjection('location.Location.FlatProjection'),
+  'isDeleted',
 ];
 
 export function fetchBenefitPlans(params) {
@@ -373,6 +374,11 @@ export function fetchBenefitPlanProjects(modulesManager, params) {
   return graphql(payload, ACTION_TYPE.SEARCH_PROJECTS);
 }
 
+export function fetchProject(modulesManager, params) {
+  const payload = formatPageQuery('project', params, PROJECT_FULL_PROJECTION(modulesManager));
+  return graphql(payload, ACTION_TYPE.GET_PROJECT);
+}
+
 export function createProject(project, clientMutationLabel) {
   const mutation = formatMutation('createProject', formatProjectGQL(project), clientMutationLabel);
   const requestedDateTime = new Date();
@@ -381,6 +387,61 @@ export function createProject(project, clientMutationLabel) {
     [REQUEST(ACTION_TYPE.MUTATION), SUCCESS(ACTION_TYPE.CREATE_PROJECT), ERROR(ACTION_TYPE.MUTATION)],
     {
       actionType: ACTION_TYPE.CREATE_PROJECT,
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+    },
+  );
+}
+
+export function updateProject(project, clientMutationLabel) {
+  const mutation = formatMutation('updateProject', formatProjectGQL(project), clientMutationLabel);
+  const requestedDateTime = new Date();
+  return graphql(
+    mutation.payload,
+    [REQUEST(ACTION_TYPE.MUTATION), SUCCESS(ACTION_TYPE.UPDATE_PROJECT), ERROR(ACTION_TYPE.MUTATION)],
+    {
+      actionType: ACTION_TYPE.UPDATE_PROJECT,
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+    },
+  );
+}
+
+export function deleteProject(project, clientMutationLabel) {
+  const projectUuids = `ids: ["${project?.id}"]`;
+  const mutation = formatMutation('deleteProject', projectUuids, clientMutationLabel);
+  const requestedDateTime = new Date();
+  return graphql(
+    mutation.payload,
+    [
+      REQUEST(ACTION_TYPE.MUTATION),
+      SUCCESS(ACTION_TYPE.DELETE_PROJECT),
+      ERROR(ACTION_TYPE.MUTATION),
+    ],
+    {
+      actionType: ACTION_TYPE.DELETE_PROJECT,
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+    },
+  );
+}
+
+export function undoDeleteProject(project, clientMutationLabel) {
+  const projectUuids = `ids: ["${project?.id}"]`;
+  const mutation = formatMutation('undoDeleteProject', projectUuids, clientMutationLabel);
+  const requestedDateTime = new Date();
+  return graphql(
+    mutation.payload,
+    [
+      REQUEST(ACTION_TYPE.MUTATION),
+      SUCCESS(ACTION_TYPE.UNDO_DELETE_PROJECT),
+      ERROR(ACTION_TYPE.MUTATION),
+    ],
+    {
+      actionType: ACTION_TYPE.UNDO_DELETE_PROJECT,
       clientMutationId: mutation.clientMutationId,
       clientMutationLabel,
       requestedDateTime,

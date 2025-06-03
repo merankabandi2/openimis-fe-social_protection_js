@@ -4,7 +4,7 @@ import { PROJECT_STATUS_LIST } from '../constants';
 
 function ProjectStatusPicker(props) {
   const {
-    required, readOnly, onChange, value, withLabel,
+    required, readOnly, onChange, value, withLabel, withNull, nullLabel,
   } = props;
 
   return (
@@ -13,11 +13,12 @@ function ProjectStatusPicker(props) {
       label="project.statusPicker"
       constants={PROJECT_STATUS_LIST}
       required={required}
-      withNull={false}
       readOnly={readOnly}
       onChange={onChange}
       value={value}
       withLabel={withLabel}
+      withNull={withNull}
+      nullLabel={nullLabel}
     />
   );
 }
