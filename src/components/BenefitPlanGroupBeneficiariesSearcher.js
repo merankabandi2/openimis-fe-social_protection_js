@@ -210,7 +210,7 @@ function BenefitPlanGroupBeneficiariesSearcher({
     if (groupBeneficiaryExport) {
       downloadExport(
         groupBeneficiaryExport,
-        `${formatMessage(intl, 'socialProtection', 'export.filename.groupBeneficiaries')}.csv`,
+        `${formatMessage(intl, 'socialProtection', 'export.filename.groupBeneficiaries')}.xlsx`,
       )();
       clearGroupBeneficiaryExport();
     }
@@ -254,14 +254,14 @@ function BenefitPlanGroupBeneficiariesSearcher({
         exportFetch={downloadGroupBeneficiaries}
         exportFields={[
           'id',
-          'group.id',
           'json_ext', // Unfolded by backend and removed from csv
         ]}
         exportFieldsColumns={{
           id: 'ID',
-          group__id: formatMessage(intl, 'socialProtection', 'export.group.id'),
         }}
         exportFieldLabel={formatMessage(intl, 'socialProtection', 'export.label')}
+        exportFileFormats={['csv', 'xlsx']}
+        exportFileFormat="xlsx"
         headers={headers}
         itemFormatters={itemFormatters}
         sorts={sorts}

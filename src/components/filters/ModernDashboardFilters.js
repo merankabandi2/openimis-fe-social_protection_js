@@ -331,6 +331,7 @@ const ModernDashboardFilters = ({
   // Calculate active filter count
   const activeFilterCount = Object.entries(filters).reduce((count, [key, value]) => {
     if (value === null || value === undefined) return count;
+    if (key === 'yearRange') return count;
     if (Array.isArray(value) && value.length > 0) return count + value.length;
     if (typeof value === 'object' && value !== null && !Array.isArray(value) && (value.start || value.end)) return count + 1;
     if (key === 'year' && typeof value === 'number' && value !== new Date().getFullYear()) return count + 1;
