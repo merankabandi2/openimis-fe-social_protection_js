@@ -12,7 +12,7 @@ import { useMemo } from 'react';
 const MONETARY_TRANSFERS_SUMMARY = `
   query MonetaryTransfersSummary($year: Int, $benefitPlanId: String, $locationId: String) {
     # Get external payments from MonetaryTransfer
-    monetaryTransfer(isDeleted: false) {
+    monetaryTransfer {
       edges {
         node {
           id
@@ -147,8 +147,10 @@ export const useMonetaryTransfersDashboard = (filters = {}) => {
     // Calculate totals from filtered external transfers
     filteredTransfers.forEach(({ node }) => {
       const totalPaid = (node.paidWomen || 0) + (node.paidMen || 0) + (node.paidTwa || 0);
+      const totalPlanned = (node.plannedWomen || 0) + (node.plannedMen || 0) + (node.plannedTwa || 0);
+      
       externalPayments += totalPaid;
-      externalBeneficiaries += totalPaid; // Each paid beneficiary counts as 1
+      externalBeneficiaries += totalPlanned; // Use planned beneficiaries for total count
       
       // Use actual amount fields
       externalPlannedAmount += parseFloat(node.plannedAmount || 0);
@@ -160,10 +162,13 @@ export const useMonetaryTransfersDashboard = (filters = {}) => {
     const internalAmountReceived = benefitsSummary.totalAmountReceived || 0;
     const totalAmountDue = benefitsSummary.totalAmountDue || 0;
     
-    // Total beneficiaries (this could be from group beneficiaries or calculated differently)
-    const totalBeneficiaries = data.groupBeneficiaryFiltered?.totalCount || 0;
+    // Total beneficiaries from internal system (group beneficiaries)
+    const internalBeneficiaries = data.groupBeneficiaryFiltered?.totalCount || 0;
     
-    // Total payments (combine external count and internal payment cycles)
+    // Total beneficiaries combines external planned beneficiaries and internal beneficiaries
+    const totalBeneficiaries = Math.max(externalBeneficiaries, internalBeneficiaries);
+    
+    // Total payments (actual paid count from external + internal payment cycles)
     const totalPayments = externalPayments + (data.paymentCycleFiltered?.totalCount || 0);
     
     // Total amount combines external planned amount and internal due amount
@@ -176,7 +181,7 @@ export const useMonetaryTransfersDashboard = (filters = {}) => {
     const totalHouseholds = data.groupFiltered?.totalCount || 0;
     const totalIndividuals = data.individualFiltered?.totalCount || 0;
 
-    return {
+    const result = {
       totalBeneficiaries,
       totalPayments,
       totalAmount,
@@ -190,6 +195,19 @@ export const useMonetaryTransfersDashboard = (filters = {}) => {
       externalTransferredAmount,
       internalAmount: internalAmountReceived,
     };
+    
+    // Debug logging
+    console.log('MonetaryTransfersDashboard processedData:', {
+      externalPlannedAmount,
+      externalTransferredAmount,
+      internalAmountReceived,
+      totalAmountDue,
+      totalAmount,
+      totalAmountReceived,
+      monetaryTransfers: filteredTransfers.length,
+    });
+    
+    return result;
   }, [data, filters]);
 
   return {

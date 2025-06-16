@@ -48,7 +48,9 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
+function ValidationDialog({
+  open, onClose, data, type, onValidated,
+}) {
   const classes = useStyles();
   const intl = useIntl();
   const modulesManager = useModulesManager();
@@ -64,21 +66,21 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
     behavior_change: 'validateBehaviorChange',
     microproject: 'validateMicroproject',
   };
-  
+
   // Helper function to get category display label
   const getCategoryLabel = (categoryKey) => {
     if (!categoryKey) return '';
-    
+
     // Try to get translation first - handle both lowercase and uppercase keys
     const normalizedKey = categoryKey.toLowerCase();
     const translationKey = `sensitizationTraining.category.${normalizedKey}`;
     const translated = intl.formatMessage({ id: translationKey });
-    
+
     // If translation exists (not same as key), return it
     if (translated !== translationKey) {
       return translated;
     }
-    
+
     // Otherwise return the original value
     return categoryKey;
   };
@@ -92,18 +94,18 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
   const handleConfirmValidation = async () => {
     setShowConfirmDialog(false);
     setIsSubmitting(true);
-    
+
     const mutationName = mutationMap[type];
-    
+
     // Map mutation names to their correct input types
     const inputTypeMap = {
       validateSensitizationTraining: 'ValidateSensitizationTrainingMutationInput',
       validateBehaviorChange: 'ValidateBehaviorChangeMutationInput',
       validateMicroproject: 'ValidateMicroProjectMutationInput',
     };
-    
+
     const inputType = inputTypeMap[mutationName];
-    
+
     const mutation = `
       mutation ${mutationName}($input: ${inputType}!) {
         ${mutationName}(input: $input) {
@@ -112,30 +114,29 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
         }
       }
     `;
-    
+
     const variables = {
       id: data.id || data.uuid,
       status: confirmAction,
       comment: comment || null,
       clientMutationId: `${mutationName}-${Date.now()}`,
     };
-    
+
     try {
       dispatch(
         graphqlWithVariables(
           mutation,
           { input: variables },
-          ['SOCIAL_PROTECTION_MUTATION_REQ', 'SOCIAL_PROTECTION_MUTATION_RESP', 'SOCIAL_PROTECTION_MUTATION_ERR']
-        )
+          ['SOCIAL_PROTECTION_MUTATION_REQ', 'SOCIAL_PROTECTION_MUTATION_RESP', 'SOCIAL_PROTECTION_MUTATION_ERR'],
+        ),
       );
-      
+
       // Since graphql action doesn't return a promise, we'll handle success optimistically
       setTimeout(() => {
         setIsSubmitting(false);
         onValidated();
         onClose();
       }, 1000);
-      
     } catch (error) {
       setIsSubmitting(false);
       console.error('Validation error:', error);
@@ -158,19 +159,31 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
               {formatMessage(intl, 'socialProtection', 'validation.trainingDetails')}
             </Typography>
             <Box className={classes.dataRow}>
-              <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.date')}:</span>
+              <span className={classes.label}>
+                {formatMessage(intl, 'socialProtection', 'validation.date')}
+                :
+              </span>
               {data.sensitizationDate}
             </Box>
             <Box className={classes.dataRow}>
-              <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.location')}:</span>
+              <span className={classes.label}>
+                {formatMessage(intl, 'socialProtection', 'validation.location')}
+                :
+              </span>
               {data.location?.name}
             </Box>
             <Box className={classes.dataRow}>
-              <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.category')}:</span>
+              <span className={classes.label}>
+                {formatMessage(intl, 'socialProtection', 'validation.category')}
+                :
+              </span>
               {getCategoryLabel(data.category)}
             </Box>
             <Box className={classes.dataRow}>
-              <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.facilitator')}:</span>
+              <span className={classes.label}>
+                {formatMessage(intl, 'socialProtection', 'validation.facilitator')}
+                :
+              </span>
               {data.facilitator}
             </Box>
             <Divider />
@@ -180,26 +193,38 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
             <Grid container spacing={2}>
               <Grid item xs={4}>
                 <Box className={classes.dataRow}>
-                  <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.men')}:</span>
+                  <span className={classes.label}>
+                    {formatMessage(intl, 'socialProtection', 'validation.men')}
+                    :
+                  </span>
                   {data.maleParticipants}
                 </Box>
               </Grid>
               <Grid item xs={4}>
                 <Box className={classes.dataRow}>
-                  <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.women')}:</span>
+                  <span className={classes.label}>
+                    {formatMessage(intl, 'socialProtection', 'validation.women')}
+                    :
+                  </span>
                   {data.femaleParticipants}
                 </Box>
               </Grid>
               <Grid item xs={4}>
                 <Box className={classes.dataRow}>
-                  <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.twa')}:</span>
+                  <span className={classes.label}>
+                    {formatMessage(intl, 'socialProtection', 'validation.twa')}
+                    :
+                  </span>
                   {data.twaParticipants}
                 </Box>
               </Grid>
             </Grid>
             {data.observations && (
               <Box className={classes.dataRow}>
-                <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.observations')}:</span>
+                <span className={classes.label}>
+                  {formatMessage(intl, 'socialProtection', 'validation.observations')}
+                  :
+                </span>
                 {data.observations}
               </Box>
             )}
@@ -213,11 +238,17 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
               {formatMessage(intl, 'socialProtection', 'validation.behaviorChangeDetails')}
             </Typography>
             <Box className={classes.dataRow}>
-              <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.date')}:</span>
+              <span className={classes.label}>
+                {formatMessage(intl, 'socialProtection', 'validation.date')}
+                :
+              </span>
               {data.reportDate}
             </Box>
             <Box className={classes.dataRow}>
-              <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.location')}:</span>
+              <span className={classes.label}>
+                {formatMessage(intl, 'socialProtection', 'validation.location')}
+                :
+              </span>
               {data.location?.name}
             </Box>
             <Divider />
@@ -227,26 +258,38 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
             <Grid container spacing={2}>
               <Grid item xs={4}>
                 <Box className={classes.dataRow}>
-                  <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.men')}:</span>
+                  <span className={classes.label}>
+                    {formatMessage(intl, 'socialProtection', 'validation.men')}
+                    :
+                  </span>
                   {data.maleParticipants}
                 </Box>
               </Grid>
               <Grid item xs={4}>
                 <Box className={classes.dataRow}>
-                  <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.women')}:</span>
+                  <span className={classes.label}>
+                    {formatMessage(intl, 'socialProtection', 'validation.women')}
+                    :
+                  </span>
                   {data.femaleParticipants}
                 </Box>
               </Grid>
               <Grid item xs={4}>
                 <Box className={classes.dataRow}>
-                  <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.twa')}:</span>
+                  <span className={classes.label}>
+                    {formatMessage(intl, 'socialProtection', 'validation.twa')}
+                    :
+                  </span>
                   {data.twaParticipants}
                 </Box>
               </Grid>
             </Grid>
             {data.comments && (
               <Box className={classes.dataRow}>
-                <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.comments')}:</span>
+                <span className={classes.label}>
+                  {formatMessage(intl, 'socialProtection', 'validation.comments')}
+                  :
+                </span>
                 {data.comments}
               </Box>
             )}
@@ -260,11 +303,17 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
               {formatMessage(intl, 'socialProtection', 'validation.microprojectDetails')}
             </Typography>
             <Box className={classes.dataRow}>
-              <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.date')}:</span>
+              <span className={classes.label}>
+                {formatMessage(intl, 'socialProtection', 'validation.date')}
+                :
+              </span>
               {data.reportDate}
             </Box>
             <Box className={classes.dataRow}>
-              <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.location')}:</span>
+              <span className={classes.label}>
+                {formatMessage(intl, 'socialProtection', 'validation.location')}
+                :
+              </span>
               {data.location?.name}
             </Box>
             <Divider />
@@ -274,19 +323,28 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
             <Grid container spacing={2}>
               <Grid item xs={4}>
                 <Box className={classes.dataRow}>
-                  <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.men')}:</span>
+                  <span className={classes.label}>
+                    {formatMessage(intl, 'socialProtection', 'validation.men')}
+                    :
+                  </span>
                   {data.maleParticipants}
                 </Box>
               </Grid>
               <Grid item xs={4}>
                 <Box className={classes.dataRow}>
-                  <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.women')}:</span>
+                  <span className={classes.label}>
+                    {formatMessage(intl, 'socialProtection', 'validation.women')}
+                    :
+                  </span>
                   {data.femaleParticipants}
                 </Box>
               </Grid>
               <Grid item xs={4}>
                 <Box className={classes.dataRow}>
-                  <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.twa')}:</span>
+                  <span className={classes.label}>
+                    {formatMessage(intl, 'socialProtection', 'validation.twa')}
+                    :
+                  </span>
                   {data.twaParticipants}
                 </Box>
               </Grid>
@@ -298,46 +356,70 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
             <Grid container spacing={2}>
               <Grid item xs={6}>
                 <Box className={classes.dataRow}>
-                  <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.agriculture')}:</span>
+                  <span className={classes.label}>
+                    {formatMessage(intl, 'socialProtection', 'validation.agriculture')}
+                    :
+                  </span>
                   {data.agricultureBeneficiaries}
                 </Box>
                 <Box className={classes.dataRow}>
-                  <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.livestock')}:</span>
+                  <span className={classes.label}>
+                    {formatMessage(intl, 'socialProtection', 'validation.livestock')}
+                    :
+                  </span>
                   {data.livestockBeneficiaries}
                 </Box>
                 <Box className={classes.dataRow}>
-                  <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.commerce')}:</span>
+                  <span className={classes.label}>
+                    {formatMessage(intl, 'socialProtection', 'validation.commerce')}
+                    :
+                  </span>
                   {data.commerceServicesBeneficiaries}
                 </Box>
               </Grid>
               <Grid item xs={6}>
                 {data.livestockGoatBeneficiaries > 0 && (
                   <Box className={classes.dataRow}>
-                    <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.goats')}:</span>
+                    <span className={classes.label}>
+                      {formatMessage(intl, 'socialProtection', 'validation.goats')}
+                      :
+                    </span>
                     {data.livestockGoatBeneficiaries}
                   </Box>
                 )}
                 {data.livestockPigBeneficiaries > 0 && (
                   <Box className={classes.dataRow}>
-                    <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.pigs')}:</span>
+                    <span className={classes.label}>
+                      {formatMessage(intl, 'socialProtection', 'validation.pigs')}
+                      :
+                    </span>
                     {data.livestockPigBeneficiaries}
                   </Box>
                 )}
                 {data.livestockRabbitBeneficiaries > 0 && (
                   <Box className={classes.dataRow}>
-                    <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.rabbits')}:</span>
+                    <span className={classes.label}>
+                      {formatMessage(intl, 'socialProtection', 'validation.rabbits')}
+                      :
+                    </span>
                     {data.livestockRabbitBeneficiaries}
                   </Box>
                 )}
                 {data.livestockPoultryBeneficiaries > 0 && (
                   <Box className={classes.dataRow}>
-                    <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.poultry')}:</span>
+                    <span className={classes.label}>
+                      {formatMessage(intl, 'socialProtection', 'validation.poultry')}
+                      :
+                    </span>
                     {data.livestockPoultryBeneficiaries}
                   </Box>
                 )}
                 {data.livestockCattleBeneficiaries > 0 && (
                   <Box className={classes.dataRow}>
-                    <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.cattle')}:</span>
+                    <span className={classes.label}>
+                      {formatMessage(intl, 'socialProtection', 'validation.cattle')}
+                      :
+                    </span>
                     {data.livestockCattleBeneficiaries}
                   </Box>
                 )}
@@ -372,7 +454,7 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
         </DialogTitle>
         <DialogContent dividers>
           {renderDataDetails()}
-          
+
           {/* Show validation history if already validated */}
           {data?.validationStatus && data.validationStatus !== 'PENDING' && (
             <Box mt={2}>
@@ -382,25 +464,34 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
               </Typography>
               {data.validatedBy && (
                 <Box className={classes.dataRow}>
-                  <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.dialog.validatedBy')}:</span>
+                  <span className={classes.label}>
+                    {formatMessage(intl, 'socialProtection', 'validation.dialog.validatedBy')}
+                    :
+                  </span>
                   {data.validatedBy.username || data.validatedBy}
                 </Box>
               )}
               {data.validationDate && (
                 <Box className={classes.dataRow}>
-                  <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.dialog.validatedOn')}:</span>
+                  <span className={classes.label}>
+                    {formatMessage(intl, 'socialProtection', 'validation.dialog.validatedOn')}
+                    :
+                  </span>
                   {data.validationDate}
                 </Box>
               )}
               {data.validationComment && (
                 <Box className={classes.dataRow}>
-                  <span className={classes.label}>{formatMessage(intl, 'socialProtection', 'validation.previousComment')}:</span>
+                  <span className={classes.label}>
+                    {formatMessage(intl, 'socialProtection', 'validation.previousComment')}
+                    :
+                  </span>
                   {data.validationComment}
                 </Box>
               )}
             </Box>
           )}
-          
+
           <TextField
             className={classes.commentField}
             fullWidth
@@ -447,14 +538,18 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
         fullWidth
       >
         <DialogTitle>
-          {formatMessage(intl, 'socialProtection', 
-            confirmAction === 'VALIDATED' ? 'validation.confirm.validate.title' : 'validation.confirm.reject.title'
+          {formatMessage(
+            intl,
+            'socialProtection',
+            confirmAction === 'VALIDATED' ? 'validation.confirm.validate.title' : 'validation.confirm.reject.title',
           )}
         </DialogTitle>
         <DialogContent>
           <Typography>
-            {formatMessage(intl, 'socialProtection',
-              confirmAction === 'VALIDATED' ? 'validation.confirm.validate.message' : 'validation.confirm.reject.message'
+            {formatMessage(
+              intl,
+              'socialProtection',
+              confirmAction === 'VALIDATED' ? 'validation.confirm.validate.message' : 'validation.confirm.reject.message',
             )}
           </Typography>
         </DialogContent>
@@ -462,9 +557,9 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
           <Button onClick={handleCancelConfirmation}>
             {formatMessage(intl, 'socialProtection', 'validation.confirm.cancel')}
           </Button>
-          <Button 
-            onClick={handleConfirmValidation} 
-            color="primary" 
+          <Button
+            onClick={handleConfirmValidation}
+            color="primary"
             variant="contained"
             disabled={isSubmitting}
             startIcon={isSubmitting && <CircularProgress size={20} />}
@@ -475,6 +570,6 @@ const ValidationDialog = ({ open, onClose, data, type, onValidated }) => {
       </Dialog>
     </>
   );
-};
+}
 
 export default ValidationDialog;

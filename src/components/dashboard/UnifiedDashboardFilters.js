@@ -44,7 +44,9 @@ import {
   CheckCircle,
 } from '@material-ui/icons';
 import { Autocomplete } from '@material-ui/lab';
-import { PublishedComponent, useModulesManager, useGraphqlQuery, formatMessage } from '@openimis/fe-core';
+import {
+  PublishedComponent, useModulesManager, useGraphqlQuery, formatMessage,
+} from '@openimis/fe-core';
 import { useIntl } from 'react-intl';
 
 const useStyles = makeStyles((theme) => ({
@@ -160,6 +162,39 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 // Filter type configurations
+// Add queries for GraphQL data fetching
+const BENEFIT_PLANS_QUERY = `
+  query BenefitPlans {
+    benefitPlan {
+      edges {
+        node {
+          id
+          code
+          name
+          type
+          isDeleted
+        }
+      }
+    }
+  }
+`;
+
+const LOCATIONS_QUERY = `
+  query Locations($type: String!, $parentUuid: String) {
+    locations(type: $type, parent_Uuid: $parentUuid) {
+      edges {
+        node {
+          id
+          uuid
+          code
+          name
+          type
+        }
+      }
+    }
+  }
+`;
+
 const FILTER_TYPES = {
   dateRange: {
     icon: CalendarToday,
@@ -199,12 +234,12 @@ const FILTER_TYPES = {
   },
 };
 
-const UnifiedDashboardFilters = ({
+function UnifiedDashboardFilters({
   onFiltersChange,
   defaultFilters = {},
   filterConfig = {},
   module = 'core',
-}) => {
+}) {
   const classes = useStyles();
   const intl = useIntl();
   const modulesManager = useModulesManager();
@@ -221,11 +256,11 @@ const UnifiedDashboardFilters = ({
         initialFilters[key] = config.default || null;
       }
     });
-    
+
     // Merge with defaultFilters
     return { ...initialFilters, ...defaultFilters };
   });
-  
+
   const [expandedSections, setExpandedSections] = useState(() => {
     const sections = {};
     Object.keys(filterConfig).forEach((key, index) => {
@@ -234,11 +269,97 @@ const UnifiedDashboardFilters = ({
     return sections;
   });
 
+  // Add state for GraphQL data
+  const [benefitPlans, setBenefitPlans] = useState([]);
+  const [locations, setLocations] = useState({
+    provinces: [],
+    communes: [],
+    collines: [],
+  });
+
+  // Calculate active filter count
+  // Load benefit plans if needed
+  const { data: benefitPlansData, loading: loadingBenefitPlans } = useGraphqlQuery(
+    BENEFIT_PLANS_QUERY,
+    {},
+    { skip: !filterConfig.benefitPlan },
+  );
+
+  // Load locations if needed - provinces (Districts)
+  const { data: provincesData, loading: loadingProvinces } = useGraphqlQuery(
+    LOCATIONS_QUERY,
+    { type: 'D' },
+    { skip: !filterConfig.provinces },
+  );
+
+  // Load communes based on selected provinces
+  const { data: communesData, loading: loadingCommunes } = useGraphqlQuery(
+    LOCATIONS_QUERY,
+    {
+      type: 'W',
+      parentUuid: Array.isArray(filters.provinces) && filters.provinces.length === 1
+        ? locations.provinces.find((p) => p.id === filters.provinces[0])?.uuid
+        : null,
+    },
+    { skip: !filterConfig.communes || !Array.isArray(filters.provinces) || filters.provinces.length !== 1 },
+  );
+
+  // Load collines based on selected communes
+  const { data: collinesData, loading: loadingCollines } = useGraphqlQuery(
+    LOCATIONS_QUERY,
+    {
+      type: 'V',
+      parentUuid: Array.isArray(filters.communes) && filters.communes.length === 1
+        ? locations.communes.find((c) => c.id === filters.communes[0])?.uuid
+        : null,
+    },
+    { skip: !filterConfig.collines || !Array.isArray(filters.communes) || filters.communes.length !== 1 },
+  );
+
+  // Update benefit plans when data changes
+  useEffect(() => {
+    if (benefitPlansData?.benefitPlan?.edges) {
+      setBenefitPlans(
+        benefitPlansData.benefitPlan.edges
+          .map((edge) => edge.node)
+          .filter((plan) => !plan.isDeleted),
+      );
+    }
+  }, [benefitPlansData]);
+
+  // Update locations when data changes
+  useEffect(() => {
+    if (provincesData?.locations?.edges) {
+      setLocations((prev) => ({
+        ...prev,
+        provinces: provincesData.locations.edges.map((edge) => edge.node),
+      }));
+    }
+  }, [provincesData]);
+
+  useEffect(() => {
+    if (communesData?.locations?.edges) {
+      setLocations((prev) => ({
+        ...prev,
+        communes: communesData.locations.edges.map((edge) => edge.node),
+      }));
+    }
+  }, [communesData]);
+
+  useEffect(() => {
+    if (collinesData?.locations?.edges) {
+      setLocations((prev) => ({
+        ...prev,
+        collines: collinesData.locations.edges.map((edge) => edge.node),
+      }));
+    }
+  }, [collinesData]);
+
   // Calculate active filter count
   const activeFilterCount = Object.entries(filters).reduce((count, [key, value]) => {
     const config = filterConfig[key];
     if (!config) return count;
-    
+
     if (value === null || value === undefined) return count;
     if (Array.isArray(value) && value.length > 0) return count + value.length;
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
@@ -246,16 +367,36 @@ const UnifiedDashboardFilters = ({
       return count;
     }
     if (config.component === 'boolean' && value === true) return count + 1;
-    if (config.component === 'year' && value !== new Date().getFullYear()) return count + 1;
+    if (config.component === 'year' && value && value !== null) return count + 1;
     if (value !== false && value !== '') return count + 1;
     return count;
   }, 0);
 
   const handleFilterChange = (filterType, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterType]: value,
-    }));
+    setFilters((prev) => {
+      const newFilters = { ...prev, [filterType]: value };
+
+      // Clear dependent filters when parent changes (for hierarchical locations)
+      if (filterType === 'provinces') {
+        if (!Array.isArray(value) || value.length !== 1) {
+          newFilters.communes = [];
+          newFilters.collines = [];
+        } else if (prev.provinces?.length === 1 && prev.provinces[0] !== value[0]) {
+          newFilters.communes = [];
+          newFilters.collines = [];
+        }
+      }
+
+      if (filterType === 'communes') {
+        if (!Array.isArray(value) || value.length !== 1) {
+          newFilters.collines = [];
+        } else if (prev.communes?.length === 1 && prev.communes[0] !== value[0]) {
+          newFilters.collines = [];
+        }
+      }
+
+      return newFilters;
+    });
   };
 
   const handleApplyFilters = () => {
@@ -273,7 +414,7 @@ const UnifiedDashboardFilters = ({
       } else if (config.component === 'boolean') {
         clearedFilters[key] = false;
       } else if (config.component === 'year') {
-        clearedFilters[key] = new Date().getFullYear();
+        clearedFilters[key] = null;
       } else {
         clearedFilters[key] = null;
       }
@@ -287,12 +428,12 @@ const UnifiedDashboardFilters = ({
     if (Array.isArray(filters[filterType])) {
       handleFilterChange(
         filterType,
-        filters[filterType].filter(v => v !== value)
+        filters[filterType].filter((v) => v !== value),
       );
     } else if (config.component === 'dateRange') {
       handleFilterChange(filterType, { start: null, end: null });
     } else if (config.component === 'year') {
-      handleFilterChange(filterType, new Date().getFullYear());
+      handleFilterChange(filterType, null);
     } else {
       handleFilterChange(filterType, null);
     }
@@ -300,7 +441,7 @@ const UnifiedDashboardFilters = ({
 
   const renderFilterComponent = (key, config) => {
     const value = filters[key];
-    
+
     switch (config.component) {
       case 'dateRange':
         return (
@@ -319,8 +460,58 @@ const UnifiedDashboardFilters = ({
             />
           </Box>
         );
-        
+
       case 'location':
+        // Handle hierarchical location filters (provinces, communes, collines)
+        const isProvinces = key === 'provinces';
+        const isCommunes = key === 'communes';
+        const isCollines = key === 'collines';
+        
+        if (isProvinces || isCommunes || isCollines) {
+          let options = [];
+          let loading = false;
+          
+          if (isProvinces) {
+            options = locations.provinces;
+            loading = loadingProvinces;
+          } else if (isCommunes) {
+            options = locations.communes;
+            loading = loadingCommunes;
+          } else if (isCollines) {
+            options = locations.collines;
+            loading = loadingCollines;
+          }
+          
+          return (
+            <Autocomplete
+              multiple
+              options={options}
+              getOptionLabel={(option) => option.name}
+              value={options.filter((o) => Array.isArray(value) && value.includes(o.id))}
+              onChange={(e, newValue) => handleFilterChange(key, newValue.map((v) => v.id))}
+              loading={loading}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={formatMessage(intl, module, `filter.${key}`)}
+                  variant="outlined"
+                  size="small"
+                  InputProps={{
+                    ...params.InputProps,
+                    endAdornment: (
+                      <>
+                        {loading ? <CircularProgress color="inherit" size={20} /> : null}
+                        {params.InputProps.endAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
+            />
+          );
+        }
+        
+        // Fallback to default location picker
         return (
           <PublishedComponent
             pubRef="location.LocationPicker"
@@ -330,14 +521,14 @@ const UnifiedDashboardFilters = ({
             required={false}
           />
         );
-        
+
       case 'multiSelect':
         return (
           <FormGroup>
-            {config.options.map(option => (
+            {config.options.map((option) => (
               <FormControlLabel
                 key={option.value}
-                control={
+                control={(
                   <Checkbox
                     checked={Array.isArray(value) && value.includes(option.value)}
                     onChange={(e) => {
@@ -345,22 +536,22 @@ const UnifiedDashboardFilters = ({
                       if (e.target.checked) {
                         handleFilterChange(key, [...currentValue, option.value]);
                       } else {
-                        handleFilterChange(key, currentValue.filter(v => v !== option.value));
+                        handleFilterChange(key, currentValue.filter((v) => v !== option.value));
                       }
                     }}
                     color="primary"
                   />
-                }
+                )}
                 label={formatMessage(intl, module, option.labelKey || `filter.${key}.${option.value}`)}
               />
             ))}
           </FormGroup>
         );
-        
+
       case 'priority':
         return (
           <Grid container spacing={1}>
-            {config.options.map(option => (
+            {config.options.map((option) => (
               <Grid item xs={6} key={option.value}>
                 <Box
                   className={`${classes.priorityOption} ${
@@ -369,7 +560,7 @@ const UnifiedDashboardFilters = ({
                   onClick={() => {
                     const currentValue = Array.isArray(value) ? value : [];
                     if (currentValue.includes(option.value)) {
-                      handleFilterChange(key, currentValue.filter(v => v !== option.value));
+                      handleFilterChange(key, currentValue.filter((v) => v !== option.value));
                     } else {
                       handleFilterChange(key, [...currentValue, option.value]);
                     }
@@ -377,7 +568,7 @@ const UnifiedDashboardFilters = ({
                   style={{
                     border: `2px solid ${
                       Array.isArray(value) && value.includes(option.value) ? option.color : 'transparent'
-                    }`
+                    }`,
                   }}
                 >
                   <Typography variant="h6">{option.icon}</Typography>
@@ -387,27 +578,28 @@ const UnifiedDashboardFilters = ({
             ))}
           </Grid>
         );
-        
+
       case 'boolean':
         return (
           <FormControlLabel
-            control={
+            control={(
               <Checkbox
                 checked={value === true}
                 onChange={(e) => handleFilterChange(key, e.target.checked)}
                 color="primary"
               />
-            }
+            )}
             label={formatMessage(intl, module, `filter.${key}`)}
           />
         );
-        
+
       case 'year':
         return (
           <TextField
             type="number"
-            value={value || new Date().getFullYear()}
-            onChange={(e) => handleFilterChange(key, parseInt(e.target.value))}
+            value={value || ''}
+            placeholder={String(new Date().getFullYear())}
+            onChange={(e) => handleFilterChange(key, e.target.value ? parseInt(e.target.value) : null)}
             inputProps={{
               min: config.minYear || 2020,
               max: config.maxYear || new Date().getFullYear(),
@@ -418,12 +610,132 @@ const UnifiedDashboardFilters = ({
           />
         );
         
+      case 'locationGroup':
+        // Group all location filters in one section
+        return (
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Autocomplete
+                multiple
+                options={locations.provinces}
+                getOptionLabel={(option) => option.name}
+                value={locations.provinces.filter((p) => Array.isArray(filters.provinces) && filters.provinces.includes(p.id))}
+                onChange={(e, value) => handleFilterChange('provinces', value.map((v) => v.id))}
+                loading={loadingProvinces}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={formatMessage(intl, module, 'filter.provinces')}
+                    variant="outlined"
+                    size="small"
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {loadingProvinces ? <CircularProgress color="inherit" size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+              />
+            </Grid>
+            {Array.isArray(filters.provinces) && filters.provinces.length === 1 && (
+              <Grid item xs={12}>
+                <Autocomplete
+                  multiple
+                  options={locations.communes}
+                  getOptionLabel={(option) => option.name}
+                  value={locations.communes.filter((c) => Array.isArray(filters.communes) && filters.communes.includes(c.id))}
+                  onChange={(e, value) => handleFilterChange('communes', value.map((v) => v.id))}
+                  loading={loadingCommunes}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={formatMessage(intl, module, 'filter.communes')}
+                      variant="outlined"
+                      size="small"
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {loadingCommunes ? <CircularProgress color="inherit" size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                />
+              </Grid>
+            )}
+            {Array.isArray(filters.communes) && filters.communes.length === 1 && (
+              <Grid item xs={12}>
+                <Autocomplete
+                  multiple
+                  options={locations.collines}
+                  getOptionLabel={(option) => option.name}
+                  value={locations.collines.filter((c) => Array.isArray(filters.collines) && filters.collines.includes(c.id))}
+                  onChange={(e, value) => handleFilterChange('collines', value.map((v) => v.id))}
+                  loading={loadingCollines}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={formatMessage(intl, module, 'filter.collines')}
+                      variant="outlined"
+                      size="small"
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {loadingCollines ? <CircularProgress color="inherit" size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                />
+              </Grid>
+            )}
+          </Grid>
+        );
+
+      case 'benefitPlan':
+        return (
+          <Autocomplete
+            options={benefitPlans}
+            getOptionLabel={(option) => `${option.code} - ${option.name}`}
+            value={benefitPlans.find((p) => p.id === value) || null}
+            onChange={(e, newValue) => handleFilterChange(key, newValue ? newValue.id : null)}
+            loading={loadingBenefitPlans}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label={formatMessage(intl, module, `filter.${key}`)}
+                variant="outlined"
+                size="small"
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {loadingBenefitPlans ? <CircularProgress color="inherit" size={20} /> : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+          />
+        );
+
       case 'custom':
         if (config.renderComponent) {
           return config.renderComponent(value, (newValue) => handleFilterChange(key, newValue));
         }
         return null;
-        
+
       default:
         return null;
     }
@@ -431,16 +743,16 @@ const UnifiedDashboardFilters = ({
 
   const renderFilterChips = () => {
     const chips = [];
-    
+
     Object.entries(filters).forEach(([key, value]) => {
       const config = filterConfig[key];
       if (!config) return;
-      
+
       const Icon = FILTER_TYPES[config.filterType]?.icon || Flag;
-      
+
       if (Array.isArray(value)) {
-        value.forEach(v => {
-          const option = config.options?.find(opt => opt.value === v);
+        value.forEach((v) => {
+          const option = config.options?.find((opt) => opt.value === v);
           chips.push(
             <Chip
               key={`${key}-${v}`}
@@ -450,13 +762,18 @@ const UnifiedDashboardFilters = ({
               className={classes.chip}
               color={config.chipColor || 'primary'}
               variant="outlined"
-            />
+            />,
           );
         });
       } else if (config.component === 'dateRange' && value && (value.start || value.end)) {
-        const dateLabel = `${value.start?.toLocaleDateString() || '...'} - ${
-          value.end?.toLocaleDateString() || '...'
-        }`;
+        const formatDate = (date) => {
+          if (!date) return '...';
+          if (date instanceof Date) return date.toLocaleDateString();
+          if (typeof date === 'string') return new Date(date).toLocaleDateString();
+          return '...';
+        };
+        
+        const dateLabel = `${formatDate(value.start)} - ${formatDate(value.end)}`;
         chips.push(
           <Chip
             key={key}
@@ -465,7 +782,7 @@ const UnifiedDashboardFilters = ({
             onDelete={() => handleRemoveFilter(key)}
             className={classes.chip}
             variant="outlined"
-          />
+          />,
         );
       } else if (config.component === 'boolean' && value === true) {
         chips.push(
@@ -477,9 +794,9 @@ const UnifiedDashboardFilters = ({
             className={classes.chip}
             color={config.chipColor || 'primary'}
             variant={config.chipVariant || 'outlined'}
-          />
+          />,
         );
-      } else if (config.component === 'year' && value !== new Date().getFullYear()) {
+      } else if (config.component === 'year' && value !== null && value !== undefined) {
         chips.push(
           <Chip
             key={key}
@@ -488,23 +805,43 @@ const UnifiedDashboardFilters = ({
             onDelete={() => handleRemoveFilter(key)}
             className={classes.chip}
             variant="outlined"
-          />
+          />,
         );
       } else if (value && config.component === 'location') {
-        chips.push(
-          <Chip
-            key={key}
-            label={value.name || value}
-            icon={<Icon />}
-            onDelete={() => handleRemoveFilter(key)}
-            className={classes.chip}
-            color="primary"
-            variant="outlined"
-          />
-        );
+        // Handle both array-based locations and single location objects
+        if (key === 'provinces' || key === 'communes' || key === 'collines') {
+          // Already handled in the array section above
+        } else {
+          chips.push(
+            <Chip
+              key={key}
+              label={value.name || value}
+              icon={<Icon />}
+              onDelete={() => handleRemoveFilter(key)}
+              className={classes.chip}
+              color="primary"
+              variant="outlined"
+            />,
+          );
+        }
+      } else if (config.component === 'benefitPlan' && value) {
+        const plan = benefitPlans.find((p) => p.id === value);
+        if (plan) {
+          chips.push(
+            <Chip
+              key={key}
+              label={plan.name}
+              icon={<Icon />}
+              onDelete={() => handleRemoveFilter(key)}
+              className={classes.chip}
+              color="secondary"
+              variant="outlined"
+            />,
+          );
+        }
       }
     });
-    
+
     return chips;
   };
 
@@ -565,14 +902,14 @@ const UnifiedDashboardFilters = ({
         <div className={classes.filterContent}>
           {Object.entries(filterConfig).map(([key, config]) => {
             const Icon = FILTER_TYPES[config.filterType]?.icon || Flag;
-            const filterCount = Array.isArray(filters[key]) ? filters[key].length : 
-                               (filters[key] ? 1 : 0);
-            
+            const filterCount = Array.isArray(filters[key]) ? filters[key].length
+              : (filters[key] ? 1 : 0);
+
             return (
               <Accordion
                 key={key}
                 expanded={expandedSections[key]}
-                onChange={() => setExpandedSections(prev => ({ ...prev, [key]: !prev[key] }))}
+                onChange={() => setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }))}
                 className={classes.accordion}
               >
                 <AccordionSummary
@@ -619,6 +956,6 @@ const UnifiedDashboardFilters = ({
       </Drawer>
     </>
   );
-};
+}
 
 export default UnifiedDashboardFilters;

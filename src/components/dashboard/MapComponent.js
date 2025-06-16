@@ -97,33 +97,48 @@ const loadStats = async (filters = {}) => {
   const csrfToken = localStorage.getItem('csrfToken');
   const baseHeaders = apiHeaders();
   
-  // Build filter string
-  const filterParts = [];
-  if (filters.benefitPlanId) {
-    filterParts.push(`benefitPlan_Id: \"${decodeId(filters.benefitPlanId)}\"`);
+  // Build filter object for optimized query
+  const queryFilters = {};
+  if (filters.benefitPlan) {
+    queryFilters.benefitPlanId = decodeId(filters.benefitPlan);
   }
-  const filterString = filterParts.length > 0 ? `(${filterParts.join(', ')})` : '';
+  if (filters.year) {
+    queryFilters.year = filters.year;
+  }
+  // Handle hierarchical location filters
+  if (filters.provinces && filters.provinces.length > 0) {
+    queryFilters.provinceId = parseInt(decodeId(filters.provinces[0]));
+  }
+  if (filters.communes && filters.communes.length > 0) {
+    queryFilters.communeId = parseInt(decodeId(filters.communes[0]));
+  }
+  if (filters.collines && filters.collines.length > 0) {
+    queryFilters.collineId = parseInt(decodeId(filters.collines[0]));
+  }
   
-  const query = `{
-    locationByBenefitPlan ${filterString} { 
-      totalCount 
-      edges {
-        node { 
-          id, 
-          code, 
-          name,
-          countSelected,
-          countSuspended,
-          countActive
-        }
+  const query = `
+    query OptimizedLocationByBenefitPlan($filters: DashboardFiltersInput) {
+      optimizedLocationByBenefitPlan(filters: $filters) {
+        id
+        code
+        name
+        countSelected
+        countSuspended
+        countActive
+        countPotential
+        countValidated
+        countGraduated
       }
     }
-  }`;
+  `;
   
   const response = await fetch(`${baseApiUrl}/graphql`, {
     method: 'post',
     headers: { ...baseHeaders, 'X-Requested-With': REQUESTED_WITH, 'X-CSRFToken': csrfToken },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ 
+      query,
+      variables: { filters: queryFilters }
+    }),
   });
   
   if (!response.ok) {
@@ -157,7 +172,7 @@ function MapComponent({ filters, isLoading: parentLoading, fullMap = false }) {
     setLoading(true);
     loadStats(filters)
       .then((data) => {
-        const locations = data.locationByBenefitPlan.edges.map((edge) => edge.node);
+        const locations = data.optimizedLocationByBenefitPlan || [];
         setLocationData(locations);
         const lookup = {};
         locations.forEach((loc) => {
@@ -174,7 +189,13 @@ function MapComponent({ filters, isLoading: parentLoading, fullMap = false }) {
   }, [filters]);
 
   // Calculate total count for a location
-  const getTotalCount = (location) => location.countSelected + location.countActive + location.countSuspended;
+  const getTotalCount = (location) => {
+    return (location.countPotential || 0) + 
+           (location.countValidated || 0) + 
+           (location.countActive || 0) + 
+           (location.countGraduated || 0) + 
+           (location.countSuspended || 0);
+  };
 
   // Find the max count for color scaling
   const maxCount = locationData.length
@@ -205,21 +226,43 @@ function MapComponent({ filters, isLoading: parentLoading, fullMap = false }) {
     const baseOpacity = 0.7;
     const fillOpacity = baseOpacity + (colorIntensity * 0.2);
 
-    if (locationInfo.countActive > 0 && locationInfo.countSelected === 0) {
-      // Active only - Green gradient
-      const intensity = Math.floor(colorIntensity * 100);
-      fillColor = `hsl(120, ${40 + intensity}%, ${85 - intensity * 0.3}%)`;
-      borderColor = '#2e7d32';
-    } else if (locationInfo.countSelected > 0 && locationInfo.countActive === 0) {
-      // Selected only - Blue gradient
-      const intensity = Math.floor(colorIntensity * 100);
-      fillColor = `hsl(210, ${40 + intensity}%, ${85 - intensity * 0.3}%)`;
-      borderColor = '#1565c0';
-    } else if (locationInfo.countActive > 0 && locationInfo.countSelected > 0) {
-      // Mixed - Purple gradient
-      const intensity = Math.floor(colorIntensity * 100);
-      fillColor = `hsl(270, ${40 + intensity}%, ${85 - intensity * 0.3}%)`;
-      borderColor = '#6a1b9a';
+    // Determine color based on dominant status
+    const statusCounts = {
+      potential: locationInfo.countPotential || 0,
+      validated: locationInfo.countValidated || 0,
+      active: locationInfo.countActive || 0,
+      graduated: locationInfo.countGraduated || 0,
+      suspended: locationInfo.countSuspended || 0
+    };
+    
+    // Find dominant status
+    const dominantStatus = Object.keys(statusCounts).reduce((a, b) => 
+      statusCounts[a] > statusCounts[b] ? a : b
+    );
+    
+    const intensity = Math.floor(colorIntensity * 100);
+    
+    switch(dominantStatus) {
+      case 'potential':
+        fillColor = `hsl(0, 0%, ${85 - intensity * 0.3}%)`;  // Gray
+        borderColor = '#9e9e9e';
+        break;
+      case 'validated':
+        fillColor = `hsl(210, ${40 + intensity}%, ${85 - intensity * 0.3}%)`;  // Blue
+        borderColor = '#1565c0';
+        break;
+      case 'active':
+        fillColor = `hsl(120, ${40 + intensity}%, ${85 - intensity * 0.3}%)`;  // Green
+        borderColor = '#2e7d32';
+        break;
+      case 'graduated':
+        fillColor = `hsl(30, ${40 + intensity}%, ${85 - intensity * 0.3}%)`;  // Orange
+        borderColor = '#ff9800';
+        break;
+      case 'suspended':
+        fillColor = `hsl(0, ${40 + intensity}%, ${85 - intensity * 0.3}%)`;  // Red
+        borderColor = '#f44336';
+        break;
     }
 
     return {
@@ -252,7 +295,7 @@ function MapComponent({ filters, isLoading: parentLoading, fullMap = false }) {
     if (locationInfo) {
       layer.bindTooltip(`
         <div style="
-          min-width: 220px;
+          min-width: 250px;
           font-family: 'Titillium Web', sans-serif;
           padding: 8px;
           line-height: 1.5;
@@ -260,17 +303,23 @@ function MapComponent({ filters, isLoading: parentLoading, fullMap = false }) {
           <div style="font-weight: 600; font-size: 16px; margin-bottom: 8px; color: #1a237e;">
             ${locationInfo.name}
           </div>
+          ${locationInfo.countPotential > 0 ? `
           <div style="display: flex; justify-content: space-between; margin: 4px 0;">
-            <span style="color: #546e7a;">Sélectionnés:</span>
-            <span style="font-weight: 600; color: #1565c0;">${locationInfo.countSelected.toLocaleString('fr-FR')}</span>
-          </div>
+            <span style="color: #546e7a;">Potentiels:</span>
+            <span style="font-weight: 600; color: #9e9e9e;">${(locationInfo.countPotential || 0).toLocaleString('fr-FR')}</span>
+          </div>` : ''}
+          ${locationInfo.countValidated > 0 ? `
+          <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+            <span style="color: #546e7a;">Validés:</span>
+            <span style="font-weight: 600; color: #1565c0;">${(locationInfo.countValidated || 0).toLocaleString('fr-FR')}</span>
+          </div>` : ''}
           <div style="display: flex; justify-content: space-between; margin: 4px 0;">
             <span style="color: #546e7a;">Actifs:</span>
-            <span style="font-weight: 600; color: #2e7d32;">${locationInfo.countActive.toLocaleString('fr-FR')}</span>
+            <span style="font-weight: 600; color: #2e7d32;">${(locationInfo.countActive || 0).toLocaleString('fr-FR')}</span>
           </div>
           <div style="display: flex; justify-content: space-between; margin: 4px 0;">
             <span style="color: #546e7a;">Suspendus:</span>
-            <span style="font-weight: 600; color: #f44336;">${locationInfo.countSuspended.toLocaleString('fr-FR')}</span>
+            <span style="font-weight: 600; color: #f44336;">${(locationInfo.countSuspended || 0).toLocaleString('fr-FR')}</span>
           </div>
           <div style="
             border-top: 1px solid #e0e0e0;
@@ -342,16 +391,20 @@ function MapComponent({ filters, isLoading: parentLoading, fullMap = false }) {
               Légende
             </Typography>
             <div className={classes.legendItem}>
+              <div className={classes.legendColor} style={{ backgroundColor: 'hsl(0, 0%, 70%)' }} />
+              <span>Potentiels</span>
+            </div>
+            <div className={classes.legendItem}>
               <div className={classes.legendColor} style={{ backgroundColor: 'hsl(210, 80%, 70%)' }} />
-              <span>Bénéficiaires sélectionnés</span>
+              <span>Validés</span>
             </div>
             <div className={classes.legendItem}>
               <div className={classes.legendColor} style={{ backgroundColor: 'hsl(120, 80%, 70%)' }} />
-              <span>Bénéficiaires actifs</span>
+              <span>Actifs</span>
             </div>
             <div className={classes.legendItem}>
-              <div className={classes.legendColor} style={{ backgroundColor: 'hsl(270, 80%, 70%)' }} />
-              <span>Mixte (sélectionnés + actifs)</span>
+              <div className={classes.legendColor} style={{ backgroundColor: 'hsl(0, 80%, 70%)' }} />
+              <span>Suspendus</span>
             </div>
           </Paper>
         </Fade>

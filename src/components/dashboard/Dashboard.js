@@ -102,9 +102,10 @@ const useStyles = makeStyles((theme) => ({
 function Dashboard() {
   const [filters, setFilters] = useState({
     provinces: [],
-    districts: [],
-    benefitPlans: [],
-    year: new Date().getFullYear(),
+    communes: [],
+    collines: [],
+    benefitPlan: null,
+    year: null,
     yearRange: [2020, new Date().getFullYear()],
     status: [],
     dateRange: { start: null, end: null },
@@ -113,9 +114,10 @@ function Dashboard() {
   // Convert filters to optimized dashboard format
   const optimizedFilters = useMemo(() => ({
     provinceId: Array.isArray(filters.provinces) && filters.provinces.length > 0 ? parseInt(decodeId(filters.provinces[0])) : undefined,
-    districtId: Array.isArray(filters.districts) && filters.districts.length > 0 ? parseInt(decodeId(filters.districts[0])) : undefined,
+    communeId: Array.isArray(filters.communes) && filters.communes.length > 0 ? parseInt(decodeId(filters.communes[0])) : undefined,
+    collineId: Array.isArray(filters.collines) && filters.collines.length > 0 ? parseInt(decodeId(filters.collines[0])) : undefined,
     year: filters.year ? parseInt(filters.year) : undefined,
-    benefitPlanId: Array.isArray(filters.benefitPlans) && filters.benefitPlans.length > 0 ? decodeId(filters.benefitPlans[0]) : undefined,
+    benefitPlanId: filters.benefitPlan ? decodeId(filters.benefitPlan) : undefined,
   }), [filters]);
 
   // Use optimized dashboard hook
@@ -317,6 +319,7 @@ function Dashboard() {
                     <TicketsPieChart
                       data={ticketsData}
                       isLoading={isLoading}
+                      filters={filters}
                     />
                   </div>
                 </Paper>

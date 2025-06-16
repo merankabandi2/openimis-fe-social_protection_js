@@ -7,6 +7,7 @@ import {
   formatMessageWithValues,
   Searcher,
   downloadExport,
+  CLEARED_STATE_FILTER,
   useModulesManager,
   useHistory,
 } from '@openimis/fe-core';
@@ -20,31 +21,40 @@ import {
   IconButton,
   Tooltip,
   DialogContent,
+  Checkbox,
+  FormControlLabel,
+  FormControl,
+  FormLabel,
+  TextField,
+  Box,
+  Typography,
 } from '@material-ui/core';
 import PreviewIcon from '@material-ui/icons/ListAlt';
-import ErrorIcon from '@material-ui/icons/Error';
-import CheckCircleIcon from '@material-ui/icons/CheckCircleOutline';
+import CloudUploadIcon from '@material-ui/icons/CloudUpload';
 import {
-  fetchGroupBeneficiaries, downloadGroupBeneficiaries, clearGroupBeneficiaryExport, updateGroupBeneficiary,
+  fetchGroupBeneficiaries, downloadGroupBeneficiaries, updateGroupBeneficiary,
+  clearGroupBeneficiaryExport, bulkUpdateGroupBeneficiaryStatus,
 } from '../actions';
 import {
   DEFAULT_PAGE_SIZE,
-  RIGHT_GROUP_SEARCH,
-  RIGHT_BENEFICIARY_UPDATE,
-  ROWS_PER_PAGE_OPTIONS,
-  CLEARED_STATE_FILTER,
   LOC_LEVELS,
   locationAtLevel,
+  RIGHT_GROUP_SEARCH,
+  RIGHT_BENEFICIARY_UPDATE,
+  RIGHT_BENEFICIARY_SEARCH,
+  ROWS_PER_PAGE_OPTIONS,
   BENEFICIARY_STATUS,
 } from '../constants';
 import BenefitPlanGroupBeneficiariesFilter from './BenefitPlanGroupBeneficiariesFilter';
 import BeneficiaryStatusPicker from '../pickers/BeneficiaryStatusPicker';
+import GroupBeneficiaryCSVUpdateDialog from '../dialogs/GroupBeneficiaryCSVUpdateDialog';
+
 import {
   applyNumberCircle,
 } from '../util/searcher-utils';
 
-function BenefitPlanGroupBeneficiariesSearcher({
-  rights,
+function BenefitPlanGroupBeneficiariesSearcherWithBulkUpdate({
+  rights = [],
   intl,
   benefitPlan,
   fetchGroupBeneficiaries,
@@ -61,11 +71,16 @@ function BenefitPlanGroupBeneficiariesSearcher({
   groupBeneficiaryExport,
   errorGroupBeneficiaryExport,
   updateGroupBeneficiary,
+  bulkUpdateGroupBeneficiaryStatus,
 }) {
   const modulesManager = useModulesManager();
   const history = useHistory();
   const [updatedGroupBeneficiaries, setUpdatedGroupBeneficiaries] = useState([]);
-
+  const [selectedGroupBeneficiaries, setSelectedGroupBeneficiaries] = useState([]);
+  const [bulkUpdateOpen, setBulkUpdateOpen] = useState(false);
+  const [csvUpdateOpen, setCSVUpdateOpen] = useState(false);
+  const [bulkUpdateStatus, setBulkUpdateStatus] = useState('');
+  const [bulkUpdateReason, setBulkUpdateReason] = useState('');
   const fetch = (params) => fetchGroupBeneficiaries(modulesManager, params);
 
   const headers = () => {
@@ -86,17 +101,13 @@ function BenefitPlanGroupBeneficiariesSearcher({
     return baseHeaders;
   };
 
-  const openBenefitPackage = (groupBeneficiary) => history.push(`${benefitPlan?.id}/`
-  + `${modulesManager.getRef('socialProtection.route.benefitPackage')}`
-    + `/group/${groupBeneficiary?.id}`);
-
   const addUpdatedGroupBeneficiary = (groupBeneficiary, status) => {
     setUpdatedGroupBeneficiaries((prevState) => {
-      const updatedBeneficiaryExists = prevState.some(
+      const updatedGroupBeneficiaryExists = prevState.some(
         (item) => item.id === groupBeneficiary.id && item.status === status,
       );
 
-      if (!updatedBeneficiaryExists) {
+      if (!updatedGroupBeneficiaryExists) {
         return [...prevState, groupBeneficiary];
       }
 
@@ -113,10 +124,57 @@ function BenefitPlanGroupBeneficiariesSearcher({
       updateGroupBeneficiary(
         editedGroupBeneficiary,
         formatMessageWithValues(intl, 'socialProtection', 'groupBeneficiary.update.mutationLabel', {
-          id: editedGroupBeneficiary.group.id,
+          id: groupBeneficiary.group.id,
         }),
       );
     }
+  };
+
+  const openBenefitPackage = (groupBeneficiary) => history.push(`${benefitPlan?.id}/`
+  + `${modulesManager.getRef('socialProtection.route.benefitPackage')}`
+    + `/group/${groupBeneficiary?.id}`);
+
+  const handleSelectGroupBeneficiary = (groupBeneficiary) => {
+    setSelectedGroupBeneficiaries((prev) => {
+      const index = prev.findIndex((gb) => gb.id === groupBeneficiary.id);
+      if (index >= 0) {
+        return prev.filter((gb) => gb.id !== groupBeneficiary.id);
+      }
+      return [...prev, groupBeneficiary];
+    });
+  };
+
+  const handleSelectAll = (event) => {
+    if (event.target.checked) {
+      setSelectedGroupBeneficiaries(groupBeneficiaries || []);
+    } else {
+      setSelectedGroupBeneficiaries([]);
+    }
+  };
+
+  const handleBulkUpdateSubmit = () => {
+    if (selectedGroupBeneficiaries.length > 0 && bulkUpdateStatus) {
+      const groupBeneficiaryIds = selectedGroupBeneficiaries.map((gb) => gb.id);
+      bulkUpdateGroupBeneficiaryStatus(
+        groupBeneficiaryIds,
+        bulkUpdateStatus,
+        bulkUpdateReason,
+        formatMessageWithValues(intl, 'socialProtection', 'groupBeneficiary.bulkUpdate.mutationLabel', {
+          count: groupBeneficiaryIds.length,
+        }),
+      );
+      setBulkUpdateOpen(false);
+      setSelectedGroupBeneficiaries([]);
+      setBulkUpdateStatus('');
+      setBulkUpdateReason('');
+      // Refresh the list
+      fetch(defaultFilters());
+    }
+  };
+
+  const handleCSVUpdateSuccess = () => {
+    // Refresh the list after CSV update
+    fetch(defaultFilters());
   };
 
   const itemFormatters = () => {
@@ -140,8 +198,7 @@ function BenefitPlanGroupBeneficiariesSearcher({
       ));
     }
 
-
-    result.push((groupBeneficiary) =>  (groupBeneficiary.status === BENEFICIARY_STATUS.ACTIVE ? <a href={`/api/merankabandi/card/${groupBeneficiary.group.code}/`}>Carte</a> : ''));
+    result.push((groupBeneficiary) => (groupBeneficiary.status === BENEFICIARY_STATUS.ACTIVE ? <a href={`/api/merankabandi/card/${groupBeneficiary.group.code}/`}>Carte</a> : ''));
 
     if (rights.includes(RIGHT_GROUP_SEARCH)) {
       result.push((groupBeneficiary) => (
@@ -157,6 +214,9 @@ function BenefitPlanGroupBeneficiariesSearcher({
 
     return result;
   };
+
+  const isRowDisabled = (_, groupBeneficiary) => (
+    updatedGroupBeneficiaries.some((item) => item.id === groupBeneficiary.id));
 
   const sorts = () => [
     ['group_Id', false],
@@ -188,9 +248,6 @@ function BenefitPlanGroupBeneficiariesSearcher({
   const [appliedCustomFilters, setAppliedCustomFilters] = useState([CLEARED_STATE_FILTER]);
   const [appliedFiltersRowStructure, setAppliedFiltersRowStructure] = useState([CLEARED_STATE_FILTER]);
 
-  const isRowDisabled = (_, groupBeneficiary) => (
-    updatedGroupBeneficiaries.some((item) => item.id === groupBeneficiary.id));
-
   useEffect(() => {
     if (errorGroupBeneficiaryExport) {
       setFailedExport(true);
@@ -201,7 +258,7 @@ function BenefitPlanGroupBeneficiariesSearcher({
     if (groupBeneficiaryExport) {
       downloadExport(
         groupBeneficiaryExport,
-        `${formatMessage(intl, 'socialProtection', 'export.filename.groupBeneficiaries')}.xlsx`,
+        `${formatMessage(intl, 'socialProtection', 'export.filename.groupBeneficiaries')}.csv`,
       )();
       clearGroupBeneficiaryExport();
     }
@@ -226,14 +283,54 @@ function BenefitPlanGroupBeneficiariesSearcher({
     // refresh when appliedCustomFilters is changed
   }, [appliedCustomFilters]);
 
+  const bulkActions = rights.includes(RIGHT_BENEFICIARY_UPDATE) && !readOnly ? [
+    {
+      name: 'bulkUpdateStatus',
+      label: formatMessageWithValues(intl, 'socialProtection', 'groupBeneficiary.bulkUpdateStatus', {
+        count: selectedGroupBeneficiaries.length,
+      }),
+      enabled: selectedGroupBeneficiaries.length > 0,
+      onClick: () => setBulkUpdateOpen(true),
+    },
+    {
+      name: 'csvUpdateStatus',
+      label: formatMessage(intl, 'socialProtection', 'groupBeneficiary.csvUpdateStatus'),
+      enabled: true,
+      icon: <CloudUploadIcon />,
+      onClick: () => setCSVUpdateOpen(true),
+    },
+  ] : [];
+
   return (
     !!benefitPlan?.id && (
     <div>
+      {rights.includes(RIGHT_BENEFICIARY_UPDATE) && !readOnly && (
+        <Box display="flex" alignItems="center" gap={2} mb={2}>
+          <FormControlLabel
+            control={(
+              <Checkbox
+                checked={groupBeneficiaries?.length > 0 && selectedGroupBeneficiaries.length === groupBeneficiaries.length}
+                indeterminate={selectedGroupBeneficiaries.length > 0 && selectedGroupBeneficiaries.length < groupBeneficiaries.length}
+                onChange={handleSelectAll}
+              />
+            )}
+            label={formatMessage(intl, 'socialProtection', 'groupBeneficiary.selectAll')}
+          />
+          {selectedGroupBeneficiaries.length > 0 && (
+            <Typography variant="body2" color="textSecondary">
+              {formatMessageWithValues(intl, 'socialProtection', 'groupBeneficiary.selectedCount', {
+                count: selectedGroupBeneficiaries.length,
+              })}
+            </Typography>
+          )}
+        </Box>
+      )}
       <Searcher
         module="benefitPlan"
         FilterPane={groupBeneficiaryFilter}
         fetch={fetch}
         items={groupBeneficiaries}
+        actions={bulkActions.length > 0 ? bulkActions : undefined}
         itemsPageInfo={groupBeneficiariesPageInfo}
         fetchingItems={fetchingGroupBeneficiaries}
         fetchedItems={fetchedGroupBeneficiaries}
@@ -275,18 +372,74 @@ function BenefitPlanGroupBeneficiariesSearcher({
         rowDisabled={isRowDisabled}
         rowLocked={isRowDisabled}
       />
+
+      {/* Bulk Update Dialog */}
+      <Dialog open={bulkUpdateOpen} onClose={() => setBulkUpdateOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>
+          {formatMessageWithValues(intl, 'socialProtection', 'groupBeneficiary.bulkUpdateDialog.title', {
+            count: selectedGroupBeneficiaries.length,
+          })}
+        </DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth margin="normal">
+            <FormLabel>{formatMessage(intl, 'socialProtection', 'groupBeneficiary.status')}</FormLabel>
+            <BeneficiaryStatusPicker
+              withLabel={false}
+              withNull={false}
+              value={bulkUpdateStatus}
+              onChange={setBulkUpdateStatus}
+            />
+          </FormControl>
+          <TextField
+            fullWidth
+            margin="normal"
+            label={formatMessage(intl, 'socialProtection', 'groupBeneficiary.bulkUpdateDialog.reason')}
+            value={bulkUpdateReason}
+            onChange={(e) => setBulkUpdateReason(e.target.value)}
+            multiline
+            rows={3}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBulkUpdateOpen(false)}>
+            {formatMessage(intl, 'socialProtection', 'cancel')}
+          </Button>
+          <Button
+            onClick={handleBulkUpdateSubmit}
+            color="primary"
+            disabled={!bulkUpdateStatus}
+          >
+            {formatMessage(intl, 'socialProtection', 'groupBeneficiary.bulkUpdateDialog.submit')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Button
+        variant="outlined"
+        color="primary"
+        startIcon={<CloudUploadIcon />}
+        onClick={() => setCSVUpdateOpen(true)}
+        size="small"
+      >
+        {formatMessage(intl, 'socialProtection', 'groupBeneficiary.csvUpdateStatus')}
+      </Button>
+      {/* CSV Update Dialog */}
+      <GroupBeneficiaryCSVUpdateDialog
+        open={csvUpdateOpen}
+        onClose={() => setCSVUpdateOpen(false)}
+        benefitPlan={benefitPlan}
+        onSuccess={handleCSVUpdateSuccess}
+      />
+
+      {/* Export Error Dialog */}
       {failedExport && (
         <Dialog open={failedExport} fullWidth maxWidth="sm">
           <DialogTitle>{errorGroupBeneficiaryExport?.message}</DialogTitle>
           <DialogContent>
-            <strong>{`${errorGroupBeneficiaryExport?.code}: `}</strong>
-            {errorGroupBeneficiaryExport?.detail}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setFailedExport(false)} color="primary" variant="contained">
+            <Button onClick={(e) => setFailedExport(false)} color="primary">
               {formatMessage(intl, 'socialProtection', 'ok')}
             </Button>
-          </DialogActions>
+          </DialogContent>
         </Dialog>
       )}
     </div>
@@ -295,23 +448,23 @@ function BenefitPlanGroupBeneficiariesSearcher({
 }
 
 const mapStateToProps = (state) => ({
-  rights: state.core?.user?.i_user?.rights ?? [],
   fetchingGroupBeneficiaries: state.socialProtection.fetchingGroupBeneficiaries,
   fetchedGroupBeneficiaries: state.socialProtection.fetchedGroupBeneficiaries,
   errorGroupBeneficiaries: state.socialProtection.errorGroupBeneficiaries,
   groupBeneficiaries: state.socialProtection.groupBeneficiaries,
   groupBeneficiariesPageInfo: state.socialProtection.groupBeneficiariesPageInfo,
   groupBeneficiariesTotalCount: state.socialProtection.groupBeneficiariesTotalCount,
-  selectedFilters: state.core.filtersCache.benefitPlanGroupBeneficiaryFilterCache,
-  fetchingGroupBeneficiaryExport: state.socialProtection.fetchingGroupBeneficiaryExport,
-  fetchedGroupBeneficiaryExport: state.socialProtection.fetchedGroupBeneficiaryExport,
   groupBeneficiaryExport: state.socialProtection.groupBeneficiaryExport,
-  groupBeneficiaryExportPageInfo: state.socialProtection.groupBeneficiaryExportPageInfo,
   errorGroupBeneficiaryExport: state.socialProtection.errorGroupBeneficiaryExport,
+  rights: state.core?.user?.i_user?.rights || [],
 });
 
 const mapDispatchToProps = (dispatch) => bindActionCreators({
-  fetchGroupBeneficiaries, downloadGroupBeneficiaries, updateGroupBeneficiary, clearGroupBeneficiaryExport,
+  fetchGroupBeneficiaries,
+  downloadGroupBeneficiaries,
+  clearGroupBeneficiaryExport,
+  updateGroupBeneficiary,
+  bulkUpdateGroupBeneficiaryStatus,
 }, dispatch);
 
-export default injectIntl(connect(mapStateToProps, mapDispatchToProps)(BenefitPlanGroupBeneficiariesSearcher));
+export default connect(mapStateToProps, mapDispatchToProps)(injectIntl(BenefitPlanGroupBeneficiariesSearcherWithBulkUpdate));

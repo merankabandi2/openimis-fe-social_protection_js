@@ -565,6 +565,69 @@ export function updateBeneficiary(beneficiary, clientMutationLabel) {
   );
 }
 
+export function bulkUpdateBeneficiaryStatus(beneficiaryIds, status, reason, clientMutationLabel) {
+  const beneficiaryIdsString = beneficiaryIds.map(id => `"${id}"`).join(', ');
+  const mutationInput = `
+    beneficiaryIds: [${beneficiaryIdsString}]
+    status: ${status}
+    ${reason ? `reason: "${reason}"` : ''}
+  `;
+  const mutation = formatMutation('bulkUpdateBeneficiaryStatus', mutationInput, clientMutationLabel);
+  const requestedDateTime = new Date();
+  return graphql(
+    mutation.payload,
+    [REQUEST(ACTION_TYPE.MUTATION), SUCCESS(ACTION_TYPE.BULK_UPDATE_BENEFICIARY_STATUS), ERROR(ACTION_TYPE.MUTATION)],
+    {
+      actionType: ACTION_TYPE.BULK_UPDATE_BENEFICIARY_STATUS,
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+    },
+  );
+}
+
+export function bulkUpdateGroupBeneficiaryStatus(groupBeneficiaryIds, status, reason, clientMutationLabel) {
+  const groupBeneficiaryIdsString = groupBeneficiaryIds.map(id => `"${id}"`).join(', ');
+  const mutationInput = `
+    groupBeneficiaryIds: [${groupBeneficiaryIdsString}]
+    status: ${status}
+    ${reason ? `reason: "${reason}"` : ''}
+  `;
+  const mutation = formatMutation('bulkUpdateGroupBeneficiaryStatus', mutationInput, clientMutationLabel);
+  const requestedDateTime = new Date();
+  return graphql(
+    mutation.payload,
+    [REQUEST(ACTION_TYPE.MUTATION), SUCCESS(ACTION_TYPE.BULK_UPDATE_GROUP_BENEFICIARY_STATUS), ERROR(ACTION_TYPE.MUTATION)],
+    {
+      actionType: ACTION_TYPE.BULK_UPDATE_GROUP_BENEFICIARY_STATUS,
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+    },
+  );
+}
+
+export function csvUpdateGroupBeneficiaryStatus(csvFileBase64, status, benefitPlanId, reason, clientMutationLabel) {
+  const mutationInput = `
+    csvFile: "${csvFileBase64}"
+    status: ${status}
+    benefitPlanId: "${benefitPlanId}"
+    ${reason ? `reason: "${reason}"` : ''}
+  `;
+  const mutation = formatMutation('csvUpdateGroupBeneficiaryStatus', mutationInput, clientMutationLabel);
+  const requestedDateTime = new Date();
+  return graphql(
+    mutation.payload,
+    [REQUEST(ACTION_TYPE.MUTATION), SUCCESS(ACTION_TYPE.CSV_UPDATE_GROUP_BENEFICIARY_STATUS), ERROR(ACTION_TYPE.MUTATION)],
+    {
+      actionType: ACTION_TYPE.CSV_UPDATE_GROUP_BENEFICIARY_STATUS,
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+    },
+  );
+}
+
 export function updateGroupBeneficiary(beneficiary, clientMutationLabel) {
   const mutation = formatMutation('updateGroupBeneficiary', formatBeneficiaryGQL(beneficiary), clientMutationLabel);
   const requestedDateTime = new Date();

@@ -111,6 +111,17 @@ const OPTIMIZED_TRANSFER_PERFORMANCE = `
         beneficiaries
         amount
         completionRate
+        q1Amount
+        q2Amount
+        q3Amount
+        q4Amount
+        q1Beneficiaries
+        q2Beneficiaries
+        q3Beneficiaries
+        q4Beneficiaries
+        paymentSource
+        femalePercentage
+        twaPercentage
       }
       byLocation {
         province
@@ -355,6 +366,8 @@ export const useOptimizedDashboard = (filters = {}, options = {}) => {
     if (filters.startDate) cleanFilters.startDate = filters.startDate;
     if (filters.endDate) cleanFilters.endDate = filters.endDate;
     if (filters.provinceId) cleanFilters.provinceId = parseInt(filters.provinceId);
+    if (filters.communeId) cleanFilters.communeId = parseInt(filters.communeId);
+    if (filters.collineId) cleanFilters.collineId = parseInt(filters.collineId);
     if (filters.communityType) cleanFilters.communityType = filters.communityType;
     if (filters.year) cleanFilters.year = parseInt(filters.year);
     if (filters.benefitPlanId) cleanFilters.benefitPlanId = filters.benefitPlanId;

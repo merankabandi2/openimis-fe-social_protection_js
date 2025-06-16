@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 import { useIntl } from 'react-intl';
@@ -19,10 +19,6 @@ import {
   CardContent,
   Avatar,
   Divider,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Button,
   Tab,
   Tabs,
@@ -35,7 +31,7 @@ import {
   Badge,
 } from '@material-ui/core';
 import { createTheme } from '@material-ui/core/styles';
-import { baseApiUrl, apiHeaders } from '@openimis/fe-core';
+import { baseApiUrl, apiHeaders, formatMessage, decodeId } from '@openimis/fe-core';
 import RefreshIcon from '@material-ui/icons/Refresh';
 import SchoolIcon from '@material-ui/icons/School';
 import GroupWorkIcon from '@material-ui/icons/GroupWork';
@@ -47,7 +43,6 @@ import TrendingUpIcon from '@material-ui/icons/TrendingUp';
 import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import HourglassEmptyIcon from '@material-ui/icons/HourglassEmpty';
 import CancelIcon from '@material-ui/icons/Cancel';
-import FilterListIcon from '@material-ui/icons/FilterList';
 import TimelineIcon from '@material-ui/icons/Timeline';
 import AssessmentIcon from '@material-ui/icons/Assessment';
 import FaceIcon from '@material-ui/icons/Face';
@@ -57,6 +52,8 @@ import AgricultureIcon from '@material-ui/icons/Eco';
 import PetsIcon from '@material-ui/icons/Pets';
 import StorefrontIcon from '@material-ui/icons/Storefront';
 import ReactApexChart from 'react-apexcharts';
+import ModernDashboardFilters from '../filters/ModernDashboardFilters';
+import { MODULE_NAME } from '../../constants';
 
 const REQUESTED_WITH = 'webapp';
 
@@ -125,41 +122,6 @@ const useStyles = makeStyles((theme) => ({
   titleIcon: {
     fontSize: '2.5rem',
     color: theme.palette.primary.main,
-  },
-  filterContainer: {
-    padding: theme.spacing(2),
-    marginBottom: theme.spacing(3),
-    backgroundColor: '#fff',
-    borderRadius: theme.spacing(1),
-    boxShadow: '0 0 20px rgba(0,0,0,.06)',
-  },
-  filterFormControl: {
-    margin: theme.spacing(1),
-    minWidth: 120,
-    '& .MuiOutlinedInput-root': {
-      borderRadius: theme.spacing(1),
-      '&:hover fieldset': {
-        borderColor: theme.palette.primary.main,
-      },
-    },
-  },
-  filterTitle: {
-    marginBottom: theme.spacing(2),
-    display: 'flex',
-    alignItems: 'center',
-    color: theme.palette.text.primary,
-    fontWeight: 600,
-  },
-  filterIcon: {
-    marginRight: theme.spacing(1),
-    color: theme.palette.primary.main,
-  },
-  filterActions: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    height: '100%',
-    paddingRight: theme.spacing(1),
   },
   summaryCard: {
     padding: theme.spacing(3),
@@ -266,25 +228,58 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 // Build filter string for GraphQL queries
-const buildFilter = (filters) => {
+const buildFilter = (filters, dateField = null) => {
   const filterParts = [];
   
-  if (filters.locationId) {
-    filterParts.push(`location_Uuid: "${filters.locationId}"`);
+  // Handle hierarchical location filters using numeric IDs
+  // GraphQL converts Django's double underscore to camelCase with underscores
+  if (Array.isArray(filters.collines) && filters.collines.length > 0) {
+    // Decode Base64 UUIDs to get numeric IDs
+    const numericIds = filters.collines.map(id => parseInt(decodeId(id))).join(', ');
+    filterParts.push(`location_Id_In: [${numericIds}]`);
+  } else if (Array.isArray(filters.communes) && filters.communes.length > 0) {
+    // Decode Base64 UUIDs to get numeric IDs
+    const numericIds = filters.communes.map(id => parseInt(decodeId(id))).join(', ');
+    filterParts.push(`location_Parent_Id_In: [${numericIds}]`);
+  } else if (Array.isArray(filters.provinces) && filters.provinces.length > 0) {
+    // Decode Base64 UUIDs to get numeric IDs
+    const numericIds = filters.provinces.map(id => parseInt(decodeId(id))).join(', ');
+    filterParts.push(`location_Parent_Parent_Id_In: [${numericIds}]`);
   }
   
-  if (filters.startDate) {
-    filterParts.push(`sensitizationDate_Gte: "${filters.startDate}"`);
-    filterParts.push(`reportDate_Gte: "${filters.startDate}"`);
+  // Apply date filters based on the specific date field for each query type
+  if (dateField && filters.dateRange?.start) {
+    let startDate = filters.dateRange.start;
+    if (startDate instanceof Date) {
+      startDate = startDate.toISOString().split('T')[0];
+    } else if (typeof startDate === 'object' && startDate.toISOString) {
+      // Handle DatePicker object that has toISOString method
+      startDate = startDate.toISOString().split('T')[0];
+    } else if (typeof startDate === 'string') {
+      // Already a string, use as is
+    }
+    if (startDate && startDate !== 'Invalid Date') {
+      filterParts.push(`${dateField}_Gte: "${startDate}"`);
+    }
   }
   
-  if (filters.endDate) {
-    filterParts.push(`sensitizationDate_Lte: "${filters.endDate}"`);
-    filterParts.push(`reportDate_Lte: "${filters.endDate}"`);
+  if (dateField && filters.dateRange?.end) {
+    let endDate = filters.dateRange.end;
+    if (endDate instanceof Date) {
+      endDate = endDate.toISOString().split('T')[0];
+    } else if (typeof endDate === 'object' && endDate.toISOString) {
+      // Handle DatePicker object that has toISOString method
+      endDate = endDate.toISOString().split('T')[0];
+    } else if (typeof endDate === 'string') {
+      // Already a string, use as is
+    }
+    if (endDate && endDate !== 'Invalid Date') {
+      filterParts.push(`${dateField}_Lte: "${endDate}"`);
+    }
   }
   
-  if (filters.validationStatus) {
-    filterParts.push(`validationStatus: "${filters.validationStatus}"`);
+  if (Array.isArray(filters.status) && filters.status.length > 0) {
+    filterParts.push(`validationStatus_In: [${filters.status.map(s => `"${s}"`).join(', ')}]`);
   }
   
   return filterParts.length > 0 ? `(${filterParts.join(', ')})` : '';
@@ -294,118 +289,226 @@ const buildFilter = (filters) => {
 const loadActivitiesData = async (filters = {}) => {
   const csrfToken = localStorage.getItem('csrfToken');
   const baseHeaders = apiHeaders();
-  const filterString = buildFilter(filters);
+  
+  // Build filters for optimized query
+  const dashboardFilters = {};
+  
+  if (filters.provinces?.length > 0) {
+    // Decode the Base64 UUID to get the numeric ID
+    const provinceId = parseInt(decodeId(filters.provinces[0]));
+    dashboardFilters.provinceId = provinceId;
+  }
+  if (filters.communes?.length > 0) {
+    // Decode the Base64 UUID to get the numeric ID
+    const communeId = parseInt(decodeId(filters.communes[0]));
+    dashboardFilters.communeId = communeId;
+  }
+  if (filters.collines?.length > 0) {
+    // Decode the Base64 UUID to get the numeric ID
+    const collineId = parseInt(decodeId(filters.collines[0]));
+    dashboardFilters.collineId = collineId;
+  }
+  if (filters.year) {
+    dashboardFilters.year = filters.year;
+  }
+  
+  // Add date range filters for the dashboard query
+  if (filters.dateRange?.start) {
+    let startDate = filters.dateRange.start;
+    if (startDate instanceof Date) {
+      dashboardFilters.startDate = startDate.toISOString().split('T')[0];
+    } else if (typeof startDate === 'object' && startDate.toISOString) {
+      dashboardFilters.startDate = startDate.toISOString().split('T')[0];
+    } else if (typeof startDate === 'string') {
+      dashboardFilters.startDate = startDate;
+    }
+  }
+  
+  if (filters.dateRange?.end) {
+    let endDate = filters.dateRange.end;
+    if (endDate instanceof Date) {
+      dashboardFilters.endDate = endDate.toISOString().split('T')[0];
+    } else if (typeof endDate === 'object' && endDate.toISOString) {
+      dashboardFilters.endDate = endDate.toISOString().split('T')[0];
+    } else if (typeof endDate === 'string') {
+      dashboardFilters.endDate = endDate;
+    }
+  }
+  
+  // Build filter strings for latest activities queries
+  const sensitizationFilterString = buildFilter(filters, 'sensitizationDate');
+  const behaviorFilterString = buildFilter(filters, 'reportDate');
+  const microProjectFilterString = buildFilter(filters, 'reportDate');
+  
+  // Debug: Log filter strings
+  console.log('Filter strings:', {
+    dashboardFilters,
+    sensitization: sensitizationFilterString,
+    behavior: behaviorFilterString,
+    microProject: microProjectFilterString,
+    filters: filters,
+    decodedProvinceId: filters.provinces?.length > 0 ? parseInt(decodeId(filters.provinces[0])) : null
+  });
+
+  const graphqlQuery = `
+    query ActivitiesDashboard($filters: DashboardFiltersInput) {
+      optimizedActivitiesDashboard(filters: $filters) {
+        overall {
+          totalActivities
+          totalParticipants
+          totalMale
+          totalFemale
+          totalTwa
+          totalValidated
+          totalPending
+          totalRejected
+        }
+        byType {
+          sensitizationTraining {
+            total
+            participants
+            male
+            female
+            twa
+            validated
+            pending
+            rejected
+          }
+          behaviorChangePromotion {
+            total
+            participants
+            male
+            female
+            twa
+            validated
+            pending
+            rejected
+          }
+          microProject {
+            total
+            participants
+            male
+            female
+            twa
+            validated
+            pending
+            rejected
+            agriculture
+            livestock
+            commerce
+          }
+        }
+        monthlyTrends {
+          year
+          month
+          activityType
+          activityCount
+          totalParticipants
+        }
+        lastUpdated
+      }
+      sensitizationTrainingLatest: sensitizationTraining(first: 10, orderBy: "-sensitizationDate"${sensitizationFilterString ? ', ' + sensitizationFilterString.slice(1, -1) : ''}) {
+        edges {
+          node {
+            id
+            sensitizationDate
+            location {
+              id
+              name
+              code
+              parent {
+                name
+              }
+            }
+            category
+            modules
+            facilitator
+            maleParticipants
+            femaleParticipants
+            twaParticipants
+            observations
+            validationStatus
+            validationStatusDisplay
+            validatedBy {
+              username
+            }
+            validationDate
+            validationComment
+          }
+        }
+      }
+      behaviorChangePromotionLatest: behaviorChangePromotion(first: 10, orderBy: "-reportDate"${behaviorFilterString ? ', ' + behaviorFilterString.slice(1, -1) : ''}) {
+        edges {
+          node {
+            id
+            reportDate
+            location {
+              id
+              name
+              code
+              parent {
+                name
+              }
+            }
+            maleParticipants
+            femaleParticipants
+            twaParticipants
+            comments
+            validationStatus
+            validationStatusDisplay
+            validatedBy {
+              username
+            }
+            validationDate
+            validationComment
+          }
+        }
+      }
+      microProjectLatest: microProject(first: 10, orderBy: "-reportDate"${microProjectFilterString ? ', ' + microProjectFilterString.slice(1, -1) : ''}) {
+        edges {
+          node {
+            id
+            reportDate
+            location {
+              id
+              name
+              code
+              parent {
+                name
+              }
+            }
+            maleParticipants
+            femaleParticipants
+            twaParticipants
+            agricultureBeneficiaries
+            livestockBeneficiaries
+            livestockGoatBeneficiaries
+            livestockPigBeneficiaries
+            livestockRabbitBeneficiaries
+            livestockPoultryBeneficiaries
+            livestockCattleBeneficiaries
+            commerceServicesBeneficiaries
+            validationStatus
+            validationStatusDisplay
+            validatedBy {
+              username
+            }
+            validationDate
+            validationComment
+          }
+        }
+      }
+    }
+  `;
+
+  console.log('Full GraphQL Query:', graphqlQuery);
 
   const response = await fetch(`${baseApiUrl}/graphql`, {
     method: 'post',
     headers: { ...baseHeaders, 'X-Requested-With': REQUESTED_WITH, 'X-CSRFToken': csrfToken },
     body: JSON.stringify({
-      query: `
-        {
-          sensitizationTraining${filterString} {
-            edges {
-              node {
-                id
-                sensitizationDate
-                location {
-                  id
-                  name
-                  code
-                  parent {
-                    name
-                  }
-                }
-                category
-                modules
-                facilitator
-                maleParticipants
-                femaleParticipants
-                twaParticipants
-                observations
-                validationStatus
-                validationStatusDisplay
-                validatedBy {
-                  username
-                }
-                validationDate
-                validationComment
-              }
-            }
-          }
-          behaviorChangePromotion${filterString} {
-            edges {
-              node {
-                id
-                reportDate
-                location {
-                  id
-                  name
-                  code
-                  parent {
-                    name
-                  }
-                }
-                maleParticipants
-                femaleParticipants
-                twaParticipants
-                comments
-                validationStatus
-                validationStatusDisplay
-                validatedBy {
-                  username
-                }
-                validationDate
-                validationComment
-              }
-            }
-          }
-          microProject${filterString} {
-            edges {
-              node {
-                id
-                reportDate
-                location {
-                  id
-                  name
-                  code
-                  parent {
-                    name
-                  }
-                }
-                maleParticipants
-                femaleParticipants
-                twaParticipants
-                agricultureBeneficiaries
-                livestockBeneficiaries
-                livestockGoatBeneficiaries
-                livestockPigBeneficiaries
-                livestockRabbitBeneficiaries
-                livestockPoultryBeneficiaries
-                livestockCattleBeneficiaries
-                commerceServicesBeneficiaries
-                validationStatus
-                validationStatusDisplay
-                validatedBy {
-                  username
-                }
-                validationDate
-                validationComment
-              }
-            }
-          }
-          locations(type: "D") {
-            edges {
-              node {
-                id
-                uuid
-                name
-                code
-                type
-              }
-            }
-          }
-        }
-      `,
+      query: graphqlQuery,
+      variables: { filters: dashboardFilters }
     }),
   });
 
@@ -413,8 +516,132 @@ const loadActivitiesData = async (filters = {}) => {
     throw new Error('Failed to fetch activities data');
   }
 
-  const { data } = await response.json();
-  return data;
+  const result = await response.json();
+  
+  if (result.errors) {
+    console.error('GraphQL errors:', result.errors);
+    throw new Error('Failed to fetch activities data');
+  }
+  
+  const { data } = result;
+  const dashboardData = data.optimizedActivitiesDashboard;
+  
+  // Transform optimized data to match expected structure
+  const transformedData = {
+    // Use optimized counts
+    sensitizationTraining: { totalCount: dashboardData.byType.sensitizationTraining.total },
+    behaviorChangePromotion: { totalCount: dashboardData.byType.behaviorChangePromotion.total },
+    microProject: { totalCount: dashboardData.byType.microProject.total },
+    
+    // Create stats arrays that match the expected structure for calculateStats
+    sensitizationTrainingStats: {
+      edges: Array(dashboardData.byType.sensitizationTraining.validated)
+        .fill({ node: { validationStatus: 'VALIDATED', maleParticipants: 0, femaleParticipants: 0, twaParticipants: 0 } })
+        .concat(Array(dashboardData.byType.sensitizationTraining.pending)
+          .fill({ node: { validationStatus: 'PENDING', maleParticipants: 0, femaleParticipants: 0, twaParticipants: 0 } }))
+        .concat(Array(dashboardData.byType.sensitizationTraining.rejected)
+          .fill({ node: { validationStatus: 'REJECTED', maleParticipants: 0, femaleParticipants: 0, twaParticipants: 0 } }))
+        .map((item, idx) => {
+          if (idx === 0) {
+            return {
+              node: {
+                ...item.node,
+                maleParticipants: dashboardData.byType.sensitizationTraining.male,
+                femaleParticipants: dashboardData.byType.sensitizationTraining.female,
+                twaParticipants: dashboardData.byType.sensitizationTraining.twa,
+              }
+            };
+          }
+          return item;
+        })
+    },
+    
+    behaviorChangePromotionStats: {
+      edges: Array(dashboardData.byType.behaviorChangePromotion.validated)
+        .fill({ node: { validationStatus: 'VALIDATED', maleParticipants: 0, femaleParticipants: 0, twaParticipants: 0 } })
+        .concat(Array(dashboardData.byType.behaviorChangePromotion.pending)
+          .fill({ node: { validationStatus: 'PENDING', maleParticipants: 0, femaleParticipants: 0, twaParticipants: 0 } }))
+        .concat(Array(dashboardData.byType.behaviorChangePromotion.rejected)
+          .fill({ node: { validationStatus: 'REJECTED', maleParticipants: 0, femaleParticipants: 0, twaParticipants: 0 } }))
+        .map((item, idx) => {
+          if (idx === 0) {
+            return {
+              node: {
+                ...item.node,
+                maleParticipants: dashboardData.byType.behaviorChangePromotion.male,
+                femaleParticipants: dashboardData.byType.behaviorChangePromotion.female,
+                twaParticipants: dashboardData.byType.behaviorChangePromotion.twa,
+              }
+            };
+          }
+          return item;
+        })
+    },
+    
+    microProjectStats: {
+      edges: Array(dashboardData.byType.microProject.validated)
+        .fill({ node: { validationStatus: 'VALIDATED', maleParticipants: 0, femaleParticipants: 0, twaParticipants: 0, agricultureBeneficiaries: 0, livestockBeneficiaries: 0, commerceServicesBeneficiaries: 0 } })
+        .concat(Array(dashboardData.byType.microProject.pending)
+          .fill({ node: { validationStatus: 'PENDING', maleParticipants: 0, femaleParticipants: 0, twaParticipants: 0, agricultureBeneficiaries: 0, livestockBeneficiaries: 0, commerceServicesBeneficiaries: 0 } }))
+        .concat(Array(dashboardData.byType.microProject.rejected)
+          .fill({ node: { validationStatus: 'REJECTED', maleParticipants: 0, femaleParticipants: 0, twaParticipants: 0, agricultureBeneficiaries: 0, livestockBeneficiaries: 0, commerceServicesBeneficiaries: 0 } }))
+        .map((item, idx) => {
+          if (idx === 0) {
+            return {
+              node: {
+                ...item.node,
+                maleParticipants: dashboardData.byType.microProject.male,
+                femaleParticipants: dashboardData.byType.microProject.female,
+                twaParticipants: dashboardData.byType.microProject.twa,
+                agricultureBeneficiaries: dashboardData.byType.microProject.agriculture,
+                livestockBeneficiaries: dashboardData.byType.microProject.livestock,
+                commerceServicesBeneficiaries: dashboardData.byType.microProject.commerce,
+              }
+            };
+          }
+          return item;
+        })
+    },
+    
+    // Latest activities for display
+    sensitizationTrainingLatest: data.sensitizationTrainingLatest,
+    behaviorChangePromotionLatest: data.behaviorChangePromotionLatest,
+    microProjectLatest: data.microProjectLatest,
+    
+    // Locations
+    locations: data.locations,
+    
+    // Monthly trends from optimized data
+    monthlyTrends: dashboardData.monthlyTrends
+  };
+  
+  // Debug: Log response counts
+  console.log('Response counts from optimized query:', {
+    sensitizationTrainingTotal: dashboardData.byType.sensitizationTraining.total,
+    behaviorChangePromotionTotal: dashboardData.byType.behaviorChangePromotion.total,
+    microProjectTotal: dashboardData.byType.microProject.total,
+    totalActivities: dashboardData.overall.totalActivities,
+    participants: {
+      total: dashboardData.overall.totalParticipants,
+      male: dashboardData.overall.totalMale,
+      female: dashboardData.overall.totalFemale,
+      twa: dashboardData.overall.totalTwa,
+    },
+    validationStats: {
+      validated: dashboardData.overall.totalValidated,
+      pending: dashboardData.overall.totalPending,
+      rejected: dashboardData.overall.totalRejected,
+    },
+    latestRecords: {
+      sensitizationTraining: data.sensitizationTrainingLatest?.edges?.length || 0,
+      behaviorChangePromotion: data.behaviorChangePromotionLatest?.edges?.length || 0,
+      microProject: data.microProjectLatest?.edges?.length || 0,
+    },
+    monthlyTrends: dashboardData.monthlyTrends?.length || 0,
+    lastUpdated: dashboardData.lastUpdated
+  });
+  
+  return transformedData;
 };
 
 // Get status color
@@ -445,14 +672,29 @@ function ActivitiesDashboard() {
     behaviorChangePromotion: [],
     microProject: [],
     locations: [],
+    counts: {
+      sensitizationTraining: 0,
+      behaviorChangePromotion: 0,
+      microProject: 0,
+    },
+    stats: {
+      sensitizationTraining: [],
+      behaviorChangePromotion: [],
+      microProject: [],
+    },
+    monthlyTrends: [],
   });
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const [filters, setFilters] = useState({
-    locationId: '',
-    startDate: '',
-    endDate: '',
-    validationStatus: '',
+    provinces: [],
+    communes: [],
+    collines: [],
+    benefitPlan: null,
+    year: null,
+    yearRange: [2020, new Date().getFullYear()],
+    status: [],
+    dateRange: { start: null, end: null },
   });
   const classes = useStyles();
 
@@ -491,10 +733,21 @@ function ActivitiesDashboard() {
       const result = await loadActivitiesData(filters);
       
       setData({
-        sensitizationTraining: result.sensitizationTraining.edges.map(edge => edge.node),
-        behaviorChangePromotion: result.behaviorChangePromotion.edges.map(edge => edge.node),
-        microProject: result.microProject.edges.map(edge => edge.node),
-        locations: result.locations.edges.map(edge => edge.node).filter(l => l.type === 'D'),
+        sensitizationTraining: result.sensitizationTrainingLatest?.edges?.map(edge => edge.node) || [],
+        behaviorChangePromotion: result.behaviorChangePromotionLatest?.edges?.map(edge => edge.node) || [],
+        microProject: result.microProjectLatest?.edges?.map(edge => edge.node) || [],
+        locations: result.locations?.edges?.map(edge => edge.node).filter(l => l.type === 'D') || [],
+        counts: {
+          sensitizationTraining: result.sensitizationTraining?.totalCount || 0,
+          behaviorChangePromotion: result.behaviorChangePromotion?.totalCount || 0,
+          microProject: result.microProject?.totalCount || 0,
+        },
+        stats: {
+          sensitizationTraining: result.sensitizationTrainingStats?.edges?.map(edge => edge.node) || [],
+          behaviorChangePromotion: result.behaviorChangePromotionStats?.edges?.map(edge => edge.node) || [],
+          microProject: result.microProjectStats?.edges?.map(edge => edge.node) || [],
+        },
+        monthlyTrends: result.monthlyTrends || [],
       });
     } catch (error) {
       console.error('Failed to load activities data:', error);
@@ -507,66 +760,66 @@ function ActivitiesDashboard() {
     loadData();
   }, [filters]);
 
-  const handleFilterChange = (event) => {
-    const { name, value } = event.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+  const handleFiltersChange = (newFilters) => {
+    setFilters(newFilters);
   };
 
-  const handleResetFilters = () => {
-    setFilters({
-      locationId: '',
-      startDate: '',
-      endDate: '',
-      validationStatus: '',
-    });
+  const handleRefresh = () => {
+    loadData();
+  };
+
+  // Define filter options for ModernDashboardFilters
+  const filterOptions = {
+    status: [
+      { value: 'PENDING', label: formatMessage(intl, MODULE_NAME, 'activities.status.pending') },
+      { value: 'VALIDATED', label: formatMessage(intl, MODULE_NAME, 'activities.status.validated') },
+      { value: 'REJECTED', label: formatMessage(intl, MODULE_NAME, 'activities.status.rejected') },
+    ],
   };
 
   // Calculate summary statistics
   const calculateStats = () => {
     const stats = {
       // Sensitization Training Stats
-      totalTrainings: data.sensitizationTraining.length,
-      trainingParticipants: data.sensitizationTraining.reduce((sum, t) => 
+      totalTrainings: data.counts.sensitizationTraining,
+      trainingParticipants: data.stats.sensitizationTraining.reduce((sum, t) => 
         sum + t.maleParticipants + t.femaleParticipants + t.twaParticipants, 0),
-      trainingMale: data.sensitizationTraining.reduce((sum, t) => sum + t.maleParticipants, 0),
-      trainingFemale: data.sensitizationTraining.reduce((sum, t) => sum + t.femaleParticipants, 0),
-      trainingTwa: data.sensitizationTraining.reduce((sum, t) => sum + t.twaParticipants, 0),
-      trainingValidated: data.sensitizationTraining.filter(t => t.validationStatus === 'VALIDATED').length,
-      trainingPending: data.sensitizationTraining.filter(t => t.validationStatus === 'PENDING').length,
-      trainingRejected: data.sensitizationTraining.filter(t => t.validationStatus === 'REJECTED').length,
+      trainingMale: data.stats.sensitizationTraining.reduce((sum, t) => sum + t.maleParticipants, 0),
+      trainingFemale: data.stats.sensitizationTraining.reduce((sum, t) => sum + t.femaleParticipants, 0),
+      trainingTwa: data.stats.sensitizationTraining.reduce((sum, t) => sum + t.twaParticipants, 0),
+      trainingValidated: data.stats.sensitizationTraining.filter(t => t.validationStatus === 'VALIDATED').length,
+      trainingPending: data.stats.sensitizationTraining.filter(t => t.validationStatus === 'PENDING').length,
+      trainingRejected: data.stats.sensitizationTraining.filter(t => t.validationStatus === 'REJECTED').length,
 
       // Behavior Change Stats
-      totalBehaviorChanges: data.behaviorChangePromotion.length,
-      behaviorParticipants: data.behaviorChangePromotion.reduce((sum, b) => 
+      totalBehaviorChanges: data.counts.behaviorChangePromotion,
+      behaviorParticipants: data.stats.behaviorChangePromotion.reduce((sum, b) => 
         sum + b.maleParticipants + b.femaleParticipants + b.twaParticipants, 0),
-      behaviorMale: data.behaviorChangePromotion.reduce((sum, b) => sum + b.maleParticipants, 0),
-      behaviorFemale: data.behaviorChangePromotion.reduce((sum, b) => sum + b.femaleParticipants, 0),
-      behaviorTwa: data.behaviorChangePromotion.reduce((sum, b) => sum + b.twaParticipants, 0),
-      behaviorValidated: data.behaviorChangePromotion.filter(b => b.validationStatus === 'VALIDATED').length,
-      behaviorPending: data.behaviorChangePromotion.filter(b => b.validationStatus === 'PENDING').length,
-      behaviorRejected: data.behaviorChangePromotion.filter(b => b.validationStatus === 'REJECTED').length,
+      behaviorMale: data.stats.behaviorChangePromotion.reduce((sum, b) => sum + b.maleParticipants, 0),
+      behaviorFemale: data.stats.behaviorChangePromotion.reduce((sum, b) => sum + b.femaleParticipants, 0),
+      behaviorTwa: data.stats.behaviorChangePromotion.reduce((sum, b) => sum + b.twaParticipants, 0),
+      behaviorValidated: data.stats.behaviorChangePromotion.filter(b => b.validationStatus === 'VALIDATED').length,
+      behaviorPending: data.stats.behaviorChangePromotion.filter(b => b.validationStatus === 'PENDING').length,
+      behaviorRejected: data.stats.behaviorChangePromotion.filter(b => b.validationStatus === 'REJECTED').length,
 
       // Micro Project Stats
-      totalMicroProjects: data.microProject.length,
-      microProjectParticipants: data.microProject.reduce((sum, m) => 
+      totalMicroProjects: data.counts.microProject,
+      microProjectParticipants: data.stats.microProject.reduce((sum, m) => 
         sum + m.maleParticipants + m.femaleParticipants + m.twaParticipants, 0),
-      microProjectMale: data.microProject.reduce((sum, m) => sum + m.maleParticipants, 0),
-      microProjectFemale: data.microProject.reduce((sum, m) => sum + m.femaleParticipants, 0),
-      microProjectTwa: data.microProject.reduce((sum, m) => sum + m.twaParticipants, 0),
-      microProjectValidated: data.microProject.filter(m => m.validationStatus === 'VALIDATED').length,
-      microProjectPending: data.microProject.filter(m => m.validationStatus === 'PENDING').length,
-      microProjectRejected: data.microProject.filter(m => m.validationStatus === 'REJECTED').length,
+      microProjectMale: data.stats.microProject.reduce((sum, m) => sum + m.maleParticipants, 0),
+      microProjectFemale: data.stats.microProject.reduce((sum, m) => sum + m.femaleParticipants, 0),
+      microProjectTwa: data.stats.microProject.reduce((sum, m) => sum + m.twaParticipants, 0),
+      microProjectValidated: data.stats.microProject.filter(m => m.validationStatus === 'VALIDATED').length,
+      microProjectPending: data.stats.microProject.filter(m => m.validationStatus === 'PENDING').length,
+      microProjectRejected: data.stats.microProject.filter(m => m.validationStatus === 'REJECTED').length,
       
       // Project Type Stats
-      agricultureProjects: data.microProject.reduce((sum, m) => sum + m.agricultureBeneficiaries, 0),
-      livestockProjects: data.microProject.reduce((sum, m) => sum + m.livestockBeneficiaries, 0),
-      commerceProjects: data.microProject.reduce((sum, m) => sum + m.commerceServicesBeneficiaries, 0),
+      agricultureProjects: data.stats.microProject.reduce((sum, m) => sum + m.agricultureBeneficiaries, 0),
+      livestockProjects: data.stats.microProject.reduce((sum, m) => sum + m.livestockBeneficiaries, 0),
+      commerceProjects: data.stats.microProject.reduce((sum, m) => sum + m.commerceServicesBeneficiaries, 0),
 
       // Overall Stats
-      totalActivities: data.sensitizationTraining.length + data.behaviorChangePromotion.length + data.microProject.length,
+      totalActivities: data.counts.sensitizationTraining + data.counts.behaviorChangePromotion + data.counts.microProject,
       totalParticipants: 0,
       totalMale: 0,
       totalFemale: 0,
@@ -618,26 +871,51 @@ function ActivitiesDashboard() {
       categories: ['Formation', 'Comportement', 'Micro-projets']
     };
 
-    // Activities by Month
-    const activitiesByMonth = {};
-    [...data.sensitizationTraining, ...data.behaviorChangePromotion, ...data.microProject].forEach(activity => {
-      const date = new Date(activity.sensitizationDate || activity.reportDate);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      activitiesByMonth[monthKey] = (activitiesByMonth[monthKey] || 0) + 1;
-    });
+    // Activities by Month - Use optimized monthly trends data if available
+    let monthlyData;
+    
+    if (data.monthlyTrends && data.monthlyTrends.length > 0) {
+      // Use optimized monthly trends from materialized view
+      const trendsByMonth = {};
+      data.monthlyTrends.forEach(trend => {
+        const monthKey = `${trend.year}-${String(trend.month).padStart(2, '0')}`;
+        trendsByMonth[monthKey] = (trendsByMonth[monthKey] || 0) + trend.activityCount;
+      });
+      
+      const sortedMonths = Object.keys(trendsByMonth).sort();
+      monthlyData = {
+        series: [{
+          name: 'Activités',
+          data: sortedMonths.map(month => trendsByMonth[month])
+        }],
+        categories: sortedMonths.map(month => {
+          const [year, monthNum] = month.split('-');
+          const monthName = new Date(year, monthNum - 1).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+          return monthName;
+        })
+      };
+    } else {
+      // Fallback to calculating from individual activities
+      const activitiesByMonth = {};
+      [...data.sensitizationTraining, ...data.behaviorChangePromotion, ...data.microProject].forEach(activity => {
+        const date = new Date(activity.sensitizationDate || activity.reportDate);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        activitiesByMonth[monthKey] = (activitiesByMonth[monthKey] || 0) + 1;
+      });
 
-    const sortedMonths = Object.keys(activitiesByMonth).sort();
-    const monthlyData = {
-      series: [{
-        name: 'Activités',
-        data: sortedMonths.map(month => activitiesByMonth[month])
-      }],
-      categories: sortedMonths.map(month => {
-        const [year, monthNum] = month.split('-');
-        const monthName = new Date(year, monthNum - 1).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
-        return monthName;
-      })
-    };
+      const sortedMonths = Object.keys(activitiesByMonth).sort();
+      monthlyData = {
+        series: [{
+          name: 'Activités',
+          data: sortedMonths.map(month => activitiesByMonth[month])
+        }],
+        categories: sortedMonths.map(month => {
+          const [year, monthNum] = month.split('-');
+          const monthName = new Date(year, monthNum - 1).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+          return monthName;
+        })
+      };
+    }
 
     // Minority Participation by Activity Type
     const minorityParticipation = {
@@ -661,10 +939,8 @@ function ActivitiesDashboard() {
   };
 
   const renderSensitizationTable = () => {
-    // Sort by date and take only the 10 most recent
-    const recentTrainings = [...data.sensitizationTraining]
-      .sort((a, b) => new Date(b.sensitizationDate) - new Date(a.sensitizationDate))
-      .slice(0, 10);
+    // Data is already sorted and limited by the server
+    const recentTrainings = data.sensitizationTraining;
 
     return (
       <TableContainer component={Paper} className={classes.tableContainer}>
@@ -722,10 +998,8 @@ function ActivitiesDashboard() {
   };
 
   const renderBehaviorChangeTable = () => {
-    // Sort by date and take only the 10 most recent
-    const recentBehaviors = [...data.behaviorChangePromotion]
-      .sort((a, b) => new Date(b.reportDate) - new Date(a.reportDate))
-      .slice(0, 10);
+    // Data is already sorted and limited by the server
+    const recentBehaviors = data.behaviorChangePromotion;
 
     return (
       <TableContainer component={Paper} className={classes.tableContainer}>
@@ -781,10 +1055,8 @@ function ActivitiesDashboard() {
   };
 
   const renderMicroProjectTable = () => {
-    // Sort by date and take only the 10 most recent
-    const recentProjects = [...data.microProject]
-      .sort((a, b) => new Date(b.reportDate) - new Date(a.reportDate))
-      .slice(0, 10);
+    // Data is already sorted and limited by the server
+    const recentProjects = data.microProject;
 
     return (
       <TableContainer component={Paper} className={classes.tableContainer}>
@@ -878,100 +1150,13 @@ function ActivitiesDashboard() {
             </Tooltip>
           </div>
 
-          {/* Filters */}
-          <Paper className={classes.filterContainer}>
-            <Typography className={classes.filterTitle}>
-              <FilterListIcon className={classes.filterIcon} />
-              Filtres
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={3}>
-                <FormControl variant="outlined" className={classes.filterFormControl} fullWidth size="small">
-                  <InputLabel id="location-label">Province</InputLabel>
-                  <Select
-                    labelId="location-label"
-                    name="locationId"
-                    value={filters.locationId}
-                    onChange={handleFilterChange}
-                    label="Province"
-                  >
-                    <MenuItem value="">
-                      <em>Toutes les provinces</em>
-                    </MenuItem>
-                    {data.locations.map(loc => (
-                      <MenuItem key={loc.uuid} value={loc.uuid}>{loc.name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6} md={2}>
-                <FormControl variant="outlined" className={classes.filterFormControl} fullWidth size="small">
-                  <InputLabel id="status-label">Statut</InputLabel>
-                  <Select
-                    labelId="status-label"
-                    name="validationStatus"
-                    value={filters.validationStatus}
-                    onChange={handleFilterChange}
-                    label="Statut"
-                  >
-                    <MenuItem value="">
-                      <em>Tous les statuts</em>
-                    </MenuItem>
-                    <MenuItem value="VALIDATED">Validé</MenuItem>
-                    <MenuItem value="PENDING">En attente</MenuItem>
-                    <MenuItem value="REJECTED">Rejeté</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6} md={2}>
-                <TextField
-                  label="Date début"
-                  type="date"
-                  name="startDate"
-                  value={filters.startDate}
-                  onChange={handleFilterChange}
-                  className={classes.filterFormControl}
-                  InputLabelProps={{ shrink: true }}
-                  fullWidth
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={2}>
-                <TextField
-                  label="Date fin"
-                  type="date"
-                  name="endDate"
-                  value={filters.endDate}
-                  onChange={handleFilterChange}
-                  className={classes.filterFormControl}
-                  InputLabelProps={{ shrink: true }}
-                  fullWidth
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs={12} sm={12} md={3}>
-                <div className={classes.filterActions}>
-                  <Button 
-                    variant="outlined" 
-                    color="default" 
-                    onClick={handleResetFilters}
-                    style={{ marginRight: 8 }}
-                    size="small"
-                  >
-                    Réinitialiser
-                  </Button>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    onClick={loadData}
-                    size="small"
-                  >
-                    Appliquer
-                  </Button>
-                </div>
-              </Grid>
-            </Grid>
-          </Paper>
+          {/* ModernDashboardFilters component */}
+          <ModernDashboardFilters
+            onFiltersChange={handleFiltersChange}
+            filterOptions={filterOptions}
+            defaultFilters={filters}
+            filterTypes={['location', 'dateRange', 'status']}
+          />
 
           {/* Summary Card */}
           <Fade in={!isLoading}>

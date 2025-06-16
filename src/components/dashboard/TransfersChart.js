@@ -130,7 +130,7 @@ const buildFilter = (filters) => {
   return filterParts.length ? `(${filterParts.join(', ')})` : '';
 };
 
-function TransfersChart({ classes, theme, filters = {}, compact = false, header = true, optimizedData = null }) {
+function TransfersChart({ classes, theme, filters = {}, compact = false, header = true }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -138,19 +138,39 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
   const loadTransfersData = async () => {
     setLoading(true);
     try {
+      // Build filters object for optimized query
+      const optimizedFilters = {};
+      if (filters.year) optimizedFilters.year = filters.year;
+      // Handle hierarchical location filters
+      if (filters.provinces && filters.provinces.length > 0) {
+        optimizedFilters.provinceId = parseInt(decodeId(filters.provinces[0]));
+      }
+      if (filters.communes && filters.communes.length > 0) {
+        optimizedFilters.communeId = parseInt(decodeId(filters.communes[0]));
+      }
+      if (filters.collines && filters.collines.length > 0) {
+        optimizedFilters.collineId = parseInt(decodeId(filters.collines[0]));
+      }
+      if (filters.benefitPlan) optimizedFilters.benefitPlanId = decodeId(filters.benefitPlan);
+      
       const response = await fetch(`${baseApiUrl}/graphql`, {
         method: 'post',
         headers: apiHeaders(),
         body: JSON.stringify({
-          query: `{ monetaryTransferBeneficiaryData${buildFilter(filters)}  {
-      transferType,
-      malePaid,
-      maleUnpaid,
-      femalePaid,
-      femaleUnpaid,
-      totalPaid,
-      totalUnpaid
-        }}`,
+          query: `query OptimizedMonetaryTransferBeneficiaryData($filters: DashboardFiltersInput) {
+            optimizedMonetaryTransferBeneficiaryData(filters: $filters) {
+              transferType
+              malePaid
+              maleUnpaid
+              femalePaid
+              femaleUnpaid
+              totalPaid
+              totalUnpaid
+            }
+          }`,
+          variables: {
+            filters: optimizedFilters
+          }
         }),
       });
 
@@ -159,7 +179,13 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
       }
 
       const result = await response.json();
-      setData(result.data);
+      
+      if (result.errors) {
+        throw new Error(result.errors[0]?.message || 'GraphQL errors occurred');
+      }
+      
+      const transferData = result.data?.optimizedMonetaryTransferBeneficiaryData;
+      setData({ monetaryTransferBeneficiaryData: transferData || [] });
       setError(null);
     } catch (err) {
       console.error('Error loading transfers data:', err);
@@ -170,42 +196,14 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
     }
   };
 
-  // Convert optimized data to the format expected by the chart
-  const convertOptimizedData = (optimizedData) => {
-    if (!optimizedData) return null;
-    
-    // Create mock transfer data based on optimized metrics
-    const mockTransferData = [
-      {
-        transferType: "Transfert Monétaire",
-        malePaid: Math.round((optimizedData.totalPaidBeneficiaries || 0) * 0.4), // Estimate male beneficiaries
-        maleUnpaid: Math.round((optimizedData.totalPlannedBeneficiaries - optimizedData.totalPaidBeneficiaries || 0) * 0.4),
-        femalePaid: Math.round((optimizedData.totalPaidBeneficiaries || 0) * 0.6), // Estimate female beneficiaries
-        femaleUnpaid: Math.round((optimizedData.totalPlannedBeneficiaries - optimizedData.totalPaidBeneficiaries || 0) * 0.6),
-        totalPaid: optimizedData.totalPaidBeneficiaries || 0,
-        totalUnpaid: (optimizedData.totalPlannedBeneficiaries || 0) - (optimizedData.totalPaidBeneficiaries || 0)
-      }
-    ];
-    
-    return { monetaryTransferBeneficiaryData: mockTransferData };
-  };
-
   useEffect(() => {
-    if (optimizedData && Object.keys(optimizedData).length > 0) {
-      // Use optimized data
-      setLoading(false);
-      setError(null);
-      setData(convertOptimizedData(optimizedData));
-    } else {
-      // Fallback to original API call
-      loadTransfersData();
-    }
-  }, [filters, optimizedData]);
+    loadTransfersData();
+  }, [filters]);
 
   // Format data for ApexCharts
   const formatChartData = (rawData) => {
     if (!rawData?.monetaryTransferBeneficiaryData?.length) {
-      return { categories: [], series: [], stats: {} };
+      return { categories: [], series: [], seriesData: [], stats: {} };
     }
 
     // Calculate total for each type and prepare series data
@@ -246,9 +244,11 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
     const formatTransferType = (type) => {
       // Shorten long transfer type names
       return type
+        .replace('Transferts monétaires', 'TM')
         .replace('Transferts monetaires', 'TM')
         .replace('d\'urgence', 'd\'urg.')
-        .replace('aux ménages refugiés', 'Refugiés');
+        .replace('aux ménages refugiés', 'Refugiés')
+        .replace('réguliers', 'Réguliers');
     };
 
     // Create series for radial chart
@@ -260,8 +260,8 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
 
   const { categories, series, seriesData, stats } = formatChartData(data);
 
-  // Create detail series only when seriesData is available
-  const detailSeries = seriesData ? [
+  // Create detail series only when seriesData has data
+  const detailSeries = seriesData && seriesData.length > 0 ? [
     {
       name: 'Paiements Hommes - Effectués',
       data: seriesData.map(item => item.malePaid),
@@ -444,7 +444,7 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
             </Box>
           )}
 
-          {!loading && !error && series.length > 0 && (
+          {!loading && !error && seriesData && seriesData.length > 0 && (
             <>
               {/* Summary Stats */}
               <div className={classes.statsContainer}>
@@ -519,10 +519,10 @@ function TransfersChart({ classes, theme, filters = {}, compact = false, header 
             </>
           )}
 
-          {!loading && !error && series.length === 0 && (
+          {!loading && !error && (!seriesData || seriesData.length === 0) && (
             <Box className={classes.noDataMessage}>
               <Typography variant="h6" gutterBottom>
-                Aucune donnée disponible
+                Aucune donnée disponible 
               </Typography>
               <Typography variant="body2" color="textSecondary">
                 Sélectionnez une année ou modifiez les filtres pour afficher les données

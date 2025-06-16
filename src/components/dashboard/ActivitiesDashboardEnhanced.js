@@ -70,7 +70,9 @@ function ActivitiesDashboardEnhanced({ rights }) {
   const modulesManager = useModulesManager();
   const [tabValue, setTabValue] = useState(0);
   const [filters, setFilters] = useState({
-    locations: [],
+    provinces: [],
+    communes: [],
+    collines: [],
     dateRange: { start: null, end: null },
     validationStatus: [],
     projectCategories: [],
@@ -81,11 +83,10 @@ function ActivitiesDashboardEnhanced({ rights }) {
 
   // Filter configuration
   const filterConfig = {
-    locations: {
+    location: {
       filterType: 'location',
-      component: 'location',
-      type: 'array',
-      locationLevel: 0,
+      component: 'locationGroup',
+      type: 'object',
     },
     dateRange: {
       filterType: 'dateRange',
@@ -121,8 +122,18 @@ function ActivitiesDashboardEnhanced({ rights }) {
   const filterString = useMemo(() => {
     const filterParts = [];
 
-    if (Array.isArray(filters.locations) && filters.locations.length > 0) {
-      filterParts.push(`location_Uuid: "${filters.locations[0].uuid}"`);
+    // Handle hierarchical location filters
+    if (Array.isArray(filters.collines) && filters.collines.length > 0) {
+      const collineUuids = filters.collines.map(id => {
+        // We need to find the actual location object to get UUID
+        // For now, use the ID directly
+        return id;
+      });
+      filterParts.push(`location_Id_In: [${collineUuids.join(', ')}]`);
+    } else if (Array.isArray(filters.communes) && filters.communes.length > 0) {
+      filterParts.push(`location_Parent_Id_In: [${filters.communes.join(', ')}]`);
+    } else if (Array.isArray(filters.provinces) && filters.provinces.length > 0) {
+      filterParts.push(`location_Parent_Parent_Id_In: [${filters.provinces.join(', ')}]`);
     }
     if (filters.dateRange?.start) {
       filterParts.push(`sensitizationDate_Gte: "${filters.dateRange.start.toISOString().split('T')[0]}"`);
@@ -499,6 +510,7 @@ function ActivitiesDashboardEnhanced({ rights }) {
       onFiltersChange={setFilters}
       FilterComponent={UnifiedDashboardFilters}
       filterConfig={filterConfig}
+      module={MODULE_NAME}
       rights={rights}
       requiredRights={[]}
     >

@@ -45,12 +45,34 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function BenefitConsumptionByProvinces({ filters }) {
+function BenefitConsumptionByProvinces({ filters, optimizedData }) {
   const classes = useStyles();
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState([]);
 
   useEffect(() => {
+    // If optimized data is provided, use it directly
+    if (optimizedData && optimizedData.length > 0) {
+      // Transform optimized data to match expected format
+      const transformedData = {
+        edges: optimizedData.map(item => ({
+          node: {
+            name: item.locationName || item.provinceName,
+            code: item.locationCode || item.provinceCode,
+            countActive: item.activeBeneficiaries || item.beneficiariesActive || 0,
+            countSuspended: item.suspendedBeneficiaries || item.beneficiariesSuspended || 0,
+            countSelected: item.totalBeneficiaries || item.beneficiariesSelected || 0,
+            totalAmount: item.totalAmount || 0,
+            totalPaid: item.totalPaid || 0,
+          }
+        }))
+      };
+      setData(transformedData);
+      setIsLoading(false);
+      return;
+    }
+
+    // Otherwise, fetch data the traditional way
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -102,7 +124,7 @@ function BenefitConsumptionByProvinces({ filters }) {
     };
 
     fetchData();
-  }, [filters]);
+  }, [filters, optimizedData]);
 
   if (isLoading) {
     return (

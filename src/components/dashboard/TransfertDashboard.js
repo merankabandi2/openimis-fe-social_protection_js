@@ -6,36 +6,17 @@ import {
   Grid,
   makeStyles,
   ThemeProvider,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Paper,
-  Button,
   Typography,
-  Box,
-  Chip,
-  Avatar,
   IconButton,
   Tooltip,
   Fade,
-  Divider,
 } from '@material-ui/core';
 import { createTheme } from '@material-ui/core/styles';
-import { baseApiUrl, apiHeaders, decodeId } from '@openimis/fe-core';
-import HomeIcon from '@material-ui/icons/Home';
-import Person from '@material-ui/icons/Person';
-import PeopleAltIcon from '@material-ui/icons/PeopleAlt';
-import AttachMoneyIcon from '@material-ui/icons/AttachMoney';
-import ReceiptIcon from '@material-ui/icons/Receipt';
-import PlaceIcon from '@material-ui/icons/Place';
-import FilterListIcon from '@material-ui/icons/FilterList';
+import { decodeId } from '@openimis/fe-core';
 import RefreshIcon from '@material-ui/icons/Refresh';
 import TrendingUpIcon from '@material-ui/icons/TrendingUp';
 import AccountBalanceIcon from '@material-ui/icons/AccountBalance';
-import AccessibilityIcon from '@material-ui/icons/Accessibility';
-import FaceIcon from '@material-ui/icons/Face';
-import WcIcon from '@material-ui/icons/Wc';
 import MapComponent from './MapComponent';
 import BoxCard from './BoxCard';
 import MonetaryTransferChart from './MonetaryTransferChart';
@@ -43,8 +24,8 @@ import MonetaryTransferChartBeneficiaires from './MonetaryTransferChartBeneficia
 import BenefitConsumptionByProvinces from './BenefitConsumptionByProvinces';
 import TransfersChart from './TransfersChart';
 import { useMonetaryTransfersDashboard } from '../../hooks/useMonetaryTransfersDashboard';
-
-// Remove the old buildFilter and loadStatsAll functions as we'll use the optimized hook
+import { useOptimizedDashboard } from '../../hooks/useOptimizedDashboard';
+import ModernDashboardFilters from '../filters/ModernDashboardFilters';
 
 // Create a custom theme
 const theme = createTheme({
@@ -138,41 +119,6 @@ const useStyles = makeStyles((theme) => ({
     height: '400px',
     position: 'relative',
   },
-  filterContainer: {
-    padding: theme.spacing(2),
-    marginBottom: theme.spacing(3),
-    backgroundColor: '#fff',
-    borderRadius: theme.spacing(1),
-    boxShadow: '0 0 20px rgba(0,0,0,.06)',
-  },
-  filterFormControl: {
-    margin: theme.spacing(1),
-    minWidth: 120,
-    '& .MuiOutlinedInput-root': {
-      borderRadius: theme.spacing(1),
-      '&:hover fieldset': {
-        borderColor: theme.palette.primary.main,
-      },
-    },
-  },
-  filterTitle: {
-    marginBottom: theme.spacing(2),
-    display: 'flex',
-    alignItems: 'center',
-    color: theme.palette.text.primary,
-    fontWeight: 600,
-  },
-  filterIcon: {
-    marginRight: theme.spacing(1),
-    color: theme.palette.primary.main,
-  },
-  filterActions: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    height: '100%',
-    paddingRight: theme.spacing(1),
-  },
   sectionTitle: {
     fontSize: '1.25rem',
     fontWeight: 600,
@@ -237,16 +183,46 @@ const useStyles = makeStyles((theme) => ({
 
 // Dashboard component
 function TransfertDashboard() {
-  const [locations, setLocations] = useState([]);
-  const [benefitPlans, setBenefitPlans] = useState([]);
   const [filters, setFilters] = useState({
-    locationId: '',
-    benefitPlanId: '',
-    year: '',
+    provinces: [],
+    communes: [],
+    collines: [],
+    benefitPlan: null,
+    year: null,
+    dateRange: { start: null, end: null },
   });
-  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
-  // Use the monetary transfers dashboard hook
+  // Convert filters to optimized dashboard format
+  const optimizedFilters = useMemo(() => ({
+    provinceId: Array.isArray(filters.provinces) && filters.provinces.length > 0 ? parseInt(decodeId(filters.provinces[0])) : undefined,
+    communeId: Array.isArray(filters.communes) && filters.communes.length > 0 ? parseInt(decodeId(filters.communes[0])) : undefined,
+    collineId: Array.isArray(filters.collines) && filters.collines.length > 0 ? parseInt(decodeId(filters.collines[0])) : undefined,
+    year: filters.year ? parseInt(filters.year) : undefined,
+    benefitPlanId: filters.benefitPlan ? decodeId(filters.benefitPlan) : undefined,
+  }), [filters]);
+
+  // Use optimized dashboard hook for performance metrics
+  const {
+    performance,
+    summary,
+    breakdown,
+    isLoading: performanceLoading,
+    refetchAll,
+  } = useOptimizedDashboard(optimizedFilters, {
+    includeTransfers: true,
+  });
+
+  // Legacy monetary transfers hook for compatibility with existing charts
+  const legacyFilters = useMemo(() => {
+    const converted = {
+      locationId: filters.provinces?.length > 0 ? filters.provinces[0] : '',
+      benefitPlanId: filters.benefitPlan || '',
+      year: filters.year || '',
+    };
+    console.log('Legacy filters conversion:', { originalFilters: filters, converted });
+    return converted;
+  }, [filters]);
+
   const {
     totalBeneficiaries,
     totalPayments,
@@ -255,82 +231,20 @@ function TransfertDashboard() {
     totalHouseholds,
     totalIndividuals,
     monetaryTransferData,
-    isLoading,
+    isLoading: legacyLoading,
     error,
-    refetch
-  } = useMonetaryTransfersDashboard(filters);
+  } = useMonetaryTransfersDashboard(legacyFilters);
 
-  // Load locations and benefit plans on mount
-  useEffect(() => {
-    const csrfToken = localStorage.getItem('csrfToken');
-    const headers = apiHeaders();
-    
-    // Fetch locations
-    fetch(`${baseApiUrl}/graphql`, {
-      method: 'post',
-      headers: { 
-        ...headers, 
-        'X-Requested-With': 'webapp',
-        'X-CSRFToken': csrfToken 
-      },
-      body: JSON.stringify({
-        query: `{
-          locations (type: "R") {
-            edges {
-              node {
-                id
-                uuid
-                name
-                code
-                type
-              }
-            }
-          }
-          benefitPlan (isDeleted: false) {
-            edges {
-              node {
-                id
-                name
-                code
-              }
-            }
-          }
-        }`
-      })
-    })
-    .then(res => res.json())
-    .then(({ data }) => {
-      if (data.locations) {
-        setLocations(data.locations.edges.map(edge => edge.node));
-      }
-      if (data.benefitPlan) {
-        setBenefitPlans(data.benefitPlan.edges.map(edge => edge.node));
-      }
-    })
-    .catch(err => console.error('Failed to load filters data', err));
-  }, []);
-
-  const handleFilterChange = (event) => {
-    const { name, value } = event.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
   };
 
-  const handleApplyFilters = () => {
-    refetch();
-  };
-
-  const handleResetFilters = () => {
-    setFilters({
-      locationId: '',
-      benefitPlanId: '',
-      year: '',
-    });
+  const handleRefresh = async () => {
+    await refetchAll();
   };
 
   const classes = useStyles();
+  const isLoading = performanceLoading || legacyLoading;
 
   // Helper function to format numbers
   const formatNumber = (value) => {
@@ -338,10 +252,43 @@ function TransfertDashboard() {
     return Number(value).toLocaleString('fr-FR');
   };
 
+  // Helper function to format currency
+  const formatCurrency = (amount) => {
+    if (!amount || amount === 0) return '0 BIF';
+    return `${formatNumber(amount)} BIF`;
+  };
+
+  // Debug logging to see what data is available
+  console.log('TransfertDashboard data:', {
+    optimizedFilters,
+    performance,
+    legacyData: {
+      totalBeneficiaries,
+      totalPayments,
+      totalAmount,
+      totalAmountReceived,
+      totalHouseholds,
+      totalIndividuals,
+    },
+    error
+  });
+
+  // Use optimized data as primary source, fallback to legacy data
+  const optimizedMetrics = performance?.overallMetrics || {};
+  const summaryData = summary?.summary || {};
   
+  const displayData = {
+    totalBeneficiaries: optimizedMetrics.totalBeneficiaries || summaryData.totalBeneficiaries || totalBeneficiaries || 0,
+    totalPayments: optimizedMetrics.totalPaymentCycles || totalPayments || 0,
+    totalAmount: optimizedMetrics.totalAmountDue || summaryData.totalAmount || totalAmount || 0,
+    totalAmountReceived: optimizedMetrics.totalAmountPaid || summaryData.totalAmountReceived || totalAmountReceived || 0,
+    totalHouseholds: optimizedMetrics.totalHouseholds || totalHouseholds || 0,
+    totalIndividuals: optimizedMetrics.totalIndividuals || totalIndividuals || 0,
+  };
+
   // Calculate payment rate
-  const paymentRate = totalAmount > 0 
-    ? Math.round((totalAmountReceived / totalAmount) * 100)
+  const paymentRate = displayData.totalAmount > 0 
+    ? Math.round((displayData.totalAmountReceived / displayData.totalAmount) * 100)
     : 0;
 
   return (
@@ -357,7 +304,7 @@ function TransfertDashboard() {
             <Tooltip title="Actualiser les données">
               <IconButton 
                 className={classes.refreshButton}
-                onClick={refetch}
+                onClick={handleRefresh}
                 disabled={isLoading}
               >
                 <RefreshIcon />
@@ -365,93 +312,12 @@ function TransfertDashboard() {
             </Tooltip>
           </div>
 
-          {/* Filters */}
-          <Paper className={classes.filterContainer}>
-            <Typography className={classes.filterTitle}>
-              <FilterListIcon className={classes.filterIcon} />
-              Filtres de recherche
-            </Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={3}>
-                <FormControl variant="outlined" className={classes.filterFormControl} fullWidth size="small">
-                  <InputLabel id="location-label">Province</InputLabel>
-                  <Select
-                    labelId="location-label"
-                    name="locationId"
-                    value={filters.locationId}
-                    onChange={handleFilterChange}
-                    label="Province"
-                  >
-                    <MenuItem value="">
-                      <em>Toutes les provinces</em>
-                    </MenuItem>
-                    {locations.map(loc => (
-                      <MenuItem key={loc.uuid} value={loc.uuid}>{loc.name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <FormControl variant="outlined" className={classes.filterFormControl} fullWidth size="small">
-                  <InputLabel id="benefit-plan-label">Intervention</InputLabel>
-                  <Select
-                    labelId="benefit-plan-label"
-                    name="benefitPlanId"
-                    value={filters.benefitPlanId}
-                    onChange={handleFilterChange}
-                    label="Intervention"
-                  >
-                    <MenuItem value="">
-                      <em>Toutes les interventions</em>
-                    </MenuItem>
-                    {benefitPlans.map(plan => (
-                      <MenuItem key={plan.id} value={plan.id}>{plan.name}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6} md={2}>
-                <FormControl variant="outlined" className={classes.filterFormControl} fullWidth size="small">
-                  <InputLabel id="year-label">Année</InputLabel>
-                  <Select
-                    labelId="year-label"
-                    name="year"
-                    value={filters.year}
-                    onChange={handleFilterChange}
-                    label="Année"
-                  >
-                    <MenuItem value="">
-                      <em>Toutes</em>
-                    </MenuItem>
-                    {years.map(year => (
-                      <MenuItem key={year} value={year}>{year}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6} md={3}>
-                <div className={classes.filterActions}>
-                  <Button 
-                    variant="outlined" 
-                    color="default" 
-                    onClick={handleResetFilters}
-                    style={{ marginRight: 8 }}
-                    size="small"
-                  >
-                    Réinitialiser
-                  </Button>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    onClick={handleApplyFilters}
-                    size="small"
-                  >
-                    Appliquer
-                  </Button>
-                </div>
-              </Grid>
-            </Grid>
-          </Paper>
+          {/* Modern Dashboard Filters */}
+          <ModernDashboardFilters
+            onFiltersChange={handleFilterChange}
+            defaultFilters={filters}
+            filterTypes={['location', 'benefitPlan', 'year']}
+          />
 
           {/* Summary Card */}
           <Fade in={!isLoading}>
@@ -464,7 +330,7 @@ function TransfertDashboard() {
                         Total Bénéficiaires
                       </Typography>
                       <Typography className={classes.summaryValue}>
-                        {formatNumber(totalBeneficiaries)}
+                        {formatNumber(displayData.totalBeneficiaries)}
                       </Typography>
                       <Typography className={classes.summarySubtitle}>
                         Ménages enregistrés
@@ -475,7 +341,7 @@ function TransfertDashboard() {
                         Montant Total
                       </Typography>
                       <Typography className={classes.summaryValue}>
-                        {formatNumber(totalAmount)}
+                        {formatCurrency(displayData.totalAmount)}
                       </Typography>
                       <Typography className={classes.summarySubtitle}>
                         BIF à distribuer
@@ -486,7 +352,7 @@ function TransfertDashboard() {
                         Montant Distribué
                       </Typography>
                       <Typography className={classes.summaryValue}>
-                        {formatNumber(totalAmountReceived)}
+                        {formatCurrency(displayData.totalAmountReceived)}
                       </Typography>
                       <Typography className={classes.summarySubtitle}>
                         BIF déjà payés
@@ -512,94 +378,42 @@ function TransfertDashboard() {
             </Grid>
           </Fade>
 
-          {/* Key Metrics */}
-          <Typography className={classes.sectionTitle}>
-            <TrendingUpIcon className={classes.sectionIcon} />
-            Indicateurs Clés
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={6} sm={3}>
-              <BoxCard
-                label="Bénéficiaires"
-                value={formatNumber(totalBeneficiaries)}
-                className={classes.statsBox}
-                icon={<Person />}
-                isLoading={isLoading}
-                color="#5a8dee"
-              />
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <BoxCard
-                label="Paiements"
-                value={formatNumber(totalPayments)}
-                className={classes.statsBox}
-                icon={<ReceiptIcon />}
-                isLoading={isLoading}
-                color="#ff8f00"
-              />
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <BoxCard
-                label="Ménages"
-                value={formatNumber(totalHouseholds)}
-                className={classes.statsBox}
-                icon={<HomeIcon />}
-                isLoading={isLoading}
-                color="#00d0bd"
-              />
-            </Grid>
-            <Grid item xs={6} sm={3}>
-              <BoxCard
-                label="Individus"
-                value={formatNumber(totalIndividuals)}
-                className={classes.statsBox}
-                icon={<PeopleAltIcon />}
-                isLoading={isLoading}
-                color="#ff5c75"
-              />
-            </Grid>
-          </Grid>
-
           {/* Charts Section */}
           <Typography className={classes.sectionTitle}>
             <TrendingUpIcon className={classes.sectionIcon} />
             Analyses Détaillées
           </Typography>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            {/*  <Grid item xs={12} md={6}>
               <Paper className={classes.box}>
-                <TransfersChart filters={filters} compact={true} />
+                <TransfersChart 
+                  filters={filters} 
+                  compact={true} 
+                  optimizedData={performance?.overallMetrics}
+                />
+              </Paper>
+            </Grid> */}
+           <Grid item xs={12} md={6}>
+              <Paper className={classes.box}>
+                <MonetaryTransferChart 
+                  filters={legacyFilters}
+                  monetaryTransferData={monetaryTransferData}
+                />
               </Paper>
             </Grid>
+             {/* <Grid item xs={12} md={6}>
+              <Paper className={classes.box}>
+                <MonetaryTransferChartBeneficiaires 
+                  filters={legacyFilters}
+                  monetaryTransferData={monetaryTransferData}
+                />
+              </Paper>
+            </Grid> */}
             <Grid item xs={12} md={6}>
               <Paper className={classes.box}>
-                <MonetaryTransferChart filters={filters} />
-              </Paper>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Paper className={classes.box}>
-                <MonetaryTransferChartBeneficiaires filters={filters} />
-              </Paper>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Paper className={classes.box}>
-                <BenefitConsumptionByProvinces filters={filters} />
-              </Paper>
-            </Grid>
-          </Grid>
-
-          {/* Map Section */}
-          <Typography className={classes.sectionTitle}>
-            <PlaceIcon className={classes.sectionIcon} />
-            Répartition Géographique
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12}>
-              <Paper className={classes.box} style={{ height: 500, padding: 0, overflow: 'hidden' }}>
-                <MapComponent 
-                  filters={filters}
-                  isLoading={isLoading}
-                  fullMap={true}
+                <BenefitConsumptionByProvinces 
+                  filters={legacyFilters} 
+                  optimizedData={breakdown?.locationBreakdown}
                 />
               </Paper>
             </Grid>

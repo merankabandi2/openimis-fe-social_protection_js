@@ -30,7 +30,7 @@ import {
   Person,
 } from '@material-ui/icons';
 import ReactApexChart from 'react-apexcharts';
-import { 
+import {
   useModulesManager,
   useGraphqlQuery,
   formatMessage,
@@ -101,7 +101,7 @@ const MONETARY_TRANSFER_DASHBOARD_QUERY = `
   }
 `;
 
-const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
+function MonetaryTransferDashboardEnhanced({ rights, locations }) {
   const theme = useTheme();
   const intl = useIntl();
   const modulesManager = useModulesManager();
@@ -165,16 +165,16 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
   // Build GraphQL filter string
   const filterString = useMemo(() => {
     const filterParts = [];
-    
+
     if (filters.year) {
       filterParts.push(`year: ${filters.year}`);
     }
     if (Array.isArray(filters.locations) && filters.locations.length > 0) {
-      filterParts.push(`parentLocation_In: ${JSON.stringify(filters.locations.map(l => l.id))}`);
-      filterParts.push(`parentLocationLevel: 0`);
+      filterParts.push(`parentLocation_In: ${JSON.stringify(filters.locations.map((l) => l.id))}`);
+      filterParts.push('parentLocationLevel: 0');
     }
     if (Array.isArray(filters.benefitPlans) && filters.benefitPlans.length > 0) {
-      filterParts.push(`benefitPlan_In: ${JSON.stringify(filters.benefitPlans.map(bp => decodeId(bp.id)))}`);
+      filterParts.push(`benefitPlan_In: ${JSON.stringify(filters.benefitPlans.map((bp) => decodeId(bp.id)))}`);
     }
     if (filters.dateRange?.start) {
       filterParts.push(`transferDate_Gte: "${filters.dateRange.start.toISOString()}"`);
@@ -185,12 +185,14 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
     if (Array.isArray(filters.transferStatus) && filters.transferStatus.length > 0) {
       filterParts.push(`status_In: ${JSON.stringify(filters.transferStatus)}`);
     }
-    
+
     return filterParts.join(', ');
   }, [filters]);
 
   // Fetch dashboard data with caching
-  const { data, loading, error, refresh } = useDashboardCache(
+  const {
+    data, loading, error, refresh,
+  } = useDashboardCache(
     async () => {
       const { data } = await modulesManager.getRef('core.GraphqlClient').query({
         query: MONETARY_TRANSFER_DASHBOARD_QUERY,
@@ -200,7 +202,7 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
       return data;
     },
     `monetary-transfer-dashboard-${filterString}`,
-    [filterString]
+    [filterString],
   );
 
   const dashboardData = data || {};
@@ -218,7 +220,7 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
 
   const statusChartData = useMemo(() => {
     if (!dashboardData.transfersByStatus) return [];
-    return dashboardData.transfersByStatus.map(item => ({
+    return dashboardData.transfersByStatus.map((item) => ({
       name: formatMessage(intl, MODULE_NAME, `transfer.status.${item.status}`),
       transfers: item.count,
       amount: item.amount,
@@ -227,14 +229,12 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
 
   const monthlyTrendData = useMemo(() => {
     if (!dashboardData.transfersByMonth) return [];
-    return dashboardData.transfersByMonth.sort((a, b) => 
-      new Date(a.month) - new Date(b.month)
-    );
+    return dashboardData.transfersByMonth.sort((a, b) => new Date(a.month) - new Date(b.month));
   }, [dashboardData]);
 
   const mapData = useMemo(() => {
     if (!dashboardData.transfersByProvince) return [];
-    return dashboardData.transfersByProvince.map(item => ({
+    return dashboardData.transfersByProvince.map((item) => ({
       name: item.province,
       coordinates: [item.longitude, item.latitude],
       value: item.amount,
@@ -279,7 +279,7 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
     },
     dataLabels: {
       enabled: true,
-      formatter: function(val, opts) {
+      formatter(val, opts) {
         return `${opts.w.config.series[opts.seriesIndex]} (${val.toFixed(1)}%)`;
       },
     },
@@ -302,9 +302,9 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
       width: 2,
     },
     xaxis: {
-      categories: monthlyTrendData.map(t => t.month),
+      categories: monthlyTrendData.map((t) => t.month),
       labels: {
-        formatter: function(value) {
+        formatter(value) {
           return new Date(value).toLocaleDateString('en-US', { month: 'short' });
         },
       },
@@ -321,8 +321,8 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
           text: formatMessage(intl, MODULE_NAME, 'dashboard.amount'),
         },
         labels: {
-          formatter: function(val) {
-            return '$' + val.toLocaleString();
+          formatter(val) {
+            return `$${val.toLocaleString()}`;
           },
         },
       },
@@ -334,7 +334,7 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
         inverseColors: false,
         opacityFrom: 0.45,
         opacityTo: 0.05,
-        stops: [20, 100, 100, 100]
+        stops: [20, 100, 100, 100],
       },
     },
     tooltip: {
@@ -354,7 +354,7 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
       exportDate: new Date().toISOString(),
       filters,
     };
-    
+
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -477,17 +477,17 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
       <Grid container spacing={3} style={{ marginBottom: theme.spacing(3) }}>
         {/* Gender Distribution */}
         <Grid item xs={12} md={4}>
-          <ChartContainer 
+          <ChartContainer
             title={formatMessage(intl, MODULE_NAME, 'dashboard.genderDistribution')}
             loading={loading}
           >
             <ReactApexChart
               options={{
                 ...getDonutChartOptions(formatMessage(intl, MODULE_NAME, 'dashboard.byGender')),
-                labels: genderChartData.map(d => d.name),
+                labels: genderChartData.map((d) => d.name),
                 colors: ['#2196f3', '#e91e63'],
               }}
-              series={genderChartData.map(d => d.value)}
+              series={genderChartData.map((d) => d.value)}
               type="donut"
               height={350}
             />
@@ -496,7 +496,7 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
 
         {/* Transfer Status Distribution */}
         <Grid item xs={12} md={4}>
-          <ChartContainer 
+          <ChartContainer
             title={formatMessage(intl, MODULE_NAME, 'dashboard.transfersByStatus')}
             loading={loading}
           >
@@ -511,20 +511,20 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
                     horizontal: false,
                     columnWidth: '55%',
                     distributed: true,
-                  }
+                  },
                 },
                 dataLabels: {
                   enabled: false,
                 },
                 xaxis: {
-                  categories: statusChartData.map(d => d.name),
+                  categories: statusChartData.map((d) => d.name),
                 },
                 yaxis: {
                   title: {
                     text: formatMessage(intl, MODULE_NAME, 'dashboard.transfers'),
                   },
                 },
-                colors: statusChartData.map(d => {
+                colors: statusChartData.map((d) => {
                   if (d.name.includes('TRANSFERRED')) return theme.palette.success.main;
                   if (d.name.includes('APPROVED')) return theme.palette.info.main;
                   if (d.name.includes('PENDING')) return theme.palette.warning.main;
@@ -533,7 +533,7 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
               }}
               series={[{
                 name: formatMessage(intl, MODULE_NAME, 'dashboard.transfers'),
-                data: statusChartData.map(d => d.transfers)
+                data: statusChartData.map((d) => d.transfers),
               }]}
               type="bar"
               height={350}
@@ -543,7 +543,7 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
 
         {/* Age Distribution */}
         <Grid item xs={12} md={4}>
-          <ChartContainer 
+          <ChartContainer
             title={formatMessage(intl, MODULE_NAME, 'dashboard.ageDistribution')}
             loading={loading}
           >
@@ -553,13 +553,13 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
                   type: 'pie',
                   fontFamily: theme.typography.fontFamily,
                 },
-                labels: beneficiaryData.ageDistribution?.map(d => d.category) || [],
+                labels: beneficiaryData.ageDistribution?.map((d) => d.category) || [],
                 legend: {
                   position: 'bottom',
                 },
                 colors: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#dfe4ea'],
               }}
-              series={beneficiaryData.ageDistribution?.map(d => d.count) || []}
+              series={beneficiaryData.ageDistribution?.map((d) => d.count) || []}
               type="pie"
               height={350}
             />
@@ -570,7 +570,7 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
       {/* Monthly Trends */}
       <Grid container spacing={3} style={{ marginBottom: theme.spacing(3) }}>
         <Grid item xs={12}>
-          <ChartContainer 
+          <ChartContainer
             title={formatMessage(intl, MODULE_NAME, 'dashboard.monthlyTrends')}
             loading={loading}
           >
@@ -580,13 +580,13 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
                 {
                   name: formatMessage(intl, MODULE_NAME, 'dashboard.transfers'),
                   type: 'column',
-                  data: monthlyTrendData.map(t => t.transfers)
+                  data: monthlyTrendData.map((t) => t.transfers),
                 },
                 {
                   name: formatMessage(intl, MODULE_NAME, 'dashboard.amount'),
                   type: 'area',
-                  data: monthlyTrendData.map(t => t.amount)
-                }
+                  data: monthlyTrendData.map((t) => t.amount),
+                },
               ]}
               type="line"
               height={350}
@@ -598,11 +598,11 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
       {/* Geographic Distribution */}
       <Grid container spacing={3}>
         <Grid item xs={12}>
-          <ChartContainer 
+          <ChartContainer
             title={formatMessage(intl, MODULE_NAME, 'dashboard.geographicDistribution')}
             loading={loading}
           >
-            <MapComponent 
+            <MapComponent
               data={mapData}
               onLocationClick={setSelectedMapData}
               height={400}
@@ -629,7 +629,10 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
               <Typography variant="body2" color="textSecondary">
                 {formatMessage(intl, MODULE_NAME, 'dashboard.amount')}
               </Typography>
-              <Typography variant="h6">${selectedMapData.value.toLocaleString()}</Typography>
+              <Typography variant="h6">
+                $
+                {selectedMapData.value.toLocaleString()}
+              </Typography>
             </Grid>
             <Grid item xs={12} sm={4}>
               <Typography variant="body2" color="textSecondary">
@@ -690,7 +693,7 @@ const MonetaryTransferDashboardEnhanced = ({ rights, locations }) => {
       )}
     </BaseDashboard>
   );
-};
+}
 
 const mapStateToProps = (state) => ({
   rights: state.core.user?.i_user?.rights || [],

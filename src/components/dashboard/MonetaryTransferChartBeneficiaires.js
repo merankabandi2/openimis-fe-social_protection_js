@@ -76,19 +76,30 @@ function MonetaryTransferChartBeneficiaires({ classes, theme, filters = {} }) {
   const loadTransfersData = async () => {
     setLoading(true);
     try {
+      // Build filters object for optimized query
+      const optimizedFilters = {};
+      if (filters.year) optimizedFilters.year = filters.year;
+      if (filters.locationId) optimizedFilters.provinceId = filters.locationId;
+      if (filters.benefitPlanId) optimizedFilters.benefitPlanId = decodeId(filters.benefitPlanId);
+      
       const response = await fetch(`${baseApiUrl}/graphql`, {
         method: 'post',
         headers: apiHeaders(),
         body: JSON.stringify({
-          query: `{ monetaryTransferBeneficiaryData${buildFilter(filters)}  {
-      transferType,
-      malePaid,
-      maleUnpaid,
-      femalePaid,
-      femaleUnpaid,
-      totalPaid,
-      totalUnpaid
-        }}`,
+          query: `query OptimizedMonetaryTransferBeneficiaryData($filters: DashboardFiltersInput) {
+            optimizedMonetaryTransferBeneficiaryData(filters: $filters) {
+              transferType
+              malePaid
+              maleUnpaid
+              femalePaid
+              femaleUnpaid
+              totalPaid
+              totalUnpaid
+            }
+          }`,
+          variables: {
+            filters: optimizedFilters
+          }
         }),
       });
 
@@ -97,7 +108,7 @@ function MonetaryTransferChartBeneficiaires({ classes, theme, filters = {} }) {
       }
 
       const result = await response.json();
-      setData(result.data);
+      setData({ monetaryTransferBeneficiaryData: result.data.optimizedMonetaryTransferBeneficiaryData });
       setError(null);
     } catch (err) {
       console.error('Error loading transfers data:', err);

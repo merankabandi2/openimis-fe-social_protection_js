@@ -5,7 +5,9 @@ import {
   formatMessage,
 } from '@openimis/fe-core';
 
-function TicketsPieChart({ data, isLoading }) {
+function TicketsPieChart({ data: propsData, isLoading: propsIsLoading, filters = {} }) {
+  const [data, setData] = useState(propsData || []);
+  const [isLoading, setIsLoading] = useState(propsIsLoading || true);
   const [chartOptions, setChartOptions] = useState({
     chart: {
       type: 'pie',
@@ -38,6 +40,14 @@ function TicketsPieChart({ data, isLoading }) {
   });
 
   const [series, setSeries] = useState([]);
+
+  useEffect(() => {
+    // Always use props data if provided
+    if (propsData !== undefined) {
+      setData(propsData || []);
+      setIsLoading(propsIsLoading || false);
+    }
+  }, [propsData, propsIsLoading]);
 
   useEffect(() => {
     if (data && data.length) {

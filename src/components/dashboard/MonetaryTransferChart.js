@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Card, CardContent, Typography, makeStyles, CircularProgress,
-  Switch, FormControlLabel, Box,
+  Switch, FormControlLabel, Box, LinearProgress, Select, MenuItem,
 } from '@material-ui/core';
 import Chart from 'react-apexcharts';
-import { baseApiUrl, apiHeaders } from '@openimis/fe-core';
+import { useOptimizedDashboardComponent } from '../../hooks/useOptimizedDashboard';
 
 const useStyles = makeStyles((theme) => ({
   card: {
@@ -25,6 +25,7 @@ const useStyles = makeStyles((theme) => ({
   },
   chartContainer: {
     marginTop: theme.spacing(2),
+    position: 'relative',
   },
   toggleLabel: {
     marginLeft: theme.spacing(2),
@@ -32,87 +33,57 @@ const useStyles = makeStyles((theme) => ({
       fontSize: '0.875rem',
     },
   },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    zIndex: 1,
+  },
+  aggregationSelect: {
+    marginLeft: theme.spacing(2),
+    minWidth: 120,
+    '& .MuiSelect-select': {
+      fontSize: '0.875rem',
+      paddingTop: theme.spacing(0.5),
+      paddingBottom: theme.spacing(0.5),
+    },
+  },
 }));
-
-const buildFilter = (filters) => {
-  const { locationId, benefitPlanId, year } = filters;
-
-  const itemFilters = {
-    year: (val) => `year: ${val}`,
-    locationId: (val) => `parentLocation: "${val}", parentLocationLevel: 0`,
-    benefitPlanId: (val) => `benefitPlanUuid: "${decodeId(val)}"`,
-  };
-
-  // Build the filter string
-  const filterParts = [];
-
-  // Process year filter (special handling for array results)
-  if (itemFilters.year && year) {
-    const yearFilter = itemFilters.year(year);
-    if (Array.isArray(yearFilter)) {
-      filterParts.push(...yearFilter);
-    } else {
-      filterParts.push(yearFilter);
-    }
-  }
-
-  if (itemFilters.locationId && locationId) {
-    filterParts.push(itemFilters.locationId(locationId));
-  }
-
-  if (itemFilters.benefitPlanId && benefitPlanId) {
-    filterParts.push(itemFilters.benefitPlanId(benefitPlanId));
-  }
-  return filterParts.length ? `(${filterParts.join(', ')})` : '';
-};
-
-const loadMonetaryTransferData = async (filters) => {
-  const response = await fetch(`${baseApiUrl}/graphql`, {
-    method: 'post',
-    headers: apiHeaders(),
-    body: JSON.stringify({
-      query: `{ monetaryTransferQuarterlyData${buildFilter(filters)}  {
-            transferType
-            q1Amount
-            q2Amount
-            q3Amount
-            q4Amount
-            q1Beneficiaries
-            q2Beneficiaries
-            q3Beneficiaries
-            q4Beneficiaries
-    }}`,
-    }),
-  });
-
-  if (!response.ok) {
-    console.log('loadMonetaryTransferDataok');
-    throw response;
-  } else {
-    console.log('loadMonetaryTransferDatano');
-    const { data } = await response.json();
-    return data.monetaryTransferQuarterlyData;
-  }
-};
 
 function MonetaryTransferChart({ filters = {} }) {
   const classes = useStyles();
-  const [chartData, setChartData] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [showBeneficiaries, setShowBeneficiaries] = useState(false);
+  const [aggregationLevel, setAggregationLevel] = useState('programme');
 
-  useEffect(() => {
-    setIsLoading(true);
-    loadMonetaryTransferData(filters)
-      .then((data) => {
-        setChartData(data || []);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error('Failed to load monetary transfer data', error);
-        setIsLoading(false);
-      });
-  }, [filters]);
+  // Use optimized dashboard component hook for transfers with aggregation level
+  const { data, isLoading, error, refetch, isRefreshing } = useOptimizedDashboardComponent(
+    'transfers',
+    { ...filters, aggregation_level: aggregationLevel }
+  );
+
+  // Transform data for the chart
+  const chartData = useMemo(() => {
+    if (!data?.byTransferType) return [];
+    
+    // The optimized query now includes quarterly breakdown data
+    return data.byTransferType.map(item => ({
+      transferType: item.transferType,
+      q1Amount: item.q1Amount || 0,
+      q2Amount: item.q2Amount || 0,
+      q3Amount: item.q3Amount || 0,
+      q4Amount: item.q4Amount || 0,
+      q1Beneficiaries: item.q1Beneficiaries || 0,
+      q2Beneficiaries: item.q2Beneficiaries || 0,
+      q3Beneficiaries: item.q3Beneficiaries || 0,
+      q4Beneficiaries: item.q4Beneficiaries || 0,
+    }));
+  }, [data]);
 
   // Prepare data for ApexCharts
   const series = chartData.map((item) => ({
@@ -130,6 +101,12 @@ function MonetaryTransferChart({ filters = {} }) {
         parseFloat(item.q3Amount || 0),
         parseFloat(item.q4Amount || 0),
       ],
+    // Add metadata for better tooltips
+    meta: {
+      paymentSource: item.paymentSource,
+      femalePercentage: item.femalePercentage,
+      twaPercentage: item.twaPercentage,
+    }
   }));
 
   const options = {
@@ -205,34 +182,52 @@ function MonetaryTransferChart({ filters = {} }) {
   };
 
   const renderChartContent = () => {
-    if (isLoading) {
+    if (error) {
       return (
-        <div
-          className={classes.chartContainer}
-          style={{
-            height: 350, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
-          <div style={{ textAlign: 'center' }}>
-            <CircularProgress size={60} />
-            <Typography style={{ marginTop: 16 }}>Chargement des données...</Typography>
-          </div>
-        </div>
+        <Box p={3} textAlign="center">
+          <Typography color="error">
+            Erreur lors du chargement des données
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            {error.message || 'Une erreur est survenue'}
+          </Typography>
+        </Box>
       );
     }
 
-    if (chartData.length === 0) {
-      return <Typography>Aucune donnée disponible</Typography>;
+    if (chartData.length === 0 && !isLoading) {
+      return (
+        <Box p={3} textAlign="center">
+          <Typography>Aucune donnée disponible</Typography>
+        </Box>
+      );
     }
 
     return (
       <div className={classes.chartContainer}>
-        <Chart
-          options={options}
-          series={series}
-          type={showBeneficiaries ? 'line' : 'bar'}
-          height={350}
-        />
+        {/* Loading overlay for refresh */}
+        {isRefreshing && (
+          <div className={classes.loadingOverlay}>
+            <CircularProgress size={40} />
+          </div>
+        )}
+        
+        {/* Main loading state */}
+        {isLoading ? (
+          <div style={{ height: 350, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ textAlign: 'center' }}>
+              <CircularProgress size={60} />
+              <Typography style={{ marginTop: 16 }}>Chargement des données...</Typography>
+            </div>
+          </div>
+        ) : (
+          <Chart
+            options={options}
+            series={series}
+            type={showBeneficiaries ? 'line' : 'bar'}
+            height={350}
+          />
+        )}
       </div>
     );
   };
@@ -241,24 +236,53 @@ function MonetaryTransferChart({ filters = {} }) {
     setShowBeneficiaries(!showBeneficiaries);
   };
 
+  const handleAggregationChange = (event) => {
+    setAggregationLevel(event.target.value);
+  };
+
   return (
     <Card className={classes.card}>
+      {/* Progress bar for loading states */}
+      {(isLoading || isRefreshing) && (
+        <LinearProgress 
+          style={{ 
+            position: 'absolute', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            zIndex: 2 
+          }} 
+        />
+      )}
+      
       <div className={classes.cardHeader}>
         <Typography className={classes.title} variant="h6" component="h2">
-          Transferts Monétaires par Trimestre
+          Transferts Monétaires par Trimestre (Système + Externe)
         </Typography>
-        <FormControlLabel
-          className={classes.toggleLabel}
-          control={(
-            <Switch
-              checked={showBeneficiaries}
-              onChange={handleToggleChange}
-              name="chartToggle"
-              color="primary"
-            />
-          )}
-          label={showBeneficiaries ? 'Bénéficiaires' : 'Montants'}
-        />
+        <Box display="flex" alignItems="center">
+          <Select
+            value={aggregationLevel}
+            onChange={handleAggregationChange}
+            className={classes.aggregationSelect}
+            disabled={isLoading}
+          >
+            <MenuItem value="programme">Par Programme</MenuItem>
+            <MenuItem value="colline">Par Colline</MenuItem>
+          </Select>
+          <FormControlLabel
+            className={classes.toggleLabel}
+            control={(
+              <Switch
+                checked={showBeneficiaries}
+                onChange={handleToggleChange}
+                name="chartToggle"
+                color="primary"
+                disabled={isLoading}
+              />
+            )}
+            label={showBeneficiaries ? 'Bénéficiaires' : 'Montants'}
+          />
+        </Box>
       </div>
       <CardContent>
         {renderChartContent()}

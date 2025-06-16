@@ -3,7 +3,7 @@ import { Tab } from '@material-ui/core';
 import { formatMessage, PublishedComponent } from '@openimis/fe-core';
 import { BENEFICIARY_STATUS, BENEFIT_PLAN_BENEFICIARIES_POTENTIAL_TAB_VALUE, BENEFIT_PLAN_TYPE } from '../constants';
 import BenefitPlanBeneficiariesSearcher from './BenefitPlanBeneficiariesSearcher';
-import BenefitPlanGroupBeneficiariesSearcher from './BenefitPlanGroupBeneficiariesSearcher';
+import BenefitPlanGroupBeneficiariesSearcherWithBulkUpdate from './BenefitPlanGroupBeneficiariesSearcherWithBulkUpdate';
 
 function BenefitPlanBeneficiariesPotentialTabLabel({
   intl, onChange, tabStyle, isSelected,
@@ -34,7 +34,7 @@ function BenefitPlanBeneficiariesPotentialTabPanel({ value, benefitPlan }) {
           readOnly
         />
       ) : (
-        <BenefitPlanGroupBeneficiariesSearcher
+        <BenefitPlanGroupBeneficiariesSearcherWithBulkUpdate
           benefitPlan={benefitPlan}
           status={BENEFICIARY_STATUS.POTENTIAL}
           readOnly

@@ -182,7 +182,7 @@ const DEFAULT_CONFIG = {
       path: `${ROUTE_ME}/activities`,
       component: MEIndicatorsPage,
     },
-    { path: ROUTE_ACTIVITIES_DASHBOARD, component: ActivitiesDashboardEnhanced },
+    { path: ROUTE_ACTIVITIES_DASHBOARD, component: ActivitiesDashboard },
     { path: ROUTE_KOBO_ETL_ADMIN, component: KoboETLAdminPage },
   ],
   refs: [
