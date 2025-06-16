@@ -5,7 +5,7 @@ import {
   formatMessage,
 } from '@openimis/fe-core';
 
-function TicketsPieChart({ data: propsData, isLoading: propsIsLoading, filters = {} }) {
+function TicketsPieChart({ data: propsData, isLoading: propsIsLoading, filters = {}, intl }) {
   const [data, setData] = useState(propsData || []);
   const [isLoading, setIsLoading] = useState(propsIsLoading || true);
   const [chartOptions, setChartOptions] = useState({
@@ -51,7 +51,11 @@ function TicketsPieChart({ data: propsData, isLoading: propsIsLoading, filters =
 
   useEffect(() => {
     if (data && data.length) {
-      const labels = data.map((item) => item.status == 'Resolved' ? 'Fermée' : 'Ouverte');
+      const labels = data.map((item) => formatMessage(
+        intl, 
+        'grievanceSocialProtection', 
+        `ticket.status.${item.status}`
+      ));
       const values = data.map((item) => parseInt(item.count, 10));
       setChartOptions((prevOptions) => ({
         ...prevOptions,

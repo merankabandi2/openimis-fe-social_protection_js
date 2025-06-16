@@ -31,6 +31,7 @@ import TransfersChart from './TransfersChart';
 import ActivitiesBarChart from './ActivitiesBarChart';
 import { useOptimizedDashboard } from '../../hooks/useOptimizedDashboard';
 import ModernDashboardFilters from '../filters/ModernDashboardFilters';
+import { useIntl } from 'react-intl';
 
 // Create a custom theme
 const theme = createTheme({
@@ -201,6 +202,7 @@ function Dashboard() {
     count: item.count
   }));
 
+  const intl = useIntl();
   return (
     <ThemeProvider theme={theme}>
       <div className={classes.wrapper}>
@@ -320,6 +322,7 @@ function Dashboard() {
                       data={ticketsData}
                       isLoading={isLoading}
                       filters={filters}
+                      intl={intl}
                     />
                   </div>
                 </Paper>
