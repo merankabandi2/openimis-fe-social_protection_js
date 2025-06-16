@@ -131,6 +131,7 @@ const ROUTE_MONETARY_TRANSFER = `${ROUTE_ME}/monetary-transfers/monetary-transfe
 const ROUTE_ME_DASHBOARD = `${ROUTE_ME}/dashboard`;
 const ROUTE_RESULTS_FRAMEWORK_DASHBOARD = `${ROUTE_ME}/results-framework-dashboard`;
 const ROUTE_ACTIVITIES_DASHBOARD = `${ROUTE_ME}/activities-dashboard`;
+const ROUTE_ACTIVITIES = `${ROUTE_ME}/activities`;
 const ROUTE_KOBO_ETL_ADMIN = 'socialProtection/koboETLAdmin';
 
 const DEFAULT_CONFIG = {
@@ -179,7 +180,7 @@ const DEFAULT_CONFIG = {
     { path: ROUTE_ME_DASHBOARD, component: MEDashboard },
     { path: ROUTE_RESULTS_FRAMEWORK_DASHBOARD, component: ResultsFrameworkDashboard },
     {
-      path: `${ROUTE_ME}/activities`,
+      path: ROUTE_ACTIVITIES,
       component: MEIndicatorsPage,
     },
     { path: ROUTE_ACTIVITIES_DASHBOARD, component: ActivitiesDashboard },
@@ -212,7 +213,7 @@ const DEFAULT_CONFIG = {
     { key: 'socialProtection.route.resultsFrameworkDashboard', ref: ROUTE_RESULTS_FRAMEWORK_DASHBOARD },
     { key: 'socialProtection.ResultsFrameworkDashboard', ref: ResultsFrameworkDashboard },
     { key: 'socialProtection.route.activitiesDashboard', ref: ROUTE_ACTIVITIES_DASHBOARD },
-    { key: 'socialProtection.ActivitiesDashboard', ref: ActivitiesDashboard },
+    { key: 'socialProtection.route.activities', ref: ROUTE_ACTIVITIES },
     { key: 'socialProtection.route.koboETLAdmin', ref: ROUTE_KOBO_ETL_ADMIN },
     { key: 'socialProtection.OptimizedMEDashboard', ref: OptimizedMEDashboard },
     { key: 'socialProtection.useOptimizedDashboard', ref: useOptimizedDashboard },
@@ -315,11 +316,11 @@ const DEFAULT_CONFIG = {
       id: 'socialProtection.me.dashboard',
     },
     {
-      text: <FormattedMessage module="socialProtection" id="menu.socialProtection.indicators" />,
+      text: <FormattedMessage module="socialProtection" id="menu.socialProtection.activities" />,
       icon: <Tune />,
-      route: '/me/indicators',
+      route: '/me/activities',
       filter: (rights) => rights.includes(RIGHT_BENEFIT_PLAN_SEARCH),
-      id: 'socialProtection.me.indicators',
+      id: 'socialProtection.me.activities',
     },
     {
       text: <FormattedMessage module="socialProtection" id="menu.socialProtection.monetaryTransfer" />,
