@@ -28,6 +28,7 @@ import {
   updateIndicatorAchievement,
   deleteIndicatorAchievement,
 } from '../../actions';
+import IndicatorCalculationDisplay from '../resultFramework/IndicatorCalculationDisplay';
 
 const useStyles = makeStyles((theme) => ({
   tableContainer: {
@@ -296,43 +297,41 @@ function DevelopmentIndicatorsTabPanel({
 
   // Filter indicators to show only development indicators
   const developmentIndicators = React.useMemo(() => {
+    // Development indicators are in sections 1-3 based on the CSV data
+    const developmentSectionIds = [1, 2, 3];
+    
     // Define development section names that should be included
     const developmentSectionNames = [
       'Renforcer les capacités de gestion',
       'Renforcer les filets de sécurité',
       'Promouvoir l\'inclusion productive et l\'accès à l\'emploi',
-      'Apporter une réponse immédiate et efficace à une crise ou une urgence éligible',
     ];
 
-    // Define development indicator keywords
-    const developmentKeywords = [
-      'Ménages',
-      'ménages',
-      'Registre social',
-      'registre social',
-      'Bénéficiaires',
-      'bénéficiaires',
-      'protection sociale',
-      'emploi',
-      'Agriculteurs',
-      'agriculteurs',
-      'actifs',
-      'services agricoles',
-    ];
-
-    // Filter indicators based on keywords or section names
+    // Filter indicators based on section ID or section name
     const filteredIndicators = indicators.filter(indicator => {
-      // Check if indicator name contains any of the keywords
-      const nameMatch = developmentKeywords.some(keyword => 
-        indicator.name?.toLowerCase().includes(keyword.toLowerCase())
-      );
+      // Handle section as either object or ID
+      let sectionId = null;
+      let sectionName = null;
       
-      // Check if indicator belongs to development sections
-      const sectionMatch = indicator.section && 
-        typeof indicator.section === 'object' && 
-        developmentSectionNames.includes(indicator.section.name);
+      if (indicator.section) {
+        if (typeof indicator.section === 'object') {
+          sectionId = indicator.section.pk || indicator.section.id;
+          sectionName = indicator.section.name;
+        } else if (typeof indicator.section === 'number' || typeof indicator.section === 'string') {
+          sectionId = parseInt(indicator.section);
+        }
+      }
       
-      return nameMatch || sectionMatch;
+      // Check if indicator belongs to development sections by ID
+      const sectionIdMatch = sectionId && developmentSectionIds.includes(sectionId);
+      
+      // Check if indicator belongs to development sections by name
+      const sectionNameMatch = sectionName && 
+        developmentSectionNames.some(name => 
+          sectionName.toLowerCase() === name.toLowerCase()
+        );
+      
+      return sectionIdMatch || sectionNameMatch;
     });
 
     // Get unique sections from filtered indicators

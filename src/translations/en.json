@@ -80,7 +80,6 @@
   "socialProtection.groupBeneficiary.csvUpdate.invalidFileTypeDetail": "Please select a CSV file.",
   "socialProtection.groupBeneficiary.csvUpdate.requiredFields": "Please select a file and status.",
   "socialProtection.validation.required": "Required Fields Missing",
-  "socialProtection.groupBeneficiary.id": "Group Code",
   "socialProtection.groupBeneficiary.headName": "Head of Household",
   "socialProtection.groupBeneficiary.location": "Location", 
   "socialProtection.groupBeneficiary.membersCount": "Members",
@@ -100,6 +99,8 @@
   "socialProtection.benefitPlan.benefitPlanBeneficiariesSuspended.label": "Suspended",
   "socialProtection.benefitPlan.benefitPlanBeneficiariesGraduated.label": "Graduated",
   "socialProtection.benefitPlan.benefitPlanBeneficiariesPotential.label": "Potential",
+  "socialProtection.benefitPlan.beneficiaries.tabGroup.label": "Beneficiaries",
+  "socialProtection.benefitPlan.benefitPlanBeneficiariesWrapper.label": "Beneficiaries",
   "socialProtection.benefitPlan.benefitPlanBeneficiaries.upload": "Upload",
   "socialProtection.benefitPlan.benefitPlanBeneficiaries.upload.label": "Upload Beneficiaries",
   "socialProtection.benefitPlan.benefitPlanBeneficiaries.upload.alert.header.invalid_format": "Invalid file format!",
@@ -160,7 +161,7 @@
   "socialProtection.rejectAll": "Reject All",
   "socialProtection.atomicApprove": "Do you want to approve this task for {count} records?",
   "socialProtection.bulkApprove": "Do you want to approve this task for all records?",
-  "socialProtection.taskConfirmation.title": "Beneficiary Upload Confirmation", 
+  "socialProtection.taskConfirmation.title": "Beneficiary Upload Confirmation",
   "socialProtection.dialogActions.continue": "Continue",
   "socialProtection.dialogActions.goBack": "Go back",
   "socialProtection.beneficiary.task.individual.id": "Individual",
@@ -187,6 +188,7 @@
   "socialProtection.benefitPlan.searcherResultsTitleHistory": "{benefitPlansHistoryTotalCount} Historical Records Found",
   "socialProtection.benefitPlan.benefitPlanSchema.label": "Benefit Plan Schema",
   "socialProtection.benefitPlan.schema.showSchema": "Show Schema",
+  "socialProtection.benefitPlan.BenefitPlanProjects.label": "Projects",
   "socialProtection.benefitPlanTasks.label": "Tasks",
   "socialProtection.group.code": "Code",
   "socialProtection.groupBeneficiary.code": "Code",
@@ -267,12 +269,10 @@
   "provincePaymentPoint.mutation.add": "Adding payment point to province",
   
   "add": "Add",
-  "resultFrameworkIndicators.actions": "Actions",
   "indicator.withoutSection": "Indicators without section",
   "core.cancel": "Cancel",
   "core.save": "Save",
   
-  "monetaryTransfer.page.title": "Monetary Transfers",
   "monetaryTransfer.noSearchRights": "You don't have the necessary rights to search monetary transfers.",
   
   "validation.status": "Validation Status",
@@ -297,6 +297,57 @@
   "validation.success.validate": "Data has been successfully validated",
   "validation.success.reject": "Data has been rejected",
   "validation.error": "An error occurred during validation",
+  
+  "menu.socialProtection.enhancedResultFramework": "Enhanced Result Framework",
+  
+  "resultFramework.enhanced.title": "Enhanced Result Framework",
+  "resultFramework.tabs.dashboard": "Dashboard",
+  "resultFramework.tabs.snapshots": "Snapshots",
+  "resultFramework.tabs.timeline": "Timeline",
+  "resultFramework.refresh": "Refresh",
+  "resultFramework.createSnapshot": "Create Snapshot",
+  "resultFramework.generateDocument": "Generate Document",
+  "resultFramework.timeline.title": "Indicator Timeline",
+  "resultFramework.timeline.description": "Track indicator progress over time",
+  
+  "resultFramework.snapshots.title": "Result Framework Snapshots",
+  "resultFramework.snapshots.list": "Snapshot List",
+  "resultFramework.snapshot.name": "Name",
+  "resultFramework.snapshot.description": "Description",
+  "resultFramework.snapshot.createdDate": "Created Date",
+  "resultFramework.snapshot.createdBy": "Created By",
+  "resultFramework.snapshot.status": "Status",
+  "resultFramework.snapshot.dateFrom": "Date From",
+  "resultFramework.snapshot.dateTo": "Date To",
+  "resultFramework.snapshot.view": "View Snapshot",
+  "resultFramework.snapshot.generateDocument": "Generate Document",
+  "resultFramework.snapshot.finalize": "Finalize",
+  "resultFramework.snapshot.details": "Snapshot Details",
+  "resultFramework.snapshot.create.button": "Create Snapshot",
+  "resultFramework.snapshot.create.title": "Create New Snapshot",
+  "resultFramework.snapshot.finalize.confirm.title": "Finalize Snapshot",
+  "resultFramework.snapshot.finalize.confirm.message": "Are you sure you want to finalize this snapshot? This action cannot be undone.",
+  
+  "snapshot.status.DRAFT": "Draft",
+  "snapshot.status.FINALIZED": "Finalized",
+  "snapshot.status.ARCHIVED": "Archived",
+  
+  "indicator.refresh": "Refresh Calculation",
+  "indicator.details": "View Details",
+  "indicator.calculationDetails": "Calculation Details",
+  "indicator.systemValue": "System Calculated Value",
+  "indicator.manualValue": "Manual Entry Value",
+  "indicator.lastUpdated": "Last Updated",
+  "indicator.genderBreakdown": "Gender Breakdown",
+  "indicator.dateFrom": "From Date",
+  "indicator.dateTo": "To Date",
+  
+  "calculation.type.SYSTEM": "System Calculated",
+  "calculation.type.MANUAL": "Manual Entry",
+  "calculation.type.MIXED": "Mixed (System + Manual)",
+  
+  "dialog.create": "Create",
+  "dialog.close": "Close",
   "validation.trainingDetails": "Training Details",
   "validation.behaviorChangeDetails": "Behavior Change Details",
   "validation.microprojectDetails": "Microproject Details",
@@ -462,5 +513,65 @@
   "socialProtection.filter.startDate": "Start Date",
   "socialProtection.filter.endDate": "End Date",
   "socialProtection.filter.clear": "Clear",
-  "socialProtection.filter.apply": "Apply"
+  "socialProtection.filter.apply": "Apply",
+  "social_protection.gql_benefit_plan_search_perms": "Social Protection | Benefit Plan Search",
+  "social_protection.gql_benefit_plan_create_perms": "Social Protection | Benefit Plan Create",
+  "social_protection.gql_benefit_plan_update_perms": "Social Protection | Benefit Plan Update",
+  "social_protection.gql_benefit_plan_delete_perms": "Social Protection | Benefit Plan Delete",
+  "social_protection.gql_benefit_plan_close_perms": "Social Protection | Benefit Plan Close",
+  "social_protection.gql_beneficiary_search_perms": "Social Protection | Beneficiary Search",
+  "social_protection.gql_beneficiary_create_perms": "Social Protection | Beneficiary Create",
+  "social_protection.gql_beneficiary_update_perms": "Social Protection | Beneficiary Update",
+  "social_protection.gql_beneficiary_delete_perms": "Social Protection | Beneficiary Delete",
+  "social_protection.gql_schema_search_perms": "Social Protection | Schema Search",
+  "social_protection.gql_schema_create_perms": "Social Protection | Schema Create",
+  "social_protection.gql_schema_update_perms": "Social Protection | Schema Update",
+  "social_protection.gql_schema_delete_perms": "Social Protection | Schema Delete",
+  "social_protection.gql_activity_search_perms": "Social Protection | Activity Search",
+  "social_protection.gql_project_search_perms": "Social Protection | Project Search",
+  "social_protection.gql_project_create_perms": "Social Protection | Project Create",
+  "socialProtection.projects.label": "Projects",
+  "socialProtection.projects.searcherResultsTitle": "{projectsTotalCount} Projects",
+  "socialProtection.projects.searcherAddAction": "Create Project",
+  "socialProtection.project.name": "Name",
+  "socialProtection.project.name.alreadyTaken": "The name is already taken",
+  "socialProtection.project.status": "Status",
+  "socialProtection.project.activity": "Activity",
+  "socialProtection.project.targetBeneficiaries": "Target Beneficiaries",
+  "socialProtection.project.workingDays": "Working Days",
+  "socialProtection.project.pageTitle": "Project details",
+  "socialProtection.project.saveButton.tooltip": "Save",
+  "socialProtection.project.location": "Location",
+  "socialProtection.project.statusPicker": "Status",
+  "socialProtection.project.statusPicker.PREPARATION": "Preparation",
+  "socialProtection.project.statusPicker.IN_PROGRESS": "In Progress",
+  "socialProtection.project.statusPicker.COMPLETED": "Completed",
+  "socialProtection.project.benefitPlan": "Program",
+  "project": {
+    "activityPicker" : {
+      "label": "Activity",
+      "null": ""
+    },
+    "create": {
+      "mutationLabel": "Create project {name}"
+    },
+    "update": {
+      "mutationLabel": "Update project {name}"
+    },
+    "delete": {
+      "confirm": {
+        "title": "Delete project {name}?",
+        "message": "Deleting a project does not mean erasing it from OpenIMIS database. The project will only be deactivated and hidden in the default list view."
+      },
+      "mutationLabel": "Delete project {name}"
+    },
+    "undo": {
+      "confirm": {
+        "title": "Restore project {name}?",
+        "message": "This will undo the deletion and make the project active again. Do you want to continue?"
+      },
+      "mutationLabel": "Restore project {name}"
+    },
+    "isDeleted": "Show Deleted"
+  }
 }

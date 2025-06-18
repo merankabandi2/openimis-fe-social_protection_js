@@ -27,6 +27,11 @@ export const RIGHT_MONETARY_TRANSFER_UPDATE = 160003;
 export const RIGHT_MONETARY_TRANSFER_CREATE = 160002;
 export const RIGHT_MONETARY_TRANSFER_DELETE = 160004;
 
+export const RIGHT_PROJECT_SEARCH = 209001;
+export const RIGHT_PROJECT_CREATE = 209002;
+export const RIGHT_PROJECT_UPDATE = 209003;
+export const RIGHT_PROJECT_DELETE = 209004;
+
 export const RIGHT_SCHEMA_SEARCH = 171001;
 export const RIGHT_SCHEMA_CREATE = 171002;
 export const RIGHT_SCHEMA_UPDATE = 171003;
@@ -58,8 +63,11 @@ export const BENEFIT_PLAN_BENEFICIARIES_POTENTIAL_TAB_VALUE = 'benefitPlanBenefi
 export const BENEFIT_PLAN_BENEFICIARIES_GRADUATED_TAB_VALUE = 'benefitPlanBeneficiariesGraduatedTab';
 export const BENEFIT_PLAN_BENEFICIARIES_SUSPENDED_TAB_VALUE = 'benefitPlanBeneficiariesSuspendedTab';
 export const BENEFIT_PLAN_PROVINCES_TAB_VALUE = 'BenefitPlanProvincesTab';
+export const BENEFIT_PLAN_BENEFICIARIES_TAB_WRAPPER_VALUE = 'benefitPlanBeneficiariesTabWrapper';
 export const BENEFIT_PLAN_TABS_LABEL_CONTRIBUTION_KEY = 'benefitPlan.TabPanel.label';
 export const BENEFIT_PLAN_TABS_PANEL_CONTRIBUTION_KEY = 'benefitPlan.TabPanel.panel';
+export const BENEFIT_PLAN_BENEFICIARY_TABS_LABEL_CONTRIBUTION_KEY = 'benefitPlan.BeneficiaryTabPanel.label';
+export const BENEFIT_PLAN_BENEFICIARY_TABS_PANEL_CONTRIBUTION_KEY = 'benefitPlan.BeneficiaryTabPanel.panel';
 export const DEDUPLICATION_SELECT_FIELD_DIALOG_CONTRIBUTION_KEY = 'deduplication.deduplicationFieldSelectionDialog';
 
 export const BENEFIT_PACKAGE_MEMBERS_TAB_VALUE = 'benefitPackageMembersTab';
@@ -195,3 +203,5 @@ export const locationAtLevel = (lowestLevelLoc, level) => {
 
   return location ? location.name : '';
 };
+export const BENEFIT_PLAN_PROJECTS_TAB_VALUE = 'BenefitPlanProjectsTab';
+export const PROJECT_STATUS_LIST = ['PREPARATION', 'IN_PROGRESS', 'COMPLETED'];

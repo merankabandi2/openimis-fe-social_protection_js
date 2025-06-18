@@ -4,7 +4,7 @@
 import React from 'react';
 import { injectIntl } from 'react-intl';
 import { connect } from 'react-redux';
-import { Tune } from '@material-ui/icons';
+import { Assessment, BarChart, AttachMoney, Dashboard } from '@material-ui/icons';
 import { formatMessage, MainMenuContribution, withModulesManager } from '@openimis/fe-core';
 import {
   RIGHT_BENEFIT_PLAN_SEARCH,
@@ -18,24 +18,31 @@ function MEMainMenu(props) {
   const entries = [
     {
       text: formatMessage(props.intl, 'socialProtection', 'menu.socialProtection.resultFrameWork'),
-      icon: <Tune />,
+      icon: <Assessment />,
       route: `/${RESULT_FRAMEWORK_ROUTE}`,
       filter: (rights) => rights.includes(RIGHT_MONETARY_TRANSFER_SEARCH),
       id: 'socialProtection.me.resultFrameWork',
     },
     {
       text: formatMessage(props.intl, 'socialProtection', 'menu.socialProtection.indicators'),
-      icon: <Tune />,
+      icon: <BarChart />,
       route: '/me/indicators',
       filter: (rights) => rights.includes(RIGHT_BENEFIT_PLAN_SEARCH),
       id: 'socialProtection.me.indicators',
     },
     {
       text: formatMessage(props.intl, 'socialProtection', 'menu.socialProtection.monetaryTransfer'),
-      icon: <Tune />,
+      icon: <AttachMoney />,
       route: `/${MONETARY_TRANSFERS_ROUTE}`,
       filter: (rights) => rights.includes(RIGHT_MONETARY_TRANSFER_SEARCH),
       id: 'socialProtection.me.monetaryTransfers',
+    },
+    {
+      text: formatMessage(props.intl, 'socialProtection', 'menu.socialProtection.enhancedResultFramework'),
+      icon: <Dashboard />,
+      route: '/me/enhanced-results-framework',
+      filter: (rights) => rights.includes(RIGHT_MONETARY_TRANSFER_SEARCH),
+      id: 'socialProtection.me.enhancedResultFramework',
     },
   ];
   entries.push(

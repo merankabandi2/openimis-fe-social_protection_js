@@ -287,33 +287,62 @@ function IntermediateIndicatorsTabPanel({
 
   // Filter indicators to show only intermediate indicators
   const intermediateIndicators = React.useMemo(() => {
-    // Define intermediate indicator keywords or patterns
-    const intermediateKeywords = [
-      'Système de gestion',
-      'Plan de communication',
-      'satisfaits du processus',
-      'plaintes résolues',
-      'compétences mises en œuvre',
-    ];
-
-    // You could also filter by section if intermediate indicators have specific sections
+    // Intermediate indicators are in sections 4-8 based on the CSV data
+    const intermediateSectionIds = [4, 5, 6, 7, 8];
+    
+    // Alternative: filter by section name for flexibility
     const intermediateSectionNames = [
-      'Indicateurs intermédiaires',
-      'Intermediate Indicators',
+      'Extension des filets de sécurité au territoire national',
+      'Activités productives et accès à l\'emploi',
+      'Développement des systèmes de protection sociale',
+      'Intégration des réfugiés et des communautés d\'accueil dans les systèmes nationaux de protection sociale',
+      'Gestion et mise en œuvre du projet',
     ];
 
-    // Filter indicators based on keywords or section names
+    // Define intermediate indicator keywords
+    const intermediateKeywords = [
+      'GRM', // Grievance Redress Mechanism
+      'plaintes',
+      'réclamations',
+      'évaluation du processus',
+      'process evaluation',
+      'satisfaction',
+      'feedback',
+      'plan d\'affaires',
+      'provinces mettant en œuvre',
+      'paiements numériques',
+    ];
+
+    // Filter indicators based on section ID, section name, or keywords
     const filtered = indicators.filter(indicator => {
+      // Handle section as either object or ID
+      let sectionId = null;
+      let sectionName = null;
+      
+      if (indicator.section) {
+        if (typeof indicator.section === 'object') {
+          sectionId = indicator.section.pk || indicator.section.id;
+          sectionName = indicator.section.name;
+        } else if (typeof indicator.section === 'number' || typeof indicator.section === 'string') {
+          sectionId = parseInt(indicator.section);
+        }
+      }
+      
+      // Check if indicator belongs to intermediate sections by ID
+      const sectionIdMatch = sectionId && intermediateSectionIds.includes(sectionId);
+      
+      // Check if indicator belongs to intermediate sections by name
+      const sectionNameMatch = sectionName && 
+        intermediateSectionNames.some(name => 
+          sectionName.toLowerCase().includes(name.toLowerCase())
+        );
+      
       // Check if indicator name contains any of the keywords
       const nameMatch = intermediateKeywords.some(keyword => 
         indicator.name?.toLowerCase().includes(keyword.toLowerCase())
       );
       
-      // Check if indicator belongs to intermediate sections
-      const sectionMatch = indicator.section && 
-        intermediateSectionNames.includes(indicator.section.name);
-      
-      return nameMatch || sectionMatch;
+      return sectionIdMatch || sectionNameMatch || nameMatch;
     });
 
     return filtered;

@@ -14,6 +14,23 @@ import {
 import {
   CLEAR, ERROR, REQUEST, SUCCESS,
 } from './util/action-type';
+import {
+  RESULT_FRAMEWORK_SNAPSHOTS_REQ,
+  RESULT_FRAMEWORK_SNAPSHOTS_RESP,
+  RESULT_FRAMEWORK_SNAPSHOTS_ERR,
+  CALCULATE_INDICATOR_VALUE_REQ,
+  CALCULATE_INDICATOR_VALUE_RESP,
+  CALCULATE_INDICATOR_VALUE_ERR,
+  CREATE_SNAPSHOT_REQ,
+  CREATE_SNAPSHOT_RESP,
+  CREATE_SNAPSHOT_ERR,
+  GENERATE_DOCUMENT_REQ,
+  GENERATE_DOCUMENT_RESP,
+  GENERATE_DOCUMENT_ERR,
+  FINALIZE_SNAPSHOT_REQ,
+  FINALIZE_SNAPSHOT_RESP,
+  FINALIZE_SNAPSHOT_ERR,
+} from './actions/resultFramework';
 
 export const ACTION_TYPE = {
   MUTATION: 'BENEFIT_PLAN_MUTATION',
@@ -103,6 +120,14 @@ export const MUTATION_SERVICE = {
     UPDATE: 'updateIndicatorAchievement',
     DELETE: 'deleteIndicatorAchievement',
   },
+  SEARCH_PROJECTS: 'BENEFIT_PLAN_PROJECTS',
+  GET_PROJECT: 'BENEFIT_PLAN_PROJECT',
+  CREATE_PROJECT: 'BENEFIT_PLAN_CREATE_PROJECT',
+  UPDATE_PROJECT: 'BENEFIT_PLAN_UPDATE_PROJECT',
+  DELETE_PROJECT: 'BENEFIT_PLAN_DELETE_PROJECT',
+  UNDO_DELETE_PROJECT: 'BENEFIT_PLAN_UNDO_DELETE_PROJECT',
+  PROJECT_NAME_FIELDS_VALIDATION: 'PROJECT_NAME_FIELDS_VALIDATION',
+  PROJECT_NAME_SET_VALID: 'PROJECT_NAME_SET_VALID',
 };
 
 function reducer(
@@ -242,6 +267,22 @@ function reducer(
     indicatorAchievementsPageInfo: {},
     indicatorAchievementsTotalCount: 0,
     errorIndicatorAchievements: null,
+    fetchingProjects: false,
+    errorProjects: null,
+    fetchedProjects: false,
+    projects: [],
+    projectsPageInfo: {},
+    projectsTotalCount: 0,
+    // Result Framework states
+    fetchingResultFrameworkSnapshots: false,
+    fetchedResultFrameworkSnapshots: false,
+    resultFrameworkSnapshots: [],
+    resultFrameworkSnapshotsPageInfo: {},
+    resultFrameworkSnapshotsTotalCount: 0,
+    errorResultFrameworkSnapshots: null,
+    calculatingIndicatorValue: false,
+    calculatedIndicatorValue: null,
+    errorCalculateIndicatorValue: null,
   },
   action,
 ) {
@@ -317,6 +358,23 @@ function reducer(
         workflows: [],
         workflowsPageInfo: {},
         errorWorkflows: null,
+      };
+    case REQUEST(ACTION_TYPE.SEARCH_PROJECTS):
+      return {
+        ...state,
+        fetchingProjects: true,
+        fetchedProjects: false,
+        projects: [],
+        projectsPageInfo: {},
+        projectsTotalCount: 0,
+        errorProjects: null,
+      };
+    case REQUEST(ACTION_TYPE.GET_PROJECT):
+      return {
+        ...state,
+        fetchingProject: true,
+        fetchedProject: false,
+        project: null,
       };
     case SUCCESS(ACTION_TYPE.SEARCH_BENEFIT_PLANS):
       return {
@@ -408,6 +466,39 @@ function reducer(
         workflowsPageInfo: pageInfo(action.payload.data.benefitPlan),
         errorWorkflows: formatGraphQLError(action.payload),
       };
+    case SUCCESS(ACTION_TYPE.SEARCH_PROJECTS):
+      return {
+        ...state,
+        fetchingProjects: false,
+        fetchedProjects: true,
+        projects: parseData(action.payload.data.project)?.map((project) => ({
+          ...project,
+          benefitPlan: { id: project?.benefitPlan?.id ? decodeId(project.benefitPlan.id) : null },
+          id: decodeId(project.id),
+        })),
+        projectsPageInfo: pageInfo(action.payload.data.project),
+        projectsTotalCount: action.payload.data.project ? action.payload.data.project.totalCount : null,
+        errorProjects: formatGraphQLError(action.payload),
+      };
+    case SUCCESS(ACTION_TYPE.GET_PROJECT):
+      return {
+        ...state,
+        fetchingProject: false,
+        fetchedProject: true,
+        project: parseData(action.payload.data.project)?.map((project) => ({
+          ...project,
+          benefitPlan: {
+            ...project?.benefitPlan,
+            id: project?.benefitPlan?.id ? decodeId(project.benefitPlan.id) : null,
+          },
+          activity: {
+            ...project?.activity,
+            id: project?.activity?.id ? decodeId(project.activity.id) : null,
+          },
+          id: decodeId(project.id),
+        }))?.[0],
+        errorProject: null,
+      };
     case ERROR(ACTION_TYPE.GET_FIELDS_FROM_BF_SCHEMA):
       return {
         ...state,
@@ -449,6 +540,18 @@ function reducer(
         ...state,
         fetchingWorkflows: false,
         errorWorkflows: formatServerError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.SEARCH_PROJECTS):
+      return {
+        ...state,
+        fetchingProjects: false,
+        errorProjects: formatServerError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.GET_PROJECT):
+      return {
+        ...state,
+        fetchingProject: false,
+        errorProject: formatServerError(action.payload),
       };
     case REQUEST(ACTION_TYPE.BENEFIT_PLAN_CODE_FIELDS_VALIDATION):
       return {
@@ -1008,6 +1111,66 @@ function reducer(
         monetaryTransfer: {},
         errorMonetaryTransfer: null,
       };
+    case REQUEST(ACTION_TYPE.PROJECT_NAME_FIELDS_VALIDATION):
+      return {
+        ...state,
+        validationFields: {
+          ...state.validationFields,
+          projectName: {
+            isValidating: true,
+            isValid: false,
+            validationError: null,
+          },
+        },
+      };
+    case SUCCESS(ACTION_TYPE.PROJECT_NAME_FIELDS_VALIDATION):
+      return {
+        ...state,
+        validationFields: {
+          ...state.validationFields,
+          projectName: {
+            isValidating: false,
+            isValid: action.payload?.data.isValid.isValid,
+            validationError: formatGraphQLError(action.payload),
+          },
+        },
+      };
+    case ERROR(ACTION_TYPE.PROJECT_NAME_FIELDS_VALIDATION):
+      return {
+        ...state,
+        validationFields: {
+          ...state.validationFields,
+          projectName: {
+            isValidating: false,
+            isValid: false,
+            validationError: formatServerError(action.payload),
+          },
+        },
+      };
+    case CLEAR(ACTION_TYPE.PROJECT_NAME_FIELDS_VALIDATION):
+      return {
+        ...state,
+        validationFields: {
+          ...state.validationFields,
+          projectName: {
+            isValidating: false,
+            isValid: false,
+            validationError: null,
+          },
+        },
+      };
+    case ACTION_TYPE.PROJECT_NAME_SET_VALID:
+      return {
+        ...state,
+        validationFields: {
+          ...state.validationFields,
+          projectName: {
+            isValidating: false,
+            isValid: true,
+            validationError: null,
+          },
+        },
+      };
     case REQUEST(ACTION_TYPE.MUTATION):
       return dispatchMutationReq(state, action);
     case ERROR(ACTION_TYPE.MUTATION):
@@ -1022,6 +1185,14 @@ function reducer(
       return dispatchMutationResp(state, 'updateBeneficiary', action);
     case SUCCESS(ACTION_TYPE.UPDATE_GROUP_BENEFICIARY):
       return dispatchMutationResp(state, 'updateGroupBeneficiary', action);
+    case SUCCESS(ACTION_TYPE.CREATE_PROJECT):
+      return dispatchMutationResp(state, 'createProject', action);
+    case SUCCESS(ACTION_TYPE.UPDATE_PROJECT):
+      return dispatchMutationResp(state, 'updateProject', action);
+    case SUCCESS(ACTION_TYPE.DELETE_PROJECT):
+      return dispatchMutationResp(state, 'deleteProject', action);
+    case SUCCESS(ACTION_TYPE.UNDO_DELETE_PROJECT):
+      return dispatchMutationResp(state, 'undoDeleteProject', action);
     case SUCCESS(ACTION_TYPE.RESOLVE_TASK):
       return dispatchMutationResp(state, 'resolveTask', action);
     case SUCCESS(ACTION_TYPE.GENERATE_PROVINCE_PAYROLL):
@@ -1233,6 +1404,70 @@ function reducer(
       return dispatchMutationResp(state, MUTATION_SERVICE.INDICATOR_ACHIEVEMENT.UPDATE, action);
     case SUCCESS(ACTION_TYPE.DELETE_INDICATOR_ACHIEVEMENT):
       return dispatchMutationResp(state, MUTATION_SERVICE.INDICATOR_ACHIEVEMENT.DELETE, action);
+    
+    // Result Framework actions
+    case RESULT_FRAMEWORK_SNAPSHOTS_REQ:
+      return {
+        ...state,
+        fetchingResultFrameworkSnapshots: true,
+        fetchedResultFrameworkSnapshots: false,
+        errorResultFrameworkSnapshots: null,
+      };
+    case RESULT_FRAMEWORK_SNAPSHOTS_RESP:
+      return {
+        ...state,
+        fetchingResultFrameworkSnapshots: false,
+        fetchedResultFrameworkSnapshots: true,
+        resultFrameworkSnapshots: parseData(action.payload.data.resultFrameworkSnapshot),
+        resultFrameworkSnapshotsPageInfo: pageInfo(action.payload.data.resultFrameworkSnapshot),
+        resultFrameworkSnapshotsTotalCount: action.payload.data.resultFrameworkSnapshot?.totalCount || 0,
+        errorResultFrameworkSnapshots: null,
+      };
+    case RESULT_FRAMEWORK_SNAPSHOTS_ERR:
+      return {
+        ...state,
+        fetchingResultFrameworkSnapshots: false,
+        errorResultFrameworkSnapshots: formatGraphQLError(action.payload),
+      };
+    case CALCULATE_INDICATOR_VALUE_REQ:
+      return {
+        ...state,
+        calculatingIndicatorValue: true,
+        calculatedIndicatorValue: null,
+        errorCalculateIndicatorValue: null,
+      };
+    case CALCULATE_INDICATOR_VALUE_RESP:
+      return {
+        ...state,
+        calculatingIndicatorValue: false,
+        calculatedIndicatorValue: action.payload.data.calculateIndicatorValue,
+        errorCalculateIndicatorValue: null,
+      };
+    case CALCULATE_INDICATOR_VALUE_ERR:
+      return {
+        ...state,
+        calculatingIndicatorValue: false,
+        errorCalculateIndicatorValue: formatGraphQLError(action.payload),
+      };
+    case CREATE_SNAPSHOT_REQ:
+    case GENERATE_DOCUMENT_REQ:
+    case FINALIZE_SNAPSHOT_REQ:
+      return dispatchMutationReq(state, action);
+    case CREATE_SNAPSHOT_ERR:
+    case GENERATE_DOCUMENT_ERR:
+    case FINALIZE_SNAPSHOT_ERR:
+      return dispatchMutationErr(state, action);
+    case CREATE_SNAPSHOT_RESP:
+      return dispatchMutationResp(state, 'createResultFrameworkSnapshot', action);
+    case GENERATE_DOCUMENT_RESP:
+      return {
+        ...state,
+        submittingMutation: false,
+        mutation: action.payload.data.generateResultFrameworkDocument,
+      };
+    case FINALIZE_SNAPSHOT_RESP:
+      return dispatchMutationResp(state, 'finalizeSnapshot', action);
+    
     default:
       return state;
   }
