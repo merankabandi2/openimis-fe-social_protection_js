@@ -34,3 +34,14 @@ export const locationAtLevel = (lowestLevelLoc, level) => {
 
   return location ? location.name : '';
 };
+export const locationFormatter = (location) => (
+  Array.from({ length: LOC_LEVELS }, (_, i) => {
+    let loc = location;
+    const levels = [];
+    while (loc) {
+      levels.unshift(loc.name); // top level first
+      loc = loc.parent;
+    }
+    return levels[i] || '';
+  })
+);

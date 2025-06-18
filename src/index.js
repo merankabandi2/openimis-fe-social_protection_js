@@ -2,7 +2,7 @@
 /* eslint-disable camelcase */
 /* eslint-disable import/prefer-default-export */
 import React from 'react';
-import { Tune, Dashboard, Sync } from '@material-ui/icons';
+import { Tune, Dashboard, Sync, Assessment, AttachMoney, Event } from '@material-ui/icons';
 import { FormattedMessage } from '@openimis/fe-core';
 import messages_en from './translations/en.json';
 import messages_fr from './translations/fr.json';
@@ -317,21 +317,21 @@ const DEFAULT_CONFIG = {
     },
     {
       text: <FormattedMessage module="socialProtection" id="menu.socialProtection.activities" />,
-      icon: <Tune />,
+      icon: <Event />,
       route: '/me/activities',
       filter: (rights) => rights.includes(RIGHT_BENEFIT_PLAN_SEARCH),
       id: 'socialProtection.me.activities',
     },
     {
       text: <FormattedMessage module="socialProtection" id="menu.socialProtection.monetaryTransfer" />,
-      icon: <Tune />,
+      icon: <AttachMoney />,
       route: `/${MONETARY_TRANSFERS_ROUTE}`,
       filter: (rights) => rights.includes(RIGHT_MONETARY_TRANSFER_SEARCH),
       id: 'socialProtection.me.monetaryTransfers',
     },
     {
       text: <FormattedMessage module="socialProtection" id="menu.socialProtection.resultsFramework" />,
-      icon: <Tune />,
+      icon: <Assessment />,
       route: `/${RESULT_FRAMEWORK_ROUTE}`,
       filter: (rights) => rights.includes(RIGHT_MONETARY_TRANSFER_SEARCH),
       id: 'socialProtection.me.resultsFramework',
