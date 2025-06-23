@@ -67,6 +67,7 @@ import {
 } from './components/tasks/BeneficiaryUploadApprovalTask';
 import { fetchBenefitPlanSchemaFields } from './actions';
 import BenefitPlanHistorySearcher from './components/BenefitPlanHistorySearcher';
+import ProjectHistorySearcher from './components/ProjectHistorySearcher';
 import {
   BenefitPlanProjectsTabLabel,
   BenefitPlanProjectsTabPanel,
@@ -76,6 +77,10 @@ import { BenefitPlanTaskTabLabel, BenefitPlanTaskTabPanel } from './components/B
 import { BENEFIT_PLAN_LABEL, RIGHT_BENEFIT_PLAN_SEARCH } from './constants';
 import BeneficiaryPicker from './pickers/BeneficiaryPicker';
 import BenefitPlanProjectsSearcher from './components/BenefitPlanProjectsSearcher';
+import {
+  ProjectChangelogTabLabel,
+  ProjectChangelogTabPanel,
+} from './components/ProjectChangelogTab';
 
 const ROUTE_BENEFIT_PLANS = 'benefitPlans';
 const ROUTE_BENEFIT_PLAN = 'benefitPlans/benefitPlan';
@@ -115,6 +120,7 @@ const DEFAULT_CONFIG = {
     { key: 'socialProtection.BenefitPlansListTabPanel', ref: BenefitPlansListTabPanel },
     { key: 'socialProtection.fetchBenefitPlanSchemaFields', ref: fetchBenefitPlanSchemaFields },
     { key: 'socialProtection.BenefitPlanHistorySearcher', ref: BenefitPlanHistorySearcher },
+    { key: 'socialProtection.ProjectHistorySearcher', ref: ProjectHistorySearcher },
     { key: 'socialProtection.BeneficiaryPicker', ref: BeneficiaryPicker },
     { key: 'socialProtection.BenefitPlanProjectsSearcher', ref: BenefitPlanProjectsSearcher },
   ],
@@ -153,6 +159,12 @@ const DEFAULT_CONFIG = {
     BenefitPackageMembersTabPanel,
     BenefitPackageBenefitsTabPanel,
     BenefitPackageGrievancesTabPanel,
+  ],
+  'project.TabPanel.label': [
+    ProjectChangelogTabLabel,
+  ],
+  'project.TabPanel.panel': [
+    ProjectChangelogTabPanel,
   ],
   'tasksManagement.tasks': [{
     text: <FormattedMessage module="socialProtection" id="benefitPlan.tasks.update.title" />,

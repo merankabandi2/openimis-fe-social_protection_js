@@ -45,6 +45,7 @@ export const ACTION_TYPE = {
   RESOLVE_TASK: 'TASK_MANAGEMENT_RESOLVE_TASK',
   SEARCH_BENEFIT_PLANS_HISTORY: 'BENEFIT_PLAN_BENEFIT_PLANS_HISTORY',
   SEARCH_PROJECTS: 'BENEFIT_PLAN_PROJECTS',
+  SEARCH_PROJECTS_HISTORY: 'BENEFIT_PLAN_PROJECTS_HISTORY',
   GET_PROJECT: 'BENEFIT_PLAN_PROJECT',
   CREATE_PROJECT: 'BENEFIT_PLAN_CREATE_PROJECT',
   UPDATE_PROJECT: 'BENEFIT_PLAN_UPDATE_PROJECT',
@@ -206,6 +207,36 @@ function reducer(
         projectsPageInfo: {},
         projectsTotalCount: 0,
         errorProjects: null,
+      };
+    case REQUEST(ACTION_TYPE.SEARCH_PROJECTS_HISTORY):
+      return {
+        ...state,
+        fetchingProjectsHistory: true,
+        fetchedProjectsHistory: false,
+        projectsHistory: [],
+        projectsHistoryPageInfo: {},
+        projectsHistoryTotalCount: 0,
+        errorProjectsHistory: null,
+      };
+    case SUCCESS(ACTION_TYPE.SEARCH_PROJECTS_HISTORY):
+      return {
+        ...state,
+        fetchingProjectsHistory: false,
+        fetchedProjectsHistory: true,
+        projectsHistory: parseData(action.payload.data.projectHistory)?.map((projectHistory) => ({
+          ...projectHistory,
+          id: decodeId(projectHistory.id),
+        })),
+        projectsHistoryPageInfo: pageInfo(action.payload.data.projectHistory),
+        // eslint-disable-next-line max-len
+        projectsHistoryTotalCount: action.payload.data.projectHistory ? action.payload.data.projectHistory.totalCount : null,
+        errorProjectsHistory: formatGraphQLError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.SEARCH_PROJECTS_HISTORY):
+      return {
+        ...state,
+        fetchingProjectsHistory: false,
+        errorProjectsHistory: formatServerError(action.payload),
       };
     case REQUEST(ACTION_TYPE.GET_PROJECT):
       return {

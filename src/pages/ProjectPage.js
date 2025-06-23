@@ -27,7 +27,11 @@ import {
 } from '../actions';
 import { ACTION_TYPE } from '../reducer';
 import ProjectHeadPanel from '../components/ProjectHeadPanel';
-import { RIGHT_BENEFIT_PLAN_UPDATE } from '../constants';
+import ProjectTabPanel from '../components/ProjectTabPanel';
+import {
+  RIGHT_BENEFIT_PLAN_UPDATE,
+  PROJECT_CHANGELOG_TAB_VALUE,
+} from '../constants';
 
 const styles = (theme) => ({
   page: theme.page,
@@ -75,6 +79,9 @@ function ProjectPage({
     status: 'PREPARATION',
   });
   const [reset, setReset] = useState(() => false);
+
+  // TODO: update default to beneficiary list
+  const [activeTab, setActiveTab] = useState(PROJECT_CHANGELOG_TAB_VALUE);
 
   const dispatch = useDispatch();
 
@@ -228,6 +235,8 @@ function ProjectPage({
       }),
   ];
 
+  if (projectUuid && !project) return <div>Loading...</div>;
+
   return rights.includes(RIGHT_BENEFIT_PLAN_UPDATE) && (
     <div className={classes.page}>
       <Form
@@ -235,6 +244,7 @@ function ProjectPage({
         className={classes.form}
         title="project.pageTitle"
         openDirty
+        project={project}
         edited={editedProject}
         onEditedChanged={setEditedProject}
         back={back}
@@ -243,7 +253,9 @@ function ProjectPage({
         canSave={canSave}
         save={handleSave}
         HeadPanel={ProjectHeadPanel}
-        Panels={[]}
+        Panels={[ProjectTabPanel]}
+        onActiveTabChange={setActiveTab}
+        activeTab={activeTab}
         rights={rights}
         actions={actions}
         readOnly={editedProject?.isDeleted}

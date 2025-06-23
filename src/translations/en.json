@@ -209,6 +209,13 @@
       },
       "mutationLabel": "Restore project {name}"
     },
-    "isDeleted": "Show Deleted"
+    "isDeleted": "Show Deleted",
+    "searcherResultsTitleHistory": "{projectsHistoryTotalCount} Historical Records Found",
+    "version": "Version",
+    "dateUpdated": "Date Updated",
+    "userUpdated": "User Updated"
+    },
+  "projectChangelog": {
+    "label": "Changelog"
   }
 }

@@ -74,6 +74,10 @@ const PROJECT_FULL_PROJECTION = (modulesManager) => [
   'activity {id, name}',
   'location' + modulesManager.getProjection('location.Location.FlatProjection'),
   'isDeleted',
+  'userUpdated {username}',
+  'version',
+  'dateCreated',
+  'dateUpdated',
 ];
 
 export function fetchBenefitPlans(params) {
@@ -377,6 +381,11 @@ export function fetchBenefitPlanProjects(modulesManager, params) {
 export function fetchProject(modulesManager, params) {
   const payload = formatPageQuery('project', params, PROJECT_FULL_PROJECTION(modulesManager));
   return graphql(payload, ACTION_TYPE.GET_PROJECT);
+}
+
+export function fetchProjectHistory(modulesManager, params) {
+  const payload = formatPageQueryWithCount('projectHistory', params, PROJECT_FULL_PROJECTION(modulesManager));
+  return graphql(payload, ACTION_TYPE.SEARCH_PROJECTS_HISTORY);
 }
 
 export function createProject(project, clientMutationLabel) {
