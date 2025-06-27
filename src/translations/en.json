@@ -217,5 +217,8 @@
     },
   "projectChangelog": {
     "label": "Changelog"
+  },
+  "projectBeneficiaries": {
+    "label": "Beneficiaries"
   }
 }

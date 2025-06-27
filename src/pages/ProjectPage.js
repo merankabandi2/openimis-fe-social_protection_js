@@ -30,7 +30,7 @@ import ProjectHeadPanel from '../components/ProjectHeadPanel';
 import ProjectTabPanel from '../components/ProjectTabPanel';
 import {
   RIGHT_BENEFIT_PLAN_UPDATE,
-  PROJECT_CHANGELOG_TAB_VALUE,
+  PROJECT_BENEFICIARIES_TAB_VALUE,
 } from '../constants';
 
 const styles = (theme) => ({
@@ -80,8 +80,7 @@ function ProjectPage({
   });
   const [reset, setReset] = useState(() => false);
 
-  // TODO: update default to beneficiary list
-  const [activeTab, setActiveTab] = useState(PROJECT_CHANGELOG_TAB_VALUE);
+  const [activeTab, setActiveTab] = useState(PROJECT_BENEFICIARIES_TAB_VALUE);
 
   const dispatch = useDispatch();
 

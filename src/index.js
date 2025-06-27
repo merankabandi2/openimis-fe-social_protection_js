@@ -78,6 +78,10 @@ import { BENEFIT_PLAN_LABEL, RIGHT_BENEFIT_PLAN_SEARCH } from './constants';
 import BeneficiaryPicker from './pickers/BeneficiaryPicker';
 import BenefitPlanProjectsSearcher from './components/BenefitPlanProjectsSearcher';
 import {
+  ProjectBeneficiariesTabPanel,
+  ProjectBeneficiariesTabLabel,
+} from './components/ProjectBeneficiariesTab';
+import {
   ProjectChangelogTabLabel,
   ProjectChangelogTabPanel,
 } from './components/ProjectChangelogTab';
@@ -161,9 +165,11 @@ const DEFAULT_CONFIG = {
     BenefitPackageGrievancesTabPanel,
   ],
   'project.TabPanel.label': [
+    ProjectBeneficiariesTabLabel,
     ProjectChangelogTabLabel,
   ],
   'project.TabPanel.panel': [
+    ProjectBeneficiariesTabPanel,
     ProjectChangelogTabPanel,
   ],
   'tasksManagement.tasks': [{

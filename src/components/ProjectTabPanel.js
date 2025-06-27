@@ -8,7 +8,7 @@ import {
 } from '@openimis/fe-core';
 import { makeStyles } from '@material-ui/core/styles';
 import {
-  PROJECT_CHANGELOG_TAB_VALUE,
+  PROJECT_BENEFICIARIES_TAB_VALUE,
   PROJECT_TABS_LABEL_CONTRIBUTION_KEY,
   PROJECT_TABS_PANEL_CONTRIBUTION_KEY,
 } from '../constants';
@@ -42,7 +42,7 @@ function ProjectTabPanel({
   onActiveTabChange,
 }) {
   const classes = useStyles();
-  const [activeTab, setActiveTab] = useState(PROJECT_CHANGELOG_TAB_VALUE);
+  const [activeTab, setActiveTab] = useState(PROJECT_BENEFICIARIES_TAB_VALUE);
 
   const isSelected = (tab) => tab === activeTab;
 

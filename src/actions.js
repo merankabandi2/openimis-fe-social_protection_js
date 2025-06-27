@@ -66,7 +66,7 @@ const WORKFLOWS_FULL_PROJECTION = () => [
 
 const PROJECT_FULL_PROJECTION = (modulesManager) => [
   'id',
-  'benefitPlan {id, name}',
+  'benefitPlan {id, name, type}',
   'name',
   'status',
   'targetBeneficiaries',
