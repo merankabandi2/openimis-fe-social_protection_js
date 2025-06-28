@@ -47,6 +47,7 @@ const UPLOAD_HISTORY_FULL_PROJECTION = () => [
 const BENEFICIARY_FULL_PROJECTION = (modulesManager) => [
   'id',
   'benefitPlan {id}',
+  'project {id}',
   'individual {firstName, lastName, dob, location' + modulesManager.getProjection('location.Location.FlatProjection') + '}',
   'status',
   'isEligible',
@@ -88,6 +89,11 @@ export function fetchBenefitPlans(params) {
 export function fetchBeneficiaries(modulesManager, params) {
   const payload = formatPageQueryWithCount('beneficiary', params, BENEFICIARY_FULL_PROJECTION(modulesManager));
   return graphql(payload, ACTION_TYPE.SEARCH_BENEFICIARIES);
+}
+
+export function fetchProjectBeneficiaries(modulesManager, params) {
+  const payload = formatPageQueryWithCount('beneficiary', params, BENEFICIARY_FULL_PROJECTION(modulesManager));
+  return graphql(payload, ACTION_TYPE.SEARCH_PROJECT_BENEFICIARIES);
 }
 
 export function fetchGroupBeneficiaries(modulesManager, params) {

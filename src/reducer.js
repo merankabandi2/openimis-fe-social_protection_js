@@ -31,6 +31,7 @@ export const ACTION_TYPE = {
   BENEFIT_PLAN_NAME_SET_VALID: 'BENEFIT_PLAN_NAME_SET_VALID',
   BENEFIT_PLAN_SCHEMA_SET_VALID: 'BENEFIT_PLAN_NAME_SET_VALID',
   SEARCH_BENEFICIARIES: 'BENEFICIARY_BENEFICIARIES',
+  SEARCH_PROJECT_BENEFICIARIES: 'PROJECT_BENEFICIARIES',
   SEARCH_GROUP_BENEFICIARIES: 'GROUP_BENEFICIARY_GROUP_BENEFICIARIES',
   UPDATE_GROUP_BENEFICIARY: 'GROUP_BENEFICIARY_UPDATE_GROUP_BENEFICIARY',
   GET_BENEFICIARY: 'BENEFICIARY_BENEFICIARY',
@@ -132,6 +133,12 @@ function reducer(
     projects: [],
     projectsPageInfo: {},
     projectsTotalCount: 0,
+    fetchingProjectBeneficiaries: false,
+    fetchedProjectBeneficiaries: false,
+    projectBeneficiaries: [],
+    projectBeneficiariesPageInfo: {},
+    projectBeneficiariesTotalCount: 0,
+    errorProjectBeneficiaries: null,
   },
   action,
 ) {
@@ -237,6 +244,36 @@ function reducer(
         ...state,
         fetchingProjectsHistory: false,
         errorProjectsHistory: formatServerError(action.payload),
+      };
+    case REQUEST(ACTION_TYPE.SEARCH_PROJECT_BENEFICIARIES):
+      return {
+        ...state,
+        fetchingProjectBeneficiaries: true,
+        fetchedProjectBeneficiaries: false,
+        projectBeneficiaries: [],
+        projectBeneficiariesPageInfo: {},
+        projectBeneficiariesTotalCount: 0,
+        errorProjectBeneficiaries: null,
+      };
+    case SUCCESS(ACTION_TYPE.SEARCH_PROJECT_BENEFICIARIES):
+      return {
+        ...state,
+        fetchingProjectBeneficiaries: false,
+        fetchedProjectBeneficiaries: true,
+        projectBeneficiaries: parseData(action.payload.data.beneficiary)?.map((beneficiary) => ({
+          ...beneficiary,
+          project: { id: beneficiary?.project?.id ? decodeId(beneficiary.project.id) : null },
+          id: decodeId(beneficiary.id),
+        })),
+        projectBeneficiariesPageInfo: pageInfo(action.payload.data.beneficiary),
+        projectBeneficiariesTotalCount: action.payload.data.beneficiary ? action.payload.data.beneficiary.totalCount : null,
+        errorProjectBeneficiaries: formatGraphQLError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.SEARCH_PROJECT_BENEFICIARIES):
+      return {
+        ...state,
+        fetchingProjectBeneficiaries: false,
+        errorProjectBeneficiaries: formatServerError(action.payload),
       };
     case REQUEST(ACTION_TYPE.GET_PROJECT):
       return {

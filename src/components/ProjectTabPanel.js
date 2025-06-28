@@ -54,6 +54,7 @@ function ProjectTabPanel({
   };
 
   return (
+    !!project?.id && (
     <Paper className={classes.paper}>
       <Grid container className={`${classes.tableTitle} ${classes.tabs}`}>
         <Contributions
@@ -76,6 +77,7 @@ function ProjectTabPanel({
         classes={classes}
       />
     </Paper>
+    )
   );
 }
 

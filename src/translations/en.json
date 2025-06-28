@@ -219,6 +219,12 @@
     "label": "Changelog"
   },
   "projectBeneficiaries": {
-    "label": "Beneficiaries"
+    "label": "Beneficiaries",
+    "enroll": "Assign Beneficiaries",
+    "dialogTitle": "Assign Active Beneficiaries",
+    "dialogSubtitle": "Select active beneficiaries to assign to the project",
+    "save": "Save",
+    "filterPlaceholder": "Filter...",
+    "activeSelected": "{n} active beneficiaries selected"
   }
 }
