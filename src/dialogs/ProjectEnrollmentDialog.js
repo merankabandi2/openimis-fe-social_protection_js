@@ -14,6 +14,7 @@ import {
   formatMessage,
   formatMessageWithValues,
   useModulesManager,
+  decodeId,
 } from '@openimis/fe-core';
 import {
   ThemeProvider,
@@ -87,14 +88,15 @@ function ProjectEnrollmentDialog({
   }, [enrolledBeneficiaries, open]);
 
   // Trigger fetch when dialog opens
-  // TODO (Wei): add status = active & location within project location filter
   useEffect(() => {
     if (open && project?.benefitPlan?.id) {
-      fetchBeneficiaries(modulesManager, {
-        benefitPlan_Id: project.benefitPlan.id,
-        isDeleted: false,
-        first: 1000,
-      });
+      fetchBeneficiaries(modulesManager, [
+        `benefitPlan_Id: "${project.benefitPlan.id}"`,
+        'isDeleted: false',
+        'status: ACTIVE',
+        `villageOrChildOf: ${decodeId(project.location.id)}`,
+        'first: 100',
+      ]);
     }
   }, [open, project?.benefitPlan?.id]);
 
@@ -203,6 +205,9 @@ function ProjectEnrollmentDialog({
               filterCellStyle: {
                 padding: 0,
                 color: theme.palette.primary.main,
+              },
+              rowStyle: {
+                height: '42px',
               },
             }}
             localization={{
