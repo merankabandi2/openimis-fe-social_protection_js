@@ -209,6 +209,9 @@
       },
       "mutationLabel": "Restore project {name}"
     },
+    "enroll": {
+      "mutationLabel": "Enrolled {n} beneficiaries in project {name}"
+    },
     "isDeleted": "Show Deleted",
     "searcherResultsTitleHistory": "{projectsHistoryTotalCount} Historical Records Found",
     "version": "Version",

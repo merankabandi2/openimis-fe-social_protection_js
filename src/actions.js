@@ -688,3 +688,34 @@ export const projectNameValidationClear = () => (dispatch) => {
     type: CLEAR(ACTION_TYPE.PROJECT_NAME_FIELDS_VALIDATION),
   });
 };
+
+function formatProjectEnrollmentGQL(params) {
+  // double quotes are important!
+  const ids = params.ids ? `"${params.ids.join('","')}"` : '';
+  return `ids: [${ids}]
+          projectId: "${params.projectId}"`;
+}
+
+export function enroll(params, clientMutationLabel) {
+  const mutation = formatMutation(
+    'enrollProject',
+    formatProjectEnrollmentGQL(params),
+    clientMutationLabel,
+  );
+
+  const requestedDateTime = new Date();
+
+  return graphql(
+    mutation.payload,
+    [
+      REQUEST(ACTION_TYPE.MUTATION),
+      SUCCESS(ACTION_TYPE.PROJECT_ENROLL),
+      ERROR(ACTION_TYPE.MUTATION),
+    ],
+    {
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+    },
+  );
+}

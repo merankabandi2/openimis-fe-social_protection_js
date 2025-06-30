@@ -54,6 +54,7 @@ export const ACTION_TYPE = {
   UNDO_DELETE_PROJECT: 'BENEFIT_PLAN_UNDO_DELETE_PROJECT',
   PROJECT_NAME_FIELDS_VALIDATION: 'PROJECT_NAME_FIELDS_VALIDATION',
   PROJECT_NAME_SET_VALID: 'PROJECT_NAME_SET_VALID',
+  PROJECT_ENROLL: 'PROJECT_ENROLL',
 };
 
 function reducer(
@@ -921,6 +922,8 @@ function reducer(
       return dispatchMutationResp(state, 'deleteProject', action);
     case SUCCESS(ACTION_TYPE.UNDO_DELETE_PROJECT):
       return dispatchMutationResp(state, 'undoDeleteProject', action);
+    case SUCCESS(ACTION_TYPE.PROJECT_ENROLL):
+      return dispatchMutationResp(state, 'enrollProject', action);
     case SUCCESS(ACTION_TYPE.RESOLVE_TASK):
       return dispatchMutationResp(state, 'resolveTask', action);
     case REQUEST(ACTION_TYPE.TASK_MUTATION):

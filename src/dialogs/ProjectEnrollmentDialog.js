@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { injectIntl } from 'react-intl';
 import {
   Dialog,
@@ -15,17 +15,22 @@ import {
   formatMessageWithValues,
   useModulesManager,
   decodeId,
+  journalize,
 } from '@openimis/fe-core';
 import {
   ThemeProvider,
-  createMuiTheme,
+  createTheme,
   withStyles,
   withTheme,
-  fade,
+  alpha,
 } from '@material-ui/core/styles';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
-import { fetchBeneficiaries } from '../actions';
+import {
+  fetchProjectBeneficiaries,
+  fetchBeneficiaries,
+  enroll,
+} from '../actions';
 import {
   MODULE_NAME,
 } from '../constants';
@@ -66,13 +71,19 @@ function ProjectEnrollmentDialog({
   onClose,
   project,
   enrolledBeneficiaries,
-  enrolledBeneficiariesTotalCount,
   fetchBeneficiaries,
   fetchingBeneficiaries,
+  fetchProjectBeneficiaries,
   beneficiaries,
+  enroll,
+  submittingMutation,
+  mutation,
+  journalize,
 }) {
+  const prevSubmittingMutationRef = useRef();
   const modulesManager = useModulesManager();
   const [selectedRows, setSelectedRows] = useState([]);
+  const [allRows, setAllRows] = useState([]);
   const tableTitle = formatMessageWithValues(
     intl,
     MODULE_NAME,
@@ -82,10 +93,16 @@ function ProjectEnrollmentDialog({
 
   const translate = (key) => formatMessage(intl, MODULE_NAME, key);
 
-  // Sync selected rows on dialog open
+  // Sync selected rows & check status on dialog open
   useEffect(() => {
     setSelectedRows(enrolledBeneficiaries);
-  }, [enrolledBeneficiaries, open]);
+
+    const checkedIds = enrolledBeneficiaries.map((b) => b.id);
+    const decoratedBeneficiaries = beneficiaries.map((b) => (
+      { ...b, tableData: { ...b.tableData, checked: checkedIds.includes(b.id) } }
+    ));
+    setAllRows(decoratedBeneficiaries);
+  }, [beneficiaries, enrolledBeneficiaries]);
 
   // Trigger fetch when dialog opens
   useEffect(() => {
@@ -103,14 +120,42 @@ function ProjectEnrollmentDialog({
   const onSelectionChange = (rows) => setSelectedRows(rows);
 
   const onSave = () => {
-    //TODO (Wei) actually save
+    enroll(
+      {
+        projectId: project.id,
+        ids: selectedRows.map((r) => r.id),
+      },
+      formatMessageWithValues(
+        intl,
+        MODULE_NAME,
+        'project.enroll.mutationLabel',
+        { name: project.name, n: selectedRows?.length || 0 },
+      ),
+    );
+
     onClose();
   };
 
-  const tableTheme = createMuiTheme({
+  useEffect(() => {
+    if (prevSubmittingMutationRef.current && !submittingMutation) {
+      journalize(mutation);
+    }
+    if (mutation?.clientMutationId) {
+      fetchProjectBeneficiaries(modulesManager, [
+        `project_Id: "${project.id}"`,
+        'isDeleted: false',
+      ]);
+    }
+  }, [submittingMutation]);
+
+  useEffect(() => {
+    prevSubmittingMutationRef.current = submittingMutation;
+  });
+
+  const tableTheme = createTheme({
     palette: {
       primary: theme.palette.primary,
-      secondary: theme.palette.primary,
+      secondary: theme.palette.secondary,
     },
     typography: {
       h6: {
@@ -126,7 +171,7 @@ function ProjectEnrollmentDialog({
       },
       MuiToolbar: {
         root: {
-          backgroundColor: fade(theme.palette.primary.light, 0.2),
+          backgroundColor: alpha(theme.palette.primary.light, 0.2),
         },
       },
       MuiTablePagination: {
@@ -182,10 +227,13 @@ function ProjectEnrollmentDialog({
                 },
               })),
             ]}
-            data={beneficiaries}
+            data={allRows}
             isLoading={fetchingBeneficiaries}
             options={{
               selection: true,
+              selectionProps: {
+                color: 'primary',
+              },
               search: true,
               filtering: true,
               paging: true,
@@ -243,10 +291,15 @@ function ProjectEnrollmentDialog({
 const mapStateToProps = (state) => ({
   fetchingBeneficiaries: state.socialProtection.fetchingBeneficiaries,
   beneficiaries: state.socialProtection.beneficiaries,
+  submittingMutation: state.socialProtection.submittingMutation,
+  mutation: state.socialProtection.mutation,
 });
 
 const mapDispatchToProps = (dispatch) => bindActionCreators({
+  fetchProjectBeneficiaries,
   fetchBeneficiaries,
+  enroll,
+  journalize,
 }, dispatch);
 
 export default injectIntl(
