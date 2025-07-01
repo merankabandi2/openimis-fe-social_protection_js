@@ -51,6 +51,7 @@ const BENEFICIARY_FULL_PROJECTION = (modulesManager) => [
   'individual {firstName, lastName, dob, location' + modulesManager.getProjection('location.Location.FlatProjection') + '}',
   'status',
   'isEligible',
+  'jsonExt',
 ];
 
 const GROUP_BENEFICIARY_FULL_PROJECTION = (modulesManager) => [

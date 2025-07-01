@@ -7,9 +7,12 @@ import {
   DialogActions,
   IconButton,
   Button,
+  MenuItem,
+  Select,
 } from '@material-ui/core';
 import CloseIcon from '@material-ui/icons/Close';
 import MaterialTable from 'material-table';
+import _ from 'lodash';
 import {
   formatMessage,
   formatMessageWithValues,
@@ -50,7 +53,7 @@ const styles = () => ({
   },
   subtitle: {
     marginTop: -10,
-    marginBottom: 20,
+    marginBottom: 12,
     fontSize: '1rem',
   },
   actionsContainer: {
@@ -62,6 +65,87 @@ const styles = () => ({
     margin: '0 16px 15px',
   },
 });
+
+const exclusionKeys = [
+  'first_name', 'last_name', 'dob',
+  'location_name', 'location_code',
+  'report_synch', 'version',
+  'group_code', 'individual_role', 'recepien_info',
+];
+
+const getDynamicColumns = (data, translateFn) => {
+  if (!data || !data.length) return [];
+
+  const sampleItem = data.find((item) => item.jsonExt && Object.keys(item.jsonExt).length > 0);
+  if (!sampleItem) return [];
+
+  return Object.keys(sampleItem.jsonExt)
+    .filter((key) => !exclusionKeys.includes(key))
+    .map((key) => {
+      // Detect type from first non-null value
+      // TODO: use benefit plan schema instead
+      const sampleValue = sampleItem.jsonExt[key];
+      let columnType = 'string';
+      let renderFn = (rowData) => {
+        const value = rowData.jsonExt?.[key];
+        if (value === null || value === undefined) return '';
+        return String(value);
+      };
+      let filterFn = (term, rowData) => {
+        const value = rowData.jsonExt?.[key];
+        if (value === null || value === undefined) return false;
+        return String(value).toLowerCase().includes(term.toLowerCase());
+      };
+      let filterComponent;
+
+      if (typeof sampleValue === 'boolean') {
+        columnType = 'boolean';
+        renderFn = (rowData) => (rowData.jsonExt?.[key] ? translateFn('common.true') : translateFn('common.false'));
+        filterFn = (term, rowData) => {
+          if (term === 'all') return true;
+          return term === String(rowData.jsonExt?.[key]);
+        };
+        filterComponent = ({ columnDef, onFilterChanged }) => (
+          <Select
+            fullWidth
+            value={columnDef.tableData.filterValue || 'all'}
+            onChange={({ target }) => {
+              onFilterChanged(columnDef.tableData.id, target.value);
+            }}
+            displayEmpty
+          >
+            <MenuItem value="all">{translateFn('common.any')}</MenuItem>
+            <MenuItem value="true">{translateFn('common.true')}</MenuItem>
+            <MenuItem value="false">{translateFn('common.false')}</MenuItem>
+          </Select>
+        );
+      } else if (typeof sampleValue === 'number') {
+        columnType = 'numeric';
+      } else if (typeof sampleValue === 'object') {
+        renderFn = (rowData) => JSON.stringify(rowData.jsonExt?.[key]);
+      } else if (
+        typeof sampleValue === 'string'
+        && !Number.isNaN(sampleValue)
+        && !Number.isNaN(Date.parse(sampleValue))
+      ) {
+        columnType = 'date';
+        renderFn = (rowData) => {
+          const date = new Date(rowData.jsonExt?.[key]);
+          return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString();
+        };
+      }
+
+      return {
+        title: _.startCase(key),
+        field: `jsonExt.${key}`,
+        type: columnType,
+        render: renderFn,
+        filterComponent,
+        customFilterAndSearch: filterFn,
+        align: 'left',
+      };
+    });
+};
 
 function ProjectEnrollmentDialog({
   intl,
@@ -99,7 +183,11 @@ function ProjectEnrollmentDialog({
 
     const checkedIds = enrolledBeneficiaries.map((b) => b.id);
     const decoratedBeneficiaries = beneficiaries.map((b) => (
-      { ...b, tableData: { ...b.tableData, checked: checkedIds.includes(b.id) } }
+      {
+        ...b,
+        jsonExt: typeof b.jsonExt === 'string' ? JSON.parse(b.jsonExt) : b.jsonExt,
+        tableData: { ...b.tableData, checked: checkedIds.includes(b.id) },
+      }
     ));
     setAllRows(decoratedBeneficiaries);
   }, [beneficiaries, enrolledBeneficiaries]);
@@ -152,10 +240,14 @@ function ProjectEnrollmentDialog({
     prevSubmittingMutationRef.current = submittingMutation;
   });
 
+  const dynamicColumns = React.useMemo(() => (
+    getDynamicColumns(allRows, translate)
+  ), [allRows, translate]);
+
   const tableTheme = createTheme({
     palette: {
       primary: theme.palette.primary,
-      secondary: theme.palette.secondary,
+      secondary: theme.palette.primary,
     },
     typography: {
       h6: {
@@ -164,6 +256,20 @@ function ProjectEnrollmentDialog({
       },
     },
     overrides: {
+      MuiInputBase: {
+        root: {
+          fontSize: '0.875rem',
+          color: theme.palette.text.primary,
+          '&.Mui-focused': {
+            color: theme.palette.primary.main,
+          },
+        },
+      },
+      MuiList: {
+        root: {
+          color: theme.palette.text.primary,
+        },
+      },
       MuiIcon: {
         root: {
           color: theme.palette.primary.main,
@@ -181,6 +287,31 @@ function ProjectEnrollmentDialog({
       },
     },
   });
+
+  const columns = [
+    {
+      title: translate('socialProtection.beneficiary.firstName'),
+      field: 'individual.firstName',
+    },
+    {
+      title: translate('socialProtection.beneficiary.lastName'),
+      field: 'individual.lastName',
+    },
+    {
+      title: translate('socialProtection.beneficiary.dob'),
+      field: 'individual.dob',
+      type: 'date',
+    },
+    ...Array.from({ length: LOC_LEVELS }, (_, i) => ({
+      title: translate(`location.locationType.${i}`),
+      render: (rowData) => locationFormatter(rowData?.individual?.location)[i] || '',
+      customFilterAndSearch: (term, rowData) => {
+        const locName = locationFormatter(rowData?.individual?.location)[i].toLowerCase() || '';
+        return locName.includes(term.toLowerCase());
+      },
+    })),
+    ...dynamicColumns,
+  ];
 
   return (
     <Dialog open={open} onClose={onClose} classes={{ paper: classes.dialogPaper }}>
@@ -204,29 +335,7 @@ function ProjectEnrollmentDialog({
         <ThemeProvider theme={tableTheme}>
           <MaterialTable
             title={tableTitle}
-            columns={[
-              {
-                title: translate('socialProtection.beneficiary.firstName'),
-                field: 'individual.firstName',
-              },
-              {
-                title: translate('socialProtection.beneficiary.lastName'),
-                field: 'individual.lastName',
-              },
-              {
-                title: translate('socialProtection.beneficiary.dob'),
-                field: 'individual.dob',
-                type: 'date',
-              },
-              ...Array.from({ length: LOC_LEVELS }, (_, i) => ({
-                title: translate(`location.locationType.${i}`),
-                render: (rowData) => locationFormatter(rowData?.individual?.location)[i] || '',
-                customFilterAndSearch: (term, rowData) => {
-                  const locName = locationFormatter(rowData?.individual?.location)[i].toLowerCase() || '';
-                  return locName.includes(term.toLowerCase());
-                },
-              })),
-            ]}
+            columns={columns}
             data={allRows}
             isLoading={fetchingBeneficiaries}
             options={{
@@ -257,6 +366,11 @@ function ProjectEnrollmentDialog({
               rowStyle: {
                 height: '42px',
               },
+              searchFieldStyle: {
+                position: 'fixed',
+                right: '164px',
+                top: '120px',
+              },
             }}
             localization={{
               toolbar: {
@@ -269,6 +383,7 @@ function ProjectEnrollmentDialog({
               },
             }}
             onSelectionChange={onSelectionChange}
+            style={{ width: 140 * columns.length }}
           />
         </ThemeProvider>
       </DialogContent>

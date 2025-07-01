@@ -229,5 +229,10 @@
     "save": "Save",
     "filterPlaceholder": "Filter...",
     "activeSelected": "{n} active beneficiaries selected"
+  },
+  "common": {
+    "true": "Yes",
+    "false": "No",
+    "any": "Any"
   }
 }
