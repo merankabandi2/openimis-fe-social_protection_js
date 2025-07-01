@@ -228,7 +228,8 @@
     "dialogSubtitle": "Select active beneficiaries to assign to the project",
     "save": "Save",
     "filterPlaceholder": "Filter...",
-    "activeSelected": "{n} active beneficiaries selected"
+    "activeSelected": "{n} active beneficiaries selected",
+    "enrolled": "{n} Beneficiaries Assigned"
   },
   "common": {
     "true": "Yes",
