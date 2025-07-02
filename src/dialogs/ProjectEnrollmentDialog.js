@@ -117,7 +117,8 @@ function ProjectEnrollmentDialog({
         'isDeleted: false',
         'status: ACTIVE',
         `villageOrChildOf: ${decodeId(project.location.id)}`,
-        'first: 100',
+        'orderBy: ["individual__last_name", "individual__first_name"]',
+        'first: 100', // TODO: switch to remote data
       ]);
     }
   }, [open, project?.benefitPlan?.id]);

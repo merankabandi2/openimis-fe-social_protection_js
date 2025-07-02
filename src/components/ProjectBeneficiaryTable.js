@@ -45,6 +45,8 @@ function ProjectBeneficiaryTable({
       fetchProjectBeneficiaries(modulesManager, [
         `project_Id: "${project.id}"`,
         'isDeleted: false',
+        'orderBy: ["individual__last_name", "individual__first_name"]',
+        'first: 100', // TODO: switch to remote data
       ]);
     }
   }, [project?.benefitPlan?.id]);
