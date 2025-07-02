@@ -33,6 +33,7 @@ export const ACTION_TYPE = {
   SEARCH_BENEFICIARIES: 'BENEFICIARY_BENEFICIARIES',
   SEARCH_PROJECT_BENEFICIARIES: 'PROJECT_BENEFICIARIES',
   SEARCH_GROUP_BENEFICIARIES: 'GROUP_BENEFICIARY_GROUP_BENEFICIARIES',
+  SEARCH_PROJECT_GROUP_BENEFICIARIES: 'PROJECT_GROUP_BENEFICIARIES',
   UPDATE_GROUP_BENEFICIARY: 'GROUP_BENEFICIARY_UPDATE_GROUP_BENEFICIARY',
   GET_BENEFICIARY: 'BENEFICIARY_BENEFICIARY',
   GET_BENEFICIARIES_GROUP: 'GROUP_BENEFICIARY_GET_GROUP',
@@ -55,6 +56,7 @@ export const ACTION_TYPE = {
   PROJECT_NAME_FIELDS_VALIDATION: 'PROJECT_NAME_FIELDS_VALIDATION',
   PROJECT_NAME_SET_VALID: 'PROJECT_NAME_SET_VALID',
   PROJECT_ENROLL: 'PROJECT_ENROLL',
+  PROJECT_ENROLL_GROUP: 'PROJECT_ENROLL_GROUP',
 };
 
 function reducer(
@@ -196,6 +198,16 @@ function reducer(
         groupBeneficiariesPageInfo: {},
         groupBeneficiariesTotalCount: 0,
         errorGroupBeneficiaries: null,
+      };
+    case REQUEST(ACTION_TYPE.SEARCH_PROJECT_GROUP_BENEFICIARIES):
+      return {
+        ...state,
+        fetchingProjectGroupBeneficiaries: true,
+        fetchedProjectGroupBeneficiaries: false,
+        projectGroupBeneficiaries: [],
+        projectGroupBeneficiariesPageInfo: {},
+        projectGroupBeneficiariesTotalCount: 0,
+        errorProjectGroupBeneficiaries: null,
       };
     case REQUEST(ACTION_TYPE.GET_WORKFLOWS):
       return {
@@ -364,6 +376,29 @@ function reducer(
           ? action.payload.data.groupBeneficiary.totalCount : null,
         errorGroupBeneficiaries: formatGraphQLError(action.payload),
       };
+    case SUCCESS(ACTION_TYPE.SEARCH_PROJECT_GROUP_BENEFICIARIES):
+      return {
+        ...state,
+        fetchingProjectGroupBeneficiaries: false,
+        fetchedProjectGroupBeneficiaries: true,
+        projectGroupBeneficiaries: parseData(action.payload.data.groupBeneficiary)?.map((groupBeneficiary) => {
+          const response = ({
+            ...groupBeneficiary,
+            id: decodeId(groupBeneficiary.id),
+          });
+          if (response?.group?.id) {
+            response.group = ({
+              ...response.group,
+              id: decodeId(response.group.id),
+            });
+          }
+          return response;
+        }),
+        projectGroupBeneficiariesPageInfo: pageInfo(action.payload.data.groupBeneficiary),
+        projectGroupBeneficiariesTotalCount: action.payload.data.groupBeneficiary
+          ? action.payload.data.groupBeneficiary.totalCount : null,
+        errorProjectGroupBeneficiaries: formatGraphQLError(action.payload),
+      };
     case SUCCESS(ACTION_TYPE.GET_WORKFLOWS):
       return {
         ...state,
@@ -441,6 +476,12 @@ function reducer(
         ...state,
         fetchingGroupBeneficiaries: false,
         errorGroupBeneficiaries: formatServerError(action.payload),
+      };
+    case ERROR(ACTION_TYPE.SEARCH_PROJECT_GROUP_BENEFICIARIES):
+      return {
+        ...state,
+        fetchingProjectGroupBeneficiaries: false,
+        errorProjectGroupBeneficiaries: formatServerError(action.payload),
       };
     case ERROR(ACTION_TYPE.GET_WORKFLOWS):
       return {
@@ -924,6 +965,8 @@ function reducer(
       return dispatchMutationResp(state, 'undoDeleteProject', action);
     case SUCCESS(ACTION_TYPE.PROJECT_ENROLL):
       return dispatchMutationResp(state, 'enrollProject', action);
+    case SUCCESS(ACTION_TYPE.PROJECT_ENROLL_GROUP):
+      return dispatchMutationResp(state, 'enrollGroupProject', action);
     case SUCCESS(ACTION_TYPE.RESOLVE_TASK):
       return dispatchMutationResp(state, 'resolveTask', action);
     case REQUEST(ACTION_TYPE.TASK_MUTATION):

@@ -12,23 +12,32 @@ import {
   Typography,
 } from '@material-ui/core';
 import AddIcon from '@material-ui/icons/Add';
-import { fetchProjectBeneficiaries } from '../actions';
+import {
+  fetchProjectBeneficiaries,
+  fetchProjectGroupBeneficiaries,
+} from '../actions';
 import {
   MODULE_NAME,
   RIGHT_PROJECT_UPDATE,
 } from '../constants';
 import BeneficiaryTable from './BeneficiaryTable';
-import ProjectEnrollmentDialog from '../dialogs/ProjectEnrollmentDialog';
+import {
+  ProjectBeneficiariyEnrollmentDialog,
+  ProjectGroupBeneficiaryEnrollmentDialog,
+} from '../dialogs/ProjectEnrollmentDialog';
 
-function ProjectBeneficiaryTable({
+function BaseProjectBeneficiaryTable({
+  project,
+  isGroup,
+  EnrollmentDialogComponent,
   rights,
   intl,
-  project,
   fetchProjectBeneficiaries,
   fetchingBeneficiaries,
   beneficiaries,
   beneficiariesTotalCount,
 }) {
+  const orderBy = isGroup ? 'orderBy: ["group__code"]' : 'orderBy: ["individual__last_name", "individual__first_name"]';
   const modulesManager = useModulesManager();
   const [allRows, setAllRows] = useState([]);
   const [enrollmentDialogOpen, setEnrollmentDialogOpen] = useState(false);
@@ -45,14 +54,14 @@ function ProjectBeneficiaryTable({
       fetchProjectBeneficiaries(modulesManager, [
         `project_Id: "${project.id}"`,
         'isDeleted: false',
-        'orderBy: ["individual__last_name", "individual__first_name"]',
+        orderBy,
         'first: 100', // TODO: switch to remote data
       ]);
     }
   }, [project?.benefitPlan?.id]);
 
   useEffect(() => {
-    const decoratedBeneficiaries = beneficiaries.map((b) => (
+    const decoratedBeneficiaries = (beneficiaries || []).map((b) => (
       {
         ...b,
         jsonExt: typeof b.jsonExt === 'string' ? JSON.parse(b.jsonExt) : b.jsonExt,
@@ -66,7 +75,6 @@ function ProjectBeneficiaryTable({
       startIcon={<AddIcon />}
       variant="contained"
       color="primary"
-      // className={classes.actionButton}
     >
       <Typography variant="body2">{formatMessage(intl, MODULE_NAME, 'projectBeneficiaries.enroll')}</Typography>
     </Button>
@@ -87,33 +95,67 @@ function ProjectBeneficiaryTable({
           allRows={allRows}
           fetchingBeneficiaries={fetchingBeneficiaries}
           tableTitle={tableTitle}
-          nameDoBFieldPrefix="individual"
+          isGroup={isGroup}
           actions={actions}
         />
-        <ProjectEnrollmentDialog
+        <EnrollmentDialogComponent
           open={enrollmentDialogOpen}
           onClose={() => setEnrollmentDialogOpen(false)}
           project={project}
           enrolledBeneficiaries={beneficiaries}
-          enrolledBeneficiariesTotalCount={beneficiariesTotalCount}
+          isGroup={isGroup}
+          orderBy={orderBy}
         />
       </>
     )
   );
 }
 
-const mapStateToProps = (state) => ({
+// For Individual Beneficiaries
+const mapStateToPropsIndividual = (state) => ({
   rights: state.core?.user?.i_user?.rights ?? [],
   fetchingBeneficiaries: state.socialProtection.fetchingProjectBeneficiaries,
-  fetchedBeneficiaries: state.socialProtection.fetchedProjectBeneficiaries,
-  errorBeneficiaries: state.socialProtection.errorProjectBeneficiaries,
   beneficiaries: state.socialProtection.projectBeneficiaries,
-  beneficiariesPageInfo: state.socialProtection.projectBeneficiariesPageInfo,
   beneficiariesTotalCount: state.socialProtection.projectBeneficiariesTotalCount,
 });
 
-const mapDispatchToProps = (dispatch) => bindActionCreators({
+const mapDispatchToPropsIndividual = (dispatch) => bindActionCreators({
   fetchProjectBeneficiaries,
 }, dispatch);
 
-export default injectIntl(connect(mapStateToProps, mapDispatchToProps)(ProjectBeneficiaryTable));
+const ConnectedProjectBeneficiaryTable = connect(
+  mapStateToPropsIndividual,
+  mapDispatchToPropsIndividual,
+)(BaseProjectBeneficiaryTable);
+
+export const ProjectBeneficiaryTable = injectIntl((props) => (
+  <ConnectedProjectBeneficiaryTable
+    {...props}
+    EnrollmentDialogComponent={ProjectBeneficiariyEnrollmentDialog}
+  />
+));
+
+// For Group Beneficiaries
+const mapStateToPropsGroup = (state) => ({
+  rights: state.core?.user?.i_user?.rights ?? [],
+  fetchingBeneficiaries: state.socialProtection.fetchingProjectGroupBeneficiaries,
+  beneficiaries: state.socialProtection.projectGroupBeneficiaries,
+  beneficiariesTotalCount: state.socialProtection.projectGroupBeneficiariesTotalCount,
+});
+
+const mapDispatchToPropsGroup = (dispatch) => bindActionCreators({
+  fetchProjectBeneficiaries: fetchProjectGroupBeneficiaries,
+}, dispatch);
+
+const ConnectedProjectGroupBeneficiaryTable = connect(
+  mapStateToPropsGroup,
+  mapDispatchToPropsGroup,
+)(BaseProjectBeneficiaryTable);
+
+export const ProjectGroupBeneficiaryTable = injectIntl((props) => (
+  <ConnectedProjectGroupBeneficiaryTable
+    {...props}
+    isGroup
+    EnrollmentDialogComponent={ProjectGroupBeneficiaryEnrollmentDialog}
+  />
+));

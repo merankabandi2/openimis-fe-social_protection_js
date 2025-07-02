@@ -115,9 +115,11 @@ function BeneficiaryTable({
   onSelectionChange,
   tableTitle,
   actions,
-  additionalColumns,
-  nameDoBFieldPrefix,
+  isGroup,
 }) {
+  const nameDoBFieldPrefix = isGroup ? 'group.head' : 'individual';
+  const locationFieldPrefix = isGroup ? 'group' : 'individual';
+
   const translate = (key) => formatMessage(intl, MODULE_NAME, key);
 
   const [filters, setFilters] = React.useState({});
@@ -184,6 +186,13 @@ function BeneficiaryTable({
     },
   });
 
+  const additionalColumns = isGroup ? [
+    {
+      title: translate('socialProtection.groupBeneficiary.code'),
+      field: 'group.code',
+    },
+  ] : [];
+
   const columns = useMemo(() => {
     const allColumns = [
       ...additionalColumns || [],
@@ -202,9 +211,9 @@ function BeneficiaryTable({
       },
       ...Array.from({ length: LOC_LEVELS }, (_, i) => ({
         title: translate(`location.locationType.${i}`),
-        render: (rowData) => locationFormatter(rowData?.individual?.location)[i] || '',
+        render: (rowData) => locationFormatter(rowData?.[locationFieldPrefix]?.location)[i] || '',
         customFilterAndSearch: (term, rowData) => {
-          const locName = locationFormatter(rowData?.individual?.location)[i].toLowerCase() || '';
+          const locName = locationFormatter(rowData?.[locationFieldPrefix]?.location)[i].toLowerCase() || '';
           return locName.includes(term.toLowerCase());
         },
       })),

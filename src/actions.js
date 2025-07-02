@@ -56,9 +56,12 @@ const BENEFICIARY_FULL_PROJECTION = (modulesManager) => [
 
 const GROUP_BENEFICIARY_FULL_PROJECTION = (modulesManager) => [
   'id',
-  'group {id, code, head {uuid}, location' + modulesManager.getProjection('location.Location.FlatProjection') + '}',
+  'benefitPlan {id}',
+  'project {id}',
+  'group {id, code, head {uuid, firstName, lastName, dob}, location' + modulesManager.getProjection('location.Location.FlatProjection') + '}',
   'status',
   'isEligible',
+  'jsonExt',
 ];
 
 const WORKFLOWS_FULL_PROJECTION = () => [
@@ -98,8 +101,21 @@ export function fetchProjectBeneficiaries(modulesManager, params) {
 }
 
 export function fetchGroupBeneficiaries(modulesManager, params) {
-  const payload = formatPageQueryWithCount('groupBeneficiary', params, GROUP_BENEFICIARY_FULL_PROJECTION(modulesManager));
+  const payload = formatPageQueryWithCount(
+    'groupBeneficiary',
+    params,
+    GROUP_BENEFICIARY_FULL_PROJECTION(modulesManager),
+  );
   return graphql(payload, ACTION_TYPE.SEARCH_GROUP_BENEFICIARIES);
+}
+
+export function fetchProjectGroupBeneficiaries(modulesManager, params) {
+  const payload = formatPageQueryWithCount(
+    'groupBeneficiary',
+    params,
+    GROUP_BENEFICIARY_FULL_PROJECTION(modulesManager),
+  );
+  return graphql(payload, ACTION_TYPE.SEARCH_PROJECT_GROUP_BENEFICIARIES);
 }
 
 export function fetchBenefitPlanSchemaFields(params) {
@@ -697,7 +713,7 @@ function formatProjectEnrollmentGQL(params) {
           projectId: "${params.projectId}"`;
 }
 
-export function enroll(params, clientMutationLabel) {
+export function enrollProject(params, clientMutationLabel) {
   const mutation = formatMutation(
     'enrollProject',
     formatProjectEnrollmentGQL(params),
@@ -711,6 +727,30 @@ export function enroll(params, clientMutationLabel) {
     [
       REQUEST(ACTION_TYPE.MUTATION),
       SUCCESS(ACTION_TYPE.PROJECT_ENROLL),
+      ERROR(ACTION_TYPE.MUTATION),
+    ],
+    {
+      clientMutationId: mutation.clientMutationId,
+      clientMutationLabel,
+      requestedDateTime,
+    },
+  );
+}
+
+export function enrollGroupProject(params, clientMutationLabel) {
+  const mutation = formatMutation(
+    'enrollGroupProject',
+    formatProjectEnrollmentGQL(params),
+    clientMutationLabel,
+  );
+
+  const requestedDateTime = new Date();
+
+  return graphql(
+    mutation.payload,
+    [
+      REQUEST(ACTION_TYPE.MUTATION),
+      SUCCESS(ACTION_TYPE.PROJECT_ENROLL_GROUP),
       ERROR(ACTION_TYPE.MUTATION),
     ],
     {

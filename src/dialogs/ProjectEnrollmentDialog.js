@@ -21,8 +21,11 @@ import {
 } from '@openimis/fe-core';
 import {
   fetchProjectBeneficiaries,
+  fetchProjectGroupBeneficiaries,
   fetchBeneficiaries,
-  enroll,
+  fetchGroupBeneficiaries,
+  enrollProject,
+  enrollGroupProject,
 } from '../actions';
 import {
   MODULE_NAME,
@@ -60,6 +63,8 @@ function ProjectEnrollmentDialog({
   onClose,
   project,
   enrolledBeneficiaries,
+  isGroup,
+  orderBy,
   fetchBeneficiaries,
   fetchingBeneficiaries,
   fetchProjectBeneficiaries,
@@ -77,16 +82,17 @@ function ProjectEnrollmentDialog({
     intl,
     MODULE_NAME,
     'projectBeneficiaries.activeSelected',
-    { n: selectedRows.length },
+    { n: selectedRows?.length || 0 },
   );
 
   const translate = (key) => formatMessage(intl, MODULE_NAME, key);
 
   // Sync selected rows & check status on dialog open
   useEffect(() => {
-    setSelectedRows(enrolledBeneficiaries);
+    const enrolled = enrolledBeneficiaries || [];
+    setSelectedRows(enrolled);
 
-    const checkedIds = new Set(enrolledBeneficiaries.map((b) => b.id));
+    const checkedIds = new Set(enrolled.map((b) => b.id));
     setAllRows((prevRows) => {
       // If we already have rows, just update their checked status
       if (prevRows.length > 0 && beneficiaries.length === prevRows.length) {
@@ -117,7 +123,7 @@ function ProjectEnrollmentDialog({
         'isDeleted: false',
         'status: ACTIVE',
         `villageOrChildOf: ${decodeId(project.location.id)}`,
-        'orderBy: ["individual__last_name", "individual__first_name"]',
+        orderBy,
         'first: 100', // TODO: switch to remote data
       ]);
     }
@@ -182,7 +188,7 @@ function ProjectEnrollmentDialog({
           fetchingBeneficiaries={fetchingBeneficiaries}
           onSelectionChange={onSelectionChange}
           tableTitle={tableTitle}
-          nameDoBFieldPrefix="individual"
+          isGroup={isGroup}
         />
       </DialogContent>
 
@@ -201,24 +207,52 @@ function ProjectEnrollmentDialog({
   );
 }
 
-const mapStateToProps = (state) => ({
+const mapStateToPropsBeneficiary = (state) => ({
   fetchingBeneficiaries: state.socialProtection.fetchingBeneficiaries,
   beneficiaries: state.socialProtection.beneficiaries,
   submittingMutation: state.socialProtection.submittingMutation,
   mutation: state.socialProtection.mutation,
 });
 
-const mapDispatchToProps = (dispatch) => bindActionCreators({
+const mapDispatchToPropsBeneficiary = (dispatch) => bindActionCreators({
   fetchProjectBeneficiaries,
   fetchBeneficiaries,
-  enroll,
+  enroll: enrollProject,
   journalize,
 }, dispatch);
 
-export default injectIntl(
+const mapStateToPropsGroupBeneficiary = (state) => ({
+  fetchingBeneficiaries: state.socialProtection.fetchingGroupBeneficiaries,
+  beneficiaries: state.socialProtection.groupBeneficiaries,
+  submittingMutation: state.socialProtection.submittingMutation,
+  mutation: state.socialProtection.mutation,
+});
+
+const mapDispatchToPropsGroupBeneficiary = (dispatch) => bindActionCreators({
+  fetchProjectBeneficiaries: fetchProjectGroupBeneficiaries,
+  fetchBeneficiaries: fetchGroupBeneficiaries,
+  enroll: enrollGroupProject,
+  journalize,
+}, dispatch);
+
+export const ProjectBeneficiariyEnrollmentDialog = injectIntl(
   withTheme(
     withStyles(styles)(
-      connect(mapStateToProps, mapDispatchToProps)(ProjectEnrollmentDialog),
+      connect(
+        mapStateToPropsBeneficiary,
+        mapDispatchToPropsBeneficiary,
+      )(ProjectEnrollmentDialog),
+    ),
+  ),
+);
+
+export const ProjectGroupBeneficiaryEnrollmentDialog = injectIntl(
+  withTheme(
+    withStyles(styles)(
+      connect(
+        mapStateToPropsGroupBeneficiary,
+        mapDispatchToPropsGroupBeneficiary,
+      )(ProjectEnrollmentDialog),
     ),
   ),
 );

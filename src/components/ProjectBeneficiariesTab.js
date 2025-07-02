@@ -2,9 +2,7 @@ import React from 'react';
 import { Tab } from '@material-ui/core';
 import { formatMessage } from '@openimis/fe-core';
 import { PROJECT_BENEFICIARIES_TAB_VALUE, BENEFIT_PLAN_TYPE } from '../constants';
-import ProjectBeneficiaryTable from './ProjectBeneficiaryTable';
-// import ProjectGroupBeneficiariesSearcher from './ProjectGroupBeneficiariesSearcher';
-// TODO (Wei): handle group beneficiaries
+import { ProjectBeneficiaryTable, ProjectGroupBeneficiaryTable } from './ProjectBeneficiaryTable';
 
 function ProjectBeneficiariesTabLabel({
   intl, onChange, tabStyle, isSelected,
@@ -30,8 +28,7 @@ function ProjectBeneficiariesTabPanel({
           {project.benefitPlan?.type === BENEFIT_PLAN_TYPE.INDIVIDUAL ? (
             <ProjectBeneficiaryTable project={project} />
           ) : (
-            ''
-            // <ProjectGroupBeneficiariesSearcher project={project} />
+            <ProjectGroupBeneficiaryTable project={project} />
           )}
         </div>
       )}
