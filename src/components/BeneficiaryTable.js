@@ -162,6 +162,13 @@ function BeneficiaryTable({
           color: theme.palette.primary.main,
         },
       },
+      MuiIconButton: {
+        root: {
+          '&:hover': {
+            backgroundColor: 'transparent',
+          },
+        },
+      },
       MuiToolbar: {
         root: {
           backgroundColor: theme.paper.body.backgroundColor,
