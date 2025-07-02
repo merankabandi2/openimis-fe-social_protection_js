@@ -692,7 +692,7 @@ export const projectNameValidationClear = () => (dispatch) => {
 
 function formatProjectEnrollmentGQL(params) {
   // double quotes are important!
-  const ids = params.ids ? `"${params.ids.join('","')}"` : '';
+  const ids = params.ids?.length ? `"${params.ids.join('","')}"` : '';
   return `ids: [${ids}]
           projectId: "${params.projectId}"`;
 }
