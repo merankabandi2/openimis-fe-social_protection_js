@@ -85,6 +85,7 @@ function ProjectBeneficiaryTable({
           allRows={allRows}
           fetchingBeneficiaries={fetchingBeneficiaries}
           tableTitle={tableTitle}
+          nameDoBFieldPrefix="individual"
           actions={actions}
         />
         <ProjectEnrollmentDialog

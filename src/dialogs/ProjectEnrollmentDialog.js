@@ -86,15 +86,27 @@ function ProjectEnrollmentDialog({
   useEffect(() => {
     setSelectedRows(enrolledBeneficiaries);
 
-    const checkedIds = enrolledBeneficiaries.map((b) => b.id);
-    const decoratedBeneficiaries = beneficiaries.map((b) => (
-      {
+    const checkedIds = new Set(enrolledBeneficiaries.map((b) => b.id));
+    setAllRows((prevRows) => {
+      // If we already have rows, just update their checked status
+      if (prevRows.length > 0 && beneficiaries.length === prevRows.length) {
+        prevRows.forEach((row) => ({
+          ...row,
+          tableData: {
+            ...row.tableData,
+            checked: checkedIds.has(row.id),
+          },
+        }));
+        return prevRows;
+      }
+
+      // Otherwise create new rows (only when beneficiaries actually change)
+      return beneficiaries.map((b) => ({
         ...b,
         jsonExt: typeof b.jsonExt === 'string' ? JSON.parse(b.jsonExt) : b.jsonExt,
-        tableData: { ...b.tableData, checked: checkedIds.includes(b.id) },
-      }
-    ));
-    setAllRows(decoratedBeneficiaries);
+        tableData: { checked: checkedIds.has(b.id) },
+      }));
+    });
   }, [beneficiaries, enrolledBeneficiaries]);
 
   // Trigger fetch when dialog opens
@@ -169,6 +181,7 @@ function ProjectEnrollmentDialog({
           fetchingBeneficiaries={fetchingBeneficiaries}
           onSelectionChange={onSelectionChange}
           tableTitle={tableTitle}
+          nameDoBFieldPrefix="individual"
         />
       </DialogContent>
 

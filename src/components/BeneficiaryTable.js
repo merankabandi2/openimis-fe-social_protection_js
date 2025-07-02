@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { injectIntl } from 'react-intl';
 import MaterialTable from 'material-table';
 import _ from 'lodash';
@@ -103,7 +103,6 @@ const getDynamicColumns = (data, translateFn) => {
         filterComponent,
         customFilterAndSearch: filterFn,
         align: 'left',
-        width: key === 'email' ? '200px' : '140px',
       };
     });
 };
@@ -116,11 +115,15 @@ function BeneficiaryTable({
   onSelectionChange,
   tableTitle,
   actions,
+  additionalColumns,
+  nameDoBFieldPrefix,
 }) {
   const translate = (key) => formatMessage(intl, MODULE_NAME, key);
 
+  const [filters, setFilters] = React.useState({});
+
   const dynamicColumns = React.useMemo(() => (
-    getDynamicColumns(allRows, translate)
+    getDynamicColumns(allRows, translate, filters)
   ), [allRows, translate]);
 
   const tableTheme = createMuiTheme({
@@ -174,34 +177,39 @@ function BeneficiaryTable({
     },
   });
 
-  const columns = [
-    {
-      title: translate('socialProtection.beneficiary.firstName'),
-      field: 'individual.firstName',
-      width: '120px',
-    },
-    {
-      title: translate('socialProtection.beneficiary.lastName'),
-      field: 'individual.lastName',
-      width: '120px',
-    },
-    {
-      title: translate('socialProtection.beneficiary.dob'),
-      field: 'individual.dob',
-      type: 'date',
-      width: '140px',
-    },
-    ...Array.from({ length: LOC_LEVELS }, (_, i) => ({
-      title: translate(`location.locationType.${i}`),
-      render: (rowData) => locationFormatter(rowData?.individual?.location)[i] || '',
-      customFilterAndSearch: (term, rowData) => {
-        const locName = locationFormatter(rowData?.individual?.location)[i].toLowerCase() || '';
-        return locName.includes(term.toLowerCase());
+  const columns = useMemo(() => {
+    const allColumns = [
+      ...additionalColumns || [],
+      {
+        title: translate('socialProtection.beneficiary.firstName'),
+        field: `${nameDoBFieldPrefix}.firstName`,
       },
-      width: '140px',
-    })),
-    ...dynamicColumns,
-  ];
+      {
+        title: translate('socialProtection.beneficiary.lastName'),
+        field: `${nameDoBFieldPrefix}.lastName`,
+      },
+      {
+        title: translate('socialProtection.beneficiary.dob'),
+        field: `${nameDoBFieldPrefix}.dob`,
+        type: 'date',
+      },
+      ...Array.from({ length: LOC_LEVELS }, (_, i) => ({
+        title: translate(`location.locationType.${i}`),
+        render: (rowData) => locationFormatter(rowData?.individual?.location)[i] || '',
+        customFilterAndSearch: (term, rowData) => {
+          const locName = locationFormatter(rowData?.individual?.location)[i].toLowerCase() || '';
+          return locName.includes(term.toLowerCase());
+        },
+      })),
+      ...dynamicColumns,
+    ];
+
+    return allColumns.map((c) => ({
+      ...c,
+      width: c.field && c.field.includes('email') ? '200px' : '140px',
+      tableData: { filterValue: filters[c.title] || '' },
+    }));
+  }, [additionalColumns, filters, nameDoBFieldPrefix, translate, dynamicColumns]);
 
   const isSelectable = !!onSelectionChange;
 
@@ -256,7 +264,17 @@ function BeneficiaryTable({
             },
           },
         }}
-        onSelectionChange={isSelectable ? onSelectionChange : undefined}
+        onFilterChange={(appliedFilters) => {
+          const updatedFilters = {};
+          appliedFilters.forEach((filter) => {
+            if (filter?.value !== undefined) {
+              // keyed by column title because not all columns have field
+              updatedFilters[filter.column.title] = filter.value;
+            }
+          });
+          setFilters(updatedFilters);
+        }}
+        onSelectionChange={(rows) => (isSelectable && onSelectionChange(rows))}
         actions={actions}
         style={{ padding: '0 20px' }}
       />
