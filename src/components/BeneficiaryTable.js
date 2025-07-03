@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { injectIntl } from 'react-intl';
 import MaterialTable from 'material-table';
 import _ from 'lodash';
@@ -12,8 +12,10 @@ import {
   ThemeProvider,
   createMuiTheme,
 } from '@material-ui/core/styles';
+import { useDispatch } from 'react-redux';
 import {
   formatMessage,
+  fetchCustomFilter,
 } from '@openimis/fe-core';
 import {
   LOC_LEVELS,
@@ -22,83 +24,106 @@ import {
 import {
   MODULE_NAME,
 } from '../constants';
+import NumberFilter from './MaterialTableNumberFilter';
 
 const styles = (theme) => ({
   page: theme.page,
   paper: theme.paper.classes,
 });
 
-const exclusionKeys = [
-  'first_name', 'last_name', 'dob',
-  'location_name', 'location_code',
-  'report_synch', 'version',
-  'group_code', 'individual_role', 'recepien_info',
-];
+const getDynamicColumns = (translateFn, customFilters = []) => {
+  if (!customFilters || !customFilters.length) return [];
 
-const getDynamicColumns = (data, translateFn) => {
-  if (!data || !data.length) return [];
-
-  const sampleItem = data.find((item) => item.jsonExt && Object.keys(item.jsonExt).length > 0);
-  if (!sampleItem) return [];
-
-  return Object.keys(sampleItem.jsonExt)
-    .filter((key) => !exclusionKeys.includes(key))
-    .map((key) => {
-      const sampleValue = sampleItem.jsonExt[key];
-      let columnType = 'string';
-      let renderFn = (rowData) => {
-        const value = rowData.jsonExt?.[key];
-        if (value === null || value === undefined) return '';
-        return String(value);
-      };
-      let filterFn = (term, rowData) => {
-        const value = rowData.jsonExt?.[key];
-        if (value === null || value === undefined) return false;
-        return String(value).toLowerCase().includes(term.toLowerCase());
-      };
+  return customFilters
+    .map((filter) => {
+      const { field, type } = filter;
+      let renderFn;
+      let filterFn;
       let filterComponent;
 
-      if (typeof sampleValue === 'boolean') {
-        columnType = 'boolean';
-        renderFn = (rowData) => (rowData.jsonExt?.[key] ? translateFn('common.true') : translateFn('common.false'));
-        filterFn = (term, rowData) => {
-          if (term === 'all') return true;
-          return term === String(rowData.jsonExt?.[key]);
-        };
-        filterComponent = ({ columnDef, onFilterChanged }) => (
-          <Select
-            fullWidth
-            value={columnDef.tableData.filterValue || 'all'}
-            onChange={({ target }) => {
-              onFilterChanged(columnDef.tableData.id, target.value);
-            }}
-            displayEmpty
-          >
-            <MenuItem value="all">{translateFn('common.any')}</MenuItem>
-            <MenuItem value="true">{translateFn('common.true')}</MenuItem>
-            <MenuItem value="false">{translateFn('common.false')}</MenuItem>
-          </Select>
-        );
-      } else if (typeof sampleValue === 'number') {
-        columnType = 'numeric';
-      } else if (typeof sampleValue === 'object') {
-        renderFn = (rowData) => JSON.stringify(rowData.jsonExt?.[key]);
-      } else if (
-        typeof sampleValue === 'string'
-        && !Number.isNaN(sampleValue)
-        && !Number.isNaN(Date.parse(sampleValue))
-      ) {
-        columnType = 'date';
-        renderFn = (rowData) => {
-          const date = new Date(rowData.jsonExt?.[key]);
-          return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString();
-        };
+      switch (type) {
+        case 'boolean':
+          renderFn = (rowData) => (rowData.jsonExt?.[field] ? translateFn('common.true') : translateFn('common.false'));
+          filterFn = (term, rowData) => {
+            if (term === 'all') return true;
+            return term === String(rowData.jsonExt?.[field]);
+          };
+          filterComponent = ({ columnDef, onFilterChanged }) => (
+            <Select
+              fullWidth
+              value={columnDef.tableData.filterValue || 'all'}
+              onChange={({ target }) => {
+                onFilterChanged(columnDef.tableData.id, target.value);
+              }}
+              displayEmpty
+            >
+              <MenuItem value="all">{translateFn('common.any')}</MenuItem>
+              <MenuItem value="true">{translateFn('common.true')}</MenuItem>
+              <MenuItem value="false">{translateFn('common.false')}</MenuItem>
+            </Select>
+          );
+          break;
+
+        case 'integer':
+        case 'numeric':
+          filterComponent = NumberFilter;
+
+          filterFn = (filter, rowData) => {
+            const value = rowData.jsonExt?.[field];
+            if (value === null || value === undefined) return false;
+            const numValue = Number(value);
+            const filterValue = Number(filter?.value);
+
+            if (Number.isNaN(numValue)) return false;
+            if (filter?.value === undefined || filter?.value === '') return true;
+            if (Number.isNaN(filterValue)) return false;
+
+            switch (filter?.operator) {
+              case 'exact': return numValue === filterValue;
+              case 'lt': return numValue < filterValue;
+              case 'lte': return numValue <= filterValue;
+              case 'gt': return numValue > filterValue;
+              case 'gte': return numValue >= filterValue;
+              default: return numValue === filterValue;
+            }
+          };
+
+          renderFn = (rowData) => {
+            const value = rowData.jsonExt?.[field];
+            return value === null || value === undefined ? '' : String(value);
+          };
+          break;
+
+        case 'date':
+          renderFn = (rowData) => {
+            const date = new Date(rowData.jsonExt?.[field]);
+            return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString();
+          };
+          filterFn = (term, rowData) => {
+            const value = rowData.jsonExt?.[field];
+            if (value === null || value === undefined) return false;
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return false;
+            return date.toLocaleDateString().includes(term);
+          };
+          break;
+
+        case 'string':
+        default:
+          renderFn = (rowData) => {
+            const value = rowData.jsonExt?.[field];
+            return value === null || value === undefined ? '' : String(value);
+          };
+          filterFn = (term, rowData) => (
+            String(rowData.jsonExt?.[field]).toLowerCase().includes(term.toLowerCase())
+          );
+          break;
       }
 
       return {
-        title: _.startCase(key),
-        field: `jsonExt.${key}`,
-        type: columnType,
+        title: _.startCase(field),
+        field: `jsonExt.${field}`,
+        type,
         render: renderFn,
         filterComponent,
         customFilterAndSearch: filterFn,
@@ -123,10 +148,26 @@ function BeneficiaryTable({
   const translate = (key) => formatMessage(intl, MODULE_NAME, key);
 
   const [filters, setFilters] = React.useState({});
+  const [jsonExtFilters, setJsonExtFilters] = React.useState({});
+
+  const dispatch = useDispatch();
 
   const dynamicColumns = React.useMemo(() => (
-    getDynamicColumns(allRows, translate, filters)
-  ), [allRows, translate]);
+    getDynamicColumns(translate, jsonExtFilters)
+  ), [jsonExtFilters, translate]);
+
+  const params = [
+    'moduleName: "individual"',
+    'objectTypeName: "Individual"',
+    'additionalParams: "{\\"type\\":\\"INDIVIDUAL\\"}"',
+  ];
+  useEffect(() => {
+    dispatch(fetchCustomFilter(params))
+      .then((response) => {
+        const customFilters = response?.payload.data.customFilters.possibleFilters;
+        setJsonExtFilters(customFilters);
+      });
+  }, [fetchCustomFilter]);
 
   const tableTheme = createMuiTheme({
     palette: {
@@ -166,6 +207,7 @@ function BeneficiaryTable({
       },
       MuiIconButton: {
         root: {
+          color: theme.palette.primary.main,
           '&:hover': {
             backgroundColor: 'transparent',
           },
