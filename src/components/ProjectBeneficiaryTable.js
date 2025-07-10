@@ -5,17 +5,12 @@ import {
   formatMessageWithValues,
   useModulesManager,
 } from '@openimis/fe-core';
-import { bindActionCreators } from 'redux';
-import { connect } from 'react-redux';
+import { connect, useDispatch } from 'react-redux';
 import {
   Button,
   Typography,
 } from '@material-ui/core';
 import AddIcon from '@material-ui/icons/Add';
-import {
-  fetchProjectBeneficiaries,
-  fetchProjectGroupBeneficiaries,
-} from '../actions';
 import {
   MODULE_NAME,
   RIGHT_PROJECT_UPDATE,
@@ -25,6 +20,8 @@ import {
   ProjectBeneficiariyEnrollmentDialog,
   ProjectGroupBeneficiaryEnrollmentDialog,
 } from '../dialogs/ProjectEnrollmentDialog';
+import { REQUEST } from '../util/action-type';
+import { ACTION_TYPE } from '../reducer';
 
 function BaseProjectBeneficiaryTable({
   project,
@@ -32,12 +29,14 @@ function BaseProjectBeneficiaryTable({
   EnrollmentDialogComponent,
   rights,
   intl,
-  fetchProjectBeneficiaries,
   fetchingBeneficiaries,
   beneficiaries,
   beneficiariesTotalCount,
 }) {
   const orderBy = isGroup ? 'orderBy: ["group__code"]' : 'orderBy: ["individual__last_name", "individual__first_name"]';
+  const actionType = isGroup
+    ? ACTION_TYPE.SEARCH_PROJECT_GROUP_BENEFICIARIES
+    : ACTION_TYPE.SEARCH_PROJECT_BENEFICIARIES;
   const modulesManager = useModulesManager();
   const [allRows, setAllRows] = useState([]);
   const [enrollmentDialogOpen, setEnrollmentDialogOpen] = useState(false);
@@ -48,15 +47,17 @@ function BaseProjectBeneficiaryTable({
     { n: beneficiariesTotalCount },
   );
 
-  // Trigger fetch
+  const dispatch = useDispatch();
+  // Trigger fetch: batch & concat handled in projectBeneficiariesMiddleware & reducers
   useEffect(() => {
     if (project?.benefitPlan?.id) {
-      fetchProjectBeneficiaries(modulesManager, [
-        `project_Id: "${project.id}"`,
-        'isDeleted: false',
-        orderBy,
-        'first: 100', // TODO: switch to remote data
-      ]);
+      dispatch({
+        type: REQUEST(actionType),
+        meta: {
+          fetchAllForProjectId: project.id,
+          modulesManager,
+        },
+      });
     }
   }, [project?.benefitPlan?.id]);
 
@@ -119,13 +120,8 @@ const mapStateToPropsIndividual = (state) => ({
   beneficiariesTotalCount: state.socialProtection.projectBeneficiariesTotalCount,
 });
 
-const mapDispatchToPropsIndividual = (dispatch) => bindActionCreators({
-  fetchProjectBeneficiaries,
-}, dispatch);
-
 const ConnectedProjectBeneficiaryTable = connect(
   mapStateToPropsIndividual,
-  mapDispatchToPropsIndividual,
 )(BaseProjectBeneficiaryTable);
 
 export const ProjectBeneficiaryTable = injectIntl((props) => (
@@ -143,13 +139,8 @@ const mapStateToPropsGroup = (state) => ({
   beneficiariesTotalCount: state.socialProtection.projectGroupBeneficiariesTotalCount,
 });
 
-const mapDispatchToPropsGroup = (dispatch) => bindActionCreators({
-  fetchProjectBeneficiaries: fetchProjectGroupBeneficiaries,
-}, dispatch);
-
 const ConnectedProjectGroupBeneficiaryTable = connect(
   mapStateToPropsGroup,
-  mapDispatchToPropsGroup,
 )(BaseProjectBeneficiaryTable);
 
 export const ProjectGroupBeneficiaryTable = injectIntl((props) => (

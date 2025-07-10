@@ -204,7 +204,7 @@ function reducer(
         ...state,
         fetchingProjectGroupBeneficiaries: true,
         fetchedProjectGroupBeneficiaries: false,
-        projectGroupBeneficiaries: [],
+        projectGroupBeneficiaries: action.meta?.isBatch ? state.projectGroupBeneficiaries : [],
         projectGroupBeneficiariesPageInfo: {},
         projectGroupBeneficiariesTotalCount: 0,
         errorProjectGroupBeneficiaries: null,
@@ -263,23 +263,30 @@ function reducer(
         ...state,
         fetchingProjectBeneficiaries: true,
         fetchedProjectBeneficiaries: false,
-        projectBeneficiaries: [],
+        projectBeneficiaries: action.meta?.isBatch ? state.projectBeneficiaries : [],
         projectBeneficiariesPageInfo: {},
         projectBeneficiariesTotalCount: 0,
         errorProjectBeneficiaries: null,
       };
     case SUCCESS(ACTION_TYPE.SEARCH_PROJECT_BENEFICIARIES):
+      /* eslint-disable no-case-declarations */
+      const parsedBeneficiaries = parseData(action.payload.data.beneficiary)?.map((beneficiary) => ({
+        ...beneficiary,
+        project: { id: beneficiary?.project?.id ? decodeId(beneficiary.project.id) : null },
+        jsonExt: typeof beneficiary.jsonExt === 'string' ? JSON.parse(beneficiary.jsonExt) : beneficiary.jsonExt,
+        id: decodeId(beneficiary.id),
+      }));
       return {
         ...state,
         fetchingProjectBeneficiaries: false,
         fetchedProjectBeneficiaries: true,
-        projectBeneficiaries: parseData(action.payload.data.beneficiary)?.map((beneficiary) => ({
-          ...beneficiary,
-          project: { id: beneficiary?.project?.id ? decodeId(beneficiary.project.id) : null },
-          id: decodeId(beneficiary.id),
-        })),
+        projectBeneficiaries: action.meta?.isBatch
+          ? [...state.projectBeneficiaries, ...parsedBeneficiaries]
+          : parsedBeneficiaries,
         projectBeneficiariesPageInfo: pageInfo(action.payload.data.beneficiary),
-        projectBeneficiariesTotalCount: action.payload.data.beneficiary ? action.payload.data.beneficiary.totalCount : null,
+        projectBeneficiariesTotalCount: action.payload.data.beneficiary
+          ? action.payload.data.beneficiary.totalCount
+          : null,
         errorProjectBeneficiaries: formatGraphQLError(action.payload),
       };
     case ERROR(ACTION_TYPE.SEARCH_PROJECT_BENEFICIARIES):
@@ -377,23 +384,31 @@ function reducer(
         errorGroupBeneficiaries: formatGraphQLError(action.payload),
       };
     case SUCCESS(ACTION_TYPE.SEARCH_PROJECT_GROUP_BENEFICIARIES):
+      /* eslint-disable no-case-declarations */
+      const parsedGroupBeneficiaries = parseData(action.payload.data.groupBeneficiary)?.map((groupBeneficiary) => {
+        const response = ({
+          ...groupBeneficiary,
+          project: { id: groupBeneficiary?.project?.id ? decodeId(groupBeneficiary.project.id) : null },
+          jsonExt: typeof groupBeneficiary.jsonExt === 'string'
+            ? JSON.parse(groupBeneficiary.jsonExt)
+            : groupBeneficiary.jsonExt,
+          id: decodeId(groupBeneficiary.id),
+        });
+        if (response?.group?.id) {
+          response.group = ({
+            ...response.group,
+            id: decodeId(response.group.id),
+          });
+        }
+        return response;
+      });
       return {
         ...state,
         fetchingProjectGroupBeneficiaries: false,
         fetchedProjectGroupBeneficiaries: true,
-        projectGroupBeneficiaries: parseData(action.payload.data.groupBeneficiary)?.map((groupBeneficiary) => {
-          const response = ({
-            ...groupBeneficiary,
-            id: decodeId(groupBeneficiary.id),
-          });
-          if (response?.group?.id) {
-            response.group = ({
-              ...response.group,
-              id: decodeId(response.group.id),
-            });
-          }
-          return response;
-        }),
+        projectGroupBeneficiaries: action.meta?.isBatch
+          ? [...state.projectGroupBeneficiaries, ...parsedGroupBeneficiaries]
+          : parsedGroupBeneficiaries,
         projectGroupBeneficiariesPageInfo: pageInfo(action.payload.data.groupBeneficiary),
         projectGroupBeneficiariesTotalCount: action.payload.data.groupBeneficiary
           ? action.payload.data.groupBeneficiary.totalCount : null,

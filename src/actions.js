@@ -95,9 +95,9 @@ export function fetchBeneficiaries(modulesManager, params) {
   return graphql(payload, ACTION_TYPE.SEARCH_BENEFICIARIES);
 }
 
-export function fetchProjectBeneficiaries(modulesManager, params) {
+export function fetchProjectBeneficiaries(modulesManager, params, meta = {}) {
   const payload = formatPageQueryWithCount('beneficiary', params, BENEFICIARY_FULL_PROJECTION(modulesManager));
-  return graphql(payload, ACTION_TYPE.SEARCH_PROJECT_BENEFICIARIES);
+  return graphql(payload, ACTION_TYPE.SEARCH_PROJECT_BENEFICIARIES, meta);
 }
 
 export function fetchGroupBeneficiaries(modulesManager, params) {
@@ -109,13 +109,13 @@ export function fetchGroupBeneficiaries(modulesManager, params) {
   return graphql(payload, ACTION_TYPE.SEARCH_GROUP_BENEFICIARIES);
 }
 
-export function fetchProjectGroupBeneficiaries(modulesManager, params) {
+export function fetchProjectGroupBeneficiaries(modulesManager, params, meta = {}) {
   const payload = formatPageQueryWithCount(
     'groupBeneficiary',
     params,
     GROUP_BENEFICIARY_FULL_PROJECTION(modulesManager),
   );
-  return graphql(payload, ACTION_TYPE.SEARCH_PROJECT_GROUP_BENEFICIARIES);
+  return graphql(payload, ACTION_TYPE.SEARCH_PROJECT_GROUP_BENEFICIARIES, meta);
 }
 
 export function fetchBenefitPlanSchemaFields(params) {

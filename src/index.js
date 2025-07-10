@@ -85,6 +85,7 @@ import {
   ProjectChangelogTabLabel,
   ProjectChangelogTabPanel,
 } from './components/ProjectChangelogTab';
+import projectBeneficiariesMiddleware from './middlewares';
 
 const ROUTE_BENEFIT_PLANS = 'benefitPlans';
 const ROUTE_BENEFIT_PLAN = 'benefitPlans/benefitPlan';
@@ -208,6 +209,7 @@ const DEFAULT_CONFIG = {
       id: 'socialProtection.benefitPlans',
     },
   ],
+  middlewares: [projectBeneficiariesMiddleware],
 };
 
 export const SocialProtectionModule = (cfg) => ({ ...DEFAULT_CONFIG, ...cfg });
