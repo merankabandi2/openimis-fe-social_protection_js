@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { injectIntl } from 'react-intl';
 import {
+  decodeId,
   formatMessage,
   formatMessageWithValues,
   useModulesManager,
@@ -26,6 +27,11 @@ import {
   ProjectGroupBeneficiaryEnrollmentDialog,
 } from '../dialogs/ProjectEnrollmentDialog';
 
+const convertFieldName = (field) => (
+  // Handle nested objects (e.g., 'individual.firstName' -> 'individual__first_name')
+  field.replace(/\./g, '__').replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()
+);
+
 function BaseProjectBeneficiaryTable({
   project,
   isGroup,
@@ -35,28 +41,34 @@ function BaseProjectBeneficiaryTable({
   fetchProjectBeneficiaries,
   fetchingBeneficiaries,
   beneficiaries,
-  beneficiariesTotalCount,
 }) {
   const orderBy = isGroup ? 'orderBy: ["group__code"]' : 'orderBy: ["individual__last_name", "individual__first_name"]';
+  const payloadField = isGroup ? 'groupBeneficiary' : 'beneficiary';
   const modulesManager = useModulesManager();
-  const [allRows, setAllRows] = useState([]);
+  const [useRemote, setUseRemote] = useState(true);
+  const [localRows, setLocalRows] = useState([]);
   const [enrollmentDialogOpen, setEnrollmentDialogOpen] = useState(false);
+  const [initialTotalCount, setInitialTotalCount] = useState(0);
   const tableTitle = formatMessageWithValues(
     intl,
     MODULE_NAME,
     'projectBeneficiaries.enrolled',
-    { n: beneficiariesTotalCount },
+    { n: initialTotalCount },
   );
 
   // Trigger fetch
   useEffect(() => {
     if (project?.benefitPlan?.id) {
-      fetchProjectBeneficiaries(modulesManager, [
+      const params = [
         `project_Id: "${project.id}"`,
         'isDeleted: false',
         orderBy,
         'first: 100', // TODO: switch to remote data
-      ]);
+      ];
+      fetchProjectBeneficiaries(modulesManager, params)
+        .then((response) => {
+          setInitialTotalCount(response?.payload.data[payloadField].totalCount);
+        });
     }
   }, [project?.benefitPlan?.id]);
 
@@ -67,7 +79,9 @@ function BaseProjectBeneficiaryTable({
         jsonExt: typeof b.jsonExt === 'string' ? JSON.parse(b.jsonExt) : b.jsonExt,
       }
     ));
-    setAllRows(decoratedBeneficiaries);
+    const manyOrNoBeneficiaries = decoratedBeneficiaries.length < 1 || decoratedBeneficiaries.length > 100;
+    setUseRemote(manyOrNoBeneficiaries);
+    setLocalRows(manyOrNoBeneficiaries ? null : decoratedBeneficiaries);
   }, [beneficiaries]);
 
   const assignButtonComponentFn = () => (
@@ -88,15 +102,95 @@ function BaseProjectBeneficiaryTable({
     },
   ] : [];
 
+  const handleQueryChange = async ({
+    page, pageSize, filters, search, orderBy, orderDirection,
+  }) => {
+    const offset = page * pageSize;
+
+    // Build base filters
+    const gqlFilters = [
+      `project_Id: "${project.id}"`,
+      'isDeleted: false',
+      `first: ${pageSize}`,
+      `offset: ${offset}`,
+      'applyDefaultValidityFilter: true',
+    ];
+
+    // Handle global search
+    if (search) {
+      const sanitizedSearch = search.replace(/\\/g, '');
+      gqlFilters.push(`search: "${sanitizedSearch}"`);
+    }
+
+    // TODO: Handle per-column filters
+    filters?.forEach(({ column, value }) => {
+      const { field } = column;
+
+      if (!value || value === '' || value === 'all') return;
+
+      // Boolean columns
+      if (column.type === 'boolean') {
+        gqlFilters.push(`${field}: ${value}`);
+        return;
+      }
+
+      // Date fields
+      if (column.type === 'date') {
+        gqlFilters.push(`${field}_Gte: "${value}"`);
+        return;
+      }
+
+      // Known fields from the table
+      if (field) {
+        gqlFilters.push(`${field}_Icontains: "${value}"`);
+      }
+    });
+
+    // Handle ordering
+    if (orderBy) {
+      const prefix = orderDirection === 'desc' ? '-' : '';
+      gqlFilters.push(`orderBy: ["${prefix}${convertFieldName(orderBy.field)}"]`);
+    }
+
+    return fetchProjectBeneficiaries(modulesManager, gqlFilters)
+      .then((response) => {
+        const payload = response?.payload?.data[payloadField] || {};
+        const rows = (payload.edges || []).map(({ node }) => ({
+          ...node,
+          benefitPlan: { id: node?.benefitPlan?.id ? decodeId(node.benefitPlan.id) : null },
+          id: decodeId(node.id),
+          jsonExt: typeof node.jsonExt === 'string' ? JSON.parse(node.jsonExt) : node.jsonExt,
+        }));
+
+        return {
+          data: rows,
+          page,
+          pageSize,
+          totalCount: payload.totalCount || 0,
+        };
+      })
+      .catch((error) => {
+        // TODO: handle error
+        console.error('Error fetching beneficiaries:', error);
+        return {
+          data: [],
+          page: 0,
+          pageSize,
+          totalCount: 0,
+        };
+      });
+  };
+
   return (
     !!project?.id && (
       <>
         <BeneficiaryTable
-          allRows={allRows}
+          allRows={localRows}
           fetchingBeneficiaries={fetchingBeneficiaries}
           tableTitle={tableTitle}
           isGroup={isGroup}
           actions={actions}
+          onQueryChange={useRemote && handleQueryChange}
         />
         <EnrollmentDialogComponent
           open={enrollmentDialogOpen}
@@ -116,7 +210,6 @@ const mapStateToPropsIndividual = (state) => ({
   rights: state.core?.user?.i_user?.rights ?? [],
   fetchingBeneficiaries: state.socialProtection.fetchingProjectBeneficiaries,
   beneficiaries: state.socialProtection.projectBeneficiaries,
-  beneficiariesTotalCount: state.socialProtection.projectBeneficiariesTotalCount,
 });
 
 const mapDispatchToPropsIndividual = (dispatch) => bindActionCreators({
@@ -140,7 +233,6 @@ const mapStateToPropsGroup = (state) => ({
   rights: state.core?.user?.i_user?.rights ?? [],
   fetchingBeneficiaries: state.socialProtection.fetchingProjectGroupBeneficiaries,
   beneficiaries: state.socialProtection.projectGroupBeneficiaries,
-  beneficiariesTotalCount: state.socialProtection.projectGroupBeneficiariesTotalCount,
 });
 
 const mapDispatchToPropsGroup = (dispatch) => bindActionCreators({
