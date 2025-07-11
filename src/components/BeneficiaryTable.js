@@ -37,8 +37,15 @@ const getDynamicColumns = (translateFn, customFilters = []) => {
   return customFilters
     .map((filter) => {
       const { field, type } = filter;
-      let renderFn;
-      let filterFn;
+      let renderFn = (rowData) => {
+        const value = rowData.jsonExt?.[field];
+        return value === null || value === undefined ? '' : String(value);
+      };
+      let filterFn = (term, rowData) => {
+        const value = rowData.jsonExt?.[field];
+        if (value === null || value === undefined) return false;
+        return String(value).toLowerCase().includes(term.toLowerCase());
+      };
       let filterComponent;
 
       switch (type) {
@@ -72,8 +79,17 @@ const getDynamicColumns = (translateFn, customFilters = []) => {
             const value = rowData.jsonExt?.[field];
             if (value === null || value === undefined) return false;
             const numValue = Number(value);
-            const filterValue = Number(filter?.value);
 
+            // Handle case when filter is a string (global search)
+            if (typeof filter === 'string') {
+              if (filter === '') return true; // Empty search matches all
+              const searchNum = Number(filter);
+              if (Number.isNaN(searchNum)) return false;
+              return numValue === searchNum; // Exact match for global search
+            }
+
+            // Handle case when filter is an object (column filter)
+            const filterValue = Number(filter?.value);
             if (Number.isNaN(numValue)) return false;
             if (filter?.value === undefined || filter?.value === '') return true;
             if (Number.isNaN(filterValue)) return false;
@@ -86,11 +102,6 @@ const getDynamicColumns = (translateFn, customFilters = []) => {
               case 'gte': return numValue >= filterValue;
               default: return numValue === filterValue;
             }
-          };
-
-          renderFn = (rowData) => {
-            const value = rowData.jsonExt?.[field];
-            return value === null || value === undefined ? '' : String(value);
           };
           break;
 
@@ -108,15 +119,7 @@ const getDynamicColumns = (translateFn, customFilters = []) => {
           };
           break;
 
-        case 'string':
         default:
-          renderFn = (rowData) => {
-            const value = rowData.jsonExt?.[field];
-            return value === null || value === undefined ? '' : String(value);
-          };
-          filterFn = (term, rowData) => (
-            String(rowData.jsonExt?.[field]).toLowerCase().includes(term.toLowerCase())
-          );
           break;
       }
 
