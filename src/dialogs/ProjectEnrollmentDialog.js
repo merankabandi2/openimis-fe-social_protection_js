@@ -141,7 +141,7 @@ function ProjectEnrollmentDialog({
             break;
           case 'date':
             customFilters.push(
-              `${jsonExtField}__gte__date=\\"${new Date(value).toISOString().substr(0, 10)}\\"`,
+              `${jsonExtField}__gte__date=\\"${new Date(value).toISOString().substring(0, 10)}\\"`,
             );
             break;
           default:
@@ -156,7 +156,7 @@ function ProjectEnrollmentDialog({
             break;
           case 'date':
             gqlFilters.push(
-              `${gqlField}_Gte: "${new Date(value).toISOString().substr(0, 10)}"`,
+              `${gqlField}_Gte: "${new Date(value).toISOString().substring(0, 10)}"`,
             );
             break;
           case 'location':
@@ -166,7 +166,8 @@ function ProjectEnrollmentDialog({
             break;
           default:
             if (field) {
-              gqlFilters.push(`${gqlField}_Icontains: "${value}"`);
+              const operator = field.includes('dob') ? '' : '_Icontains';
+              gqlFilters.push(`${gqlField}${operator}: "${value}"`);
             }
         }
       }

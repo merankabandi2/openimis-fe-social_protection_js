@@ -115,7 +115,7 @@ const getDynamicColumns = (translateFn, customFilters = []) => {
             if (value === null || value === undefined) return false;
             const date = new Date(value);
             if (Number.isNaN(date.getTime())) return false;
-            return date.toISOString().substr(0, 10).includes(term);
+            return date.toISOString().substring(0, 10).includes(term);
           };
           break;
 
@@ -260,7 +260,6 @@ function BeneficiaryTable({
       {
         title: translate('socialProtection.beneficiary.dob'),
         field: `${nameDoBFieldPrefix}.dob`,
-        type: 'date',
       },
       ...Array.from({ length: LOC_LEVELS }, (_, i) => ({
         title: translate(`location.locationType.${i}`),
