@@ -115,7 +115,7 @@ const getDynamicColumns = (translateFn, customFilters = []) => {
             if (value === null || value === undefined) return false;
             const date = new Date(value);
             if (Number.isNaN(date.getTime())) return false;
-            return date.toLocaleDateString().includes(term);
+            return date.toISOString().substr(0, 10).includes(term);
           };
           break;
 
@@ -145,6 +145,7 @@ function BeneficiaryTable({
   tableTitle,
   actions,
   isGroup,
+  appliedFilters,
 }) {
   const nameDoBFieldPrefix = isGroup ? 'group.head' : 'individual';
   const locationFieldPrefix = isGroup ? 'group' : 'individual';
@@ -159,6 +160,12 @@ function BeneficiaryTable({
   const dynamicColumns = React.useMemo(() => (
     getDynamicColumns(translate, jsonExtFilters)
   ), [jsonExtFilters, translate]);
+
+  useEffect(() => {
+    if (appliedFilters) {
+      setFilters(appliedFilters);
+    }
+  }, [appliedFilters]);
 
   const params = [
     'moduleName: "individual"',
@@ -327,6 +334,7 @@ function BeneficiaryTable({
           },
         }}
         onFilterChange={(appliedFilters) => {
+          // This is only triggered for local data
           const updatedFilters = {};
           appliedFilters.forEach((filter) => {
             if (filter?.value !== undefined) {

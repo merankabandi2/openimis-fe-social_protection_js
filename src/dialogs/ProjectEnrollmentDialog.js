@@ -57,8 +57,8 @@ const styles = () => ({
 });
 
 const convertFieldName = (field) => (
-  // Handle nested objects (e.g., 'individual.firstName' -> 'individual__first_name')
-  field.replace(/\./g, '__').replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()
+  // Handle nested objects (e.g., 'individual.firstName' -> 'individual_FirstName')
+  field.replace(/\.([a-z])/g, (_, char) => `_${char.toUpperCase()}`)
 );
 
 function ProjectEnrollmentDialog({
@@ -87,6 +87,7 @@ function ProjectEnrollmentDialog({
     'projectBeneficiaries.activeSelected',
     { n: selectedIds.size },
   );
+  const [filters, setFilters] = React.useState({});
 
   const handleQueryChange = async ({
     page, pageSize, filters, search, orderBy, orderDirection,
@@ -106,29 +107,66 @@ function ProjectEnrollmentDialog({
       gqlFilters.push(`search: "${sanitizedSearch}"`);
     }
 
-    // TODO: Handle per-column filters
+    const customFilters = [];
     filters?.forEach(({ column, value }) => {
-      const { field } = column;
+      const { field, type } = column;
 
       if (!value || value === '' || value === 'all') return;
 
-      // Boolean columns
-      if (column.type === 'boolean') {
-        gqlFilters.push(`${field}: ${value}`);
-        return;
-      }
+      // Handle jsonExt fields specially
+      if (field.includes('jsonExt')) {
+        const jsonExtField = field.replace('jsonExt.', '');
 
-      // Date fields
-      if (column.type === 'date') {
-        gqlFilters.push(`${field}_Gte: "${value}"`);
-        return;
-      }
+        switch (type) {
+          case 'string':
+            customFilters.push(`${jsonExtField}__icontains__string=\\"${value}\\"`);
+            break;
+          case 'boolean':
+            customFilters.push(`${jsonExtField}__exact__boolean=${value}`);
+            break;
+          case 'integer':
+          case 'numeric':
+            if (typeof value === 'object') {
+              if (value.value === undefined) break;
 
-      // Known fields from the table
-      if (field) {
-        gqlFilters.push(`${field}_Icontains: "${value}"`);
+              const operator = value.operator || 'exact';
+              customFilters.push(`${jsonExtField}__${operator}__${type}=${value.value}`);
+            } else if (value !== undefined) {
+              customFilters.push(`${jsonExtField}__exact__${type}=${value}`);
+            }
+            break;
+          case 'date':
+            customFilters.push(
+              `${jsonExtField}__gte__date=\\"${new Date(value).toISOString().substr(0, 10)}\\"`,
+            );
+            break;
+          default:
+            customFilters.push(`${jsonExtField}__icontains__string=\\"${value}\\"`);
+        }
+      } else {
+        const gqlField = convertFieldName(field);
+        // Non-jsonExt fields
+        switch (type) {
+          case 'boolean':
+            gqlFilters.push(`${gqlField}: ${value}`);
+            break;
+          case 'date':
+            gqlFilters.push(
+              `${gqlField}_Gte: "${new Date(value).toISOString().substr(0, 10)}"`,
+            );
+            break;
+          default:
+            if (field) {
+              gqlFilters.push(`${gqlField}_Icontains: "${value}"`);
+            }
+        }
       }
     });
+
+    // Add collected custom filters to gqlFilters if any exist
+    if (customFilters.length > 0) {
+      gqlFilters.push(`customFilters: [${customFilters.map((f) => `"${f}"`).join(',')}]`);
+    }
 
     if (orderBy) {
       const prefix = orderDirection === 'desc' ? '-' : '';
@@ -152,6 +190,13 @@ function ProjectEnrollmentDialog({
     });
 
     setPageData(rows);
+
+    // retain filter state to pass back to BeneficiaryTable
+    const appliedFilters = {};
+    filters.forEach((f) => {
+      appliedFilters[f.column.title] = f.value;
+    });
+    setFilters(appliedFilters);
 
     return {
       data: rows,
@@ -278,6 +323,7 @@ function ProjectEnrollmentDialog({
           onSelectionChange={onSelectionChange}
           tableTitle={tableTitle}
           isGroup={isGroup}
+          appliedFilters={filters}
         />
       </DialogContent>
 
