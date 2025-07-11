@@ -89,6 +89,8 @@ function ProjectEnrollmentDialog({
   );
   const [filters, setFilters] = React.useState({});
 
+  const payloadField = isGroup ? 'groupBeneficiary' : 'beneficiary';
+
   const handleQueryChange = async ({
     page, pageSize, filters, search, orderBy, orderDirection,
   }) => {
@@ -174,7 +176,7 @@ function ProjectEnrollmentDialog({
     }
 
     const response = await fetchBeneficiaries(modulesManager, gqlFilters);
-    const payload = response?.payload?.data?.beneficiary || {};
+    const payload = response?.payload?.data?.[payloadField] || {};
     const rows = (payload.edges || []).map(({ node }) => {
       const decodedId = decodeId(node.id);
       return {
