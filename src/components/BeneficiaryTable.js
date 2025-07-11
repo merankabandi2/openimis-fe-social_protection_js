@@ -264,6 +264,8 @@ function BeneficiaryTable({
       },
       ...Array.from({ length: LOC_LEVELS }, (_, i) => ({
         title: translate(`location.locationType.${i}`),
+        type: 'location',
+        level: i,
         render: (rowData) => locationFormatter(rowData?.[locationFieldPrefix]?.location)[i] || '',
         customFilterAndSearch: (term, rowData) => {
           const locName = locationFormatter(rowData?.[locationFieldPrefix]?.location)[i].toLowerCase() || '';

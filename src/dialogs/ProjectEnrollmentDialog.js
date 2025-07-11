@@ -58,7 +58,7 @@ const styles = () => ({
 
 const convertFieldName = (field) => (
   // Handle nested objects (e.g., 'individual.firstName' -> 'individual_FirstName')
-  field.replace(/\.([a-z])/g, (_, char) => `_${char.toUpperCase()}`)
+  (field || '').replace(/\.([a-z])/g, (_, char) => `_${char.toUpperCase()}`)
 );
 
 function ProjectEnrollmentDialog({
@@ -110,13 +110,15 @@ function ProjectEnrollmentDialog({
     }
 
     const customFilters = [];
+    const locationFilters = [];
+
     filters?.forEach(({ column, value }) => {
       const { field, type } = column;
 
       if (!value || value === '' || value === 'all') return;
 
       // Handle jsonExt fields specially
-      if (field.includes('jsonExt')) {
+      if (field && field.includes('jsonExt')) {
         const jsonExtField = field.replace('jsonExt.', '');
 
         switch (type) {
@@ -157,6 +159,11 @@ function ProjectEnrollmentDialog({
               `${gqlField}_Gte: "${new Date(value).toISOString().substr(0, 10)}"`,
             );
             break;
+          case 'location':
+            if (column.level !== undefined && value) {
+              locationFilters.push(`${column.level}:${value}`);
+            }
+            break;
           default:
             if (field) {
               gqlFilters.push(`${gqlField}_Icontains: "${value}"`);
@@ -164,6 +171,11 @@ function ProjectEnrollmentDialog({
         }
       }
     });
+
+    // Combine multiple location filters into a single filter parameter
+    if (locationFilters.length > 0) {
+      gqlFilters.push(`location: "${locationFilters.join(',')}"`);
+    }
 
     // Add collected custom filters to gqlFilters if any exist
     if (customFilters.length > 0) {
