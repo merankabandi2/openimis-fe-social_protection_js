@@ -38,7 +38,6 @@ function BaseProjectBeneficiaryTable({
     ? ACTION_TYPE.SEARCH_PROJECT_GROUP_BENEFICIARIES
     : ACTION_TYPE.SEARCH_PROJECT_BENEFICIARIES;
   const modulesManager = useModulesManager();
-  const [allRows, setAllRows] = useState([]);
   const [enrollmentDialogOpen, setEnrollmentDialogOpen] = useState(false);
   const tableTitle = formatMessageWithValues(
     intl,
@@ -60,16 +59,6 @@ function BaseProjectBeneficiaryTable({
       });
     }
   }, [project?.benefitPlan?.id]);
-
-  useEffect(() => {
-    const decoratedBeneficiaries = (beneficiaries || []).map((b) => (
-      {
-        ...b,
-        jsonExt: typeof b.jsonExt === 'string' ? JSON.parse(b.jsonExt) : b.jsonExt,
-      }
-    ));
-    setAllRows(decoratedBeneficiaries);
-  }, [beneficiaries]);
 
   const assignButtonComponentFn = () => (
     <Button
@@ -93,7 +82,7 @@ function BaseProjectBeneficiaryTable({
     !!project?.id && (
       <>
         <BeneficiaryTable
-          allRows={allRows}
+          allRows={beneficiaries}
           fetchingBeneficiaries={fetchingBeneficiaries}
           tableTitle={tableTitle}
           isGroup={isGroup}
