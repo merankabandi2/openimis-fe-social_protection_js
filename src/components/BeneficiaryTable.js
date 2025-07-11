@@ -135,7 +135,8 @@ const getDynamicColumns = (translateFn, customFilters = []) => {
 function BeneficiaryTable({
   intl,
   theme,
-  allRows,
+  allRows, // expect either allRows or onQueryChange to be specified, not both at the same time
+  onQueryChange,
   fetchingBeneficiaries,
   onSelectionChange,
   tableTitle,
@@ -278,7 +279,7 @@ function BeneficiaryTable({
       <MaterialTable
         title={tableTitle}
         columns={columns}
-        data={allRows}
+        data={onQueryChange || allRows}
         isLoading={fetchingBeneficiaries}
         options={{
           selection: isSelectable,

@@ -10,7 +10,7 @@ import {
 } from '@material-ui/core';
 import CloseIcon from '@material-ui/icons/Close';
 import { withStyles, withTheme } from '@material-ui/core/styles';
-import { connect } from 'react-redux';
+import { connect, useDispatch } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import {
   formatMessage,
@@ -20,8 +20,6 @@ import {
   journalize,
 } from '@openimis/fe-core';
 import {
-  fetchProjectBeneficiaries,
-  fetchProjectGroupBeneficiaries,
   fetchBeneficiaries,
   fetchGroupBeneficiaries,
   enrollProject,
@@ -31,6 +29,8 @@ import {
   MODULE_NAME,
 } from '../constants';
 import BeneficiaryTable from '../components/BeneficiaryTable';
+import { REQUEST } from '../util/action-type';
+import { ACTION_TYPE } from '../reducer';
 
 const styles = () => ({
   dialogPaper: {
@@ -56,6 +56,11 @@ const styles = () => ({
   },
 });
 
+const convertFieldName = (field) => (
+  // Handle nested objects (e.g., 'individual.firstName' -> 'individual__first_name')
+  field.replace(/\./g, '__').replace(/([a-z])([A-Z])/g, '$1_$2').toLowerCase()
+);
+
 function ProjectEnrollmentDialog({
   intl,
   classes,
@@ -64,11 +69,8 @@ function ProjectEnrollmentDialog({
   project,
   enrolledBeneficiaries,
   isGroup,
-  orderBy,
   fetchBeneficiaries,
   fetchingBeneficiaries,
-  fetchProjectBeneficiaries,
-  beneficiaries,
   enroll,
   submittingMutation,
   mutation,
@@ -76,93 +78,180 @@ function ProjectEnrollmentDialog({
 }) {
   const prevSubmittingMutationRef = useRef();
   const modulesManager = useModulesManager();
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [allRows, setAllRows] = useState([]);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [pageData, setPageData] = useState([]);
+  const translate = (key) => formatMessage(intl, MODULE_NAME, key);
   const tableTitle = formatMessageWithValues(
     intl,
     MODULE_NAME,
     'projectBeneficiaries.activeSelected',
-    { n: selectedRows?.length || 0 },
+    { n: selectedIds.size },
   );
 
-  const translate = (key) => formatMessage(intl, MODULE_NAME, key);
+  const handleQueryChange = async ({
+    page, pageSize, filters, search, orderBy, orderDirection,
+  }) => {
+    const offset = page * pageSize;
+    const gqlFilters = [
+      `benefitPlan_Id: "${project.benefitPlan.id}"`,
+      'isDeleted: false',
+      'status: ACTIVE',
+      `villageOrChildOf: ${decodeId(project.location.id)}`,
+      `first: ${pageSize}`,
+      `offset: ${offset}`,
+    ];
 
-  // Sync selected rows & check status on dialog open
-  useEffect(() => {
-    const enrolled = enrolledBeneficiaries || [];
-    setSelectedRows(enrolled);
+    if (search) {
+      const sanitizedSearch = search.replace(/\\/g, '');
+      gqlFilters.push(`search: "${sanitizedSearch}"`);
+    }
 
-    const checkedIds = new Set(enrolled.map((b) => b.id));
-    setAllRows((prevRows) => {
-      // If we already have rows, just update their checked status
-      if (prevRows.length > 0 && beneficiaries.length === prevRows.length) {
-        prevRows.forEach((row) => ({
-          ...row,
-          tableData: {
-            ...row.tableData,
-            checked: checkedIds.has(row.id),
-          },
-        }));
-        return prevRows;
+    // TODO: Handle per-column filters
+    filters?.forEach(({ column, value }) => {
+      const { field } = column;
+
+      if (!value || value === '' || value === 'all') return;
+
+      // Boolean columns
+      if (column.type === 'boolean') {
+        gqlFilters.push(`${field}: ${value}`);
+        return;
       }
 
-      // Otherwise create new rows (only when beneficiaries actually change)
-      return beneficiaries.map((b) => ({
-        ...b,
-        jsonExt: typeof b.jsonExt === 'string' ? JSON.parse(b.jsonExt) : b.jsonExt,
-        tableData: { checked: checkedIds.has(b.id) },
-      }));
+      // Date fields
+      if (column.type === 'date') {
+        gqlFilters.push(`${field}_Gte: "${value}"`);
+        return;
+      }
+
+      // Known fields from the table
+      if (field) {
+        gqlFilters.push(`${field}_Icontains: "${value}"`);
+      }
     });
-  }, [beneficiaries, enrolledBeneficiaries]);
 
-  // Trigger fetch when dialog opens
-  useEffect(() => {
-    if (open && project?.benefitPlan?.id) {
-      fetchBeneficiaries(modulesManager, [
-        `benefitPlan_Id: "${project.benefitPlan.id}"`,
-        'isDeleted: false',
-        'status: ACTIVE',
-        `villageOrChildOf: ${decodeId(project.location.id)}`,
-        orderBy,
-        'first: 100', // TODO: switch to remote data
-      ]);
+    if (orderBy) {
+      const prefix = orderDirection === 'desc' ? '-' : '';
+      gqlFilters.push(`orderBy: ["${prefix}${convertFieldName(orderBy.field)}"]`);
     }
-  }, [open, project?.benefitPlan?.id]);
 
-  const onSelectionChange = (rows) => setSelectedRows(rows);
+    const response = await fetchBeneficiaries(modulesManager, gqlFilters);
+    const payload = response?.payload?.data?.beneficiary || {};
+    const rows = (payload.edges || []).map(({ node }) => {
+      const decodedId = decodeId(node.id);
+      return {
+        ...node,
+        id: decodedId,
+        project: { id: node?.project?.id ? decodeId(node.project.id) : null },
+        jsonExt: typeof node.jsonExt === 'string' ? JSON.parse(node.jsonExt) : node.jsonExt,
+        tableData: {
+          ...node.tableData,
+          checked: selectedIds.has(decodedId),
+        },
+      };
+    });
+
+    setPageData(rows);
+
+    return {
+      data: rows,
+      page,
+      pageSize,
+      totalCount: payload.totalCount || 0,
+    };
+  };
+
+  const onSelectionChange = (selectedRows) => {
+    // Create a new Set to avoid direct state mutation
+    const selectedIdsCopy = new Set(selectedIds);
+
+    const currentPageIds = new Set(pageData.map((row) => row.id));
+    const newlySelectedIds = new Set(selectedRows.map((row) => row.id));
+
+    // remove deselected
+    currentPageIds.forEach((id) => {
+      if (!newlySelectedIds.has(id) && selectedIdsCopy.has(id)) {
+        selectedIdsCopy.delete(id);
+      }
+    });
+
+    // Add all newly selected rows
+    newlySelectedIds.forEach((id) => {
+      selectedIdsCopy.add(id);
+    });
+
+    setSelectedIds(selectedIdsCopy);
+
+    const updatedPageData = pageData.map((row) => ({
+      ...row,
+      tableData: {
+        ...row.tableData,
+        checked: selectedIdsCopy.has(row.id),
+      },
+    }));
+
+    setPageData(updatedPageData);
+  };
 
   const onSave = () => {
     enroll(
       {
         projectId: project.id,
-        ids: selectedRows.map((r) => r.id),
+        ids: Array.from(selectedIds),
       },
       formatMessageWithValues(
         intl,
         MODULE_NAME,
         'project.enroll.mutationLabel',
-        { name: project.name, n: selectedRows?.length || 0 },
+        { name: project.name, n: selectedIds.size },
       ),
     );
 
     onClose();
   };
 
+  const dispatch = useDispatch();
+  const actionType = isGroup
+    ? ACTION_TYPE.SEARCH_PROJECT_GROUP_BENEFICIARIES
+    : ACTION_TYPE.SEARCH_PROJECT_BENEFICIARIES;
+
   useEffect(() => {
     if (prevSubmittingMutationRef.current && !submittingMutation) {
       journalize(mutation);
     }
     if (mutation?.clientMutationId) {
-      fetchProjectBeneficiaries(modulesManager, [
-        `project_Id: "${project.id}"`,
-        'isDeleted: false',
-      ]);
+      dispatch({
+        type: REQUEST(actionType),
+        meta: {
+          fetchAllForProjectId: project.id,
+          modulesManager,
+        },
+      });
     }
   }, [submittingMutation]);
 
   useEffect(() => {
     prevSubmittingMutationRef.current = submittingMutation;
   });
+
+  useEffect(() => {
+    if (enrolledBeneficiaries?.length) {
+      const enrolledIds = new Set(enrolledBeneficiaries.map((b) => b.id));
+      setSelectedIds(enrolledIds);
+
+      // Update current page data if it exists
+      if (pageData.length) {
+        const updatedData = pageData.map((row) => ({
+          ...row,
+          tableData: {
+            ...row.tableData,
+            checked: enrolledIds.has(row.id) || !!row.project?.id,
+          },
+        }));
+        setPageData(updatedData);
+      }
+    }
+  }, [enrolledBeneficiaries]);
 
   return (
     <Dialog open={open} onClose={onClose} classes={{ paper: classes.dialogPaper }}>
@@ -184,7 +273,7 @@ function ProjectEnrollmentDialog({
         </div>
 
         <BeneficiaryTable
-          allRows={allRows}
+          onQueryChange={handleQueryChange}
           fetchingBeneficiaries={fetchingBeneficiaries}
           onSelectionChange={onSelectionChange}
           tableTitle={tableTitle}
@@ -209,13 +298,11 @@ function ProjectEnrollmentDialog({
 
 const mapStateToPropsBeneficiary = (state) => ({
   fetchingBeneficiaries: state.socialProtection.fetchingBeneficiaries,
-  beneficiaries: state.socialProtection.beneficiaries,
   submittingMutation: state.socialProtection.submittingMutation,
   mutation: state.socialProtection.mutation,
 });
 
 const mapDispatchToPropsBeneficiary = (dispatch) => bindActionCreators({
-  fetchProjectBeneficiaries,
   fetchBeneficiaries,
   enroll: enrollProject,
   journalize,
@@ -223,13 +310,11 @@ const mapDispatchToPropsBeneficiary = (dispatch) => bindActionCreators({
 
 const mapStateToPropsGroupBeneficiary = (state) => ({
   fetchingBeneficiaries: state.socialProtection.fetchingGroupBeneficiaries,
-  beneficiaries: state.socialProtection.groupBeneficiaries,
   submittingMutation: state.socialProtection.submittingMutation,
   mutation: state.socialProtection.mutation,
 });
 
 const mapDispatchToPropsGroupBeneficiary = (dispatch) => bindActionCreators({
-  fetchProjectBeneficiaries: fetchProjectGroupBeneficiaries,
   fetchBeneficiaries: fetchGroupBeneficiaries,
   enroll: enrollGroupProject,
   journalize,
