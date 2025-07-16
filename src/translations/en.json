@@ -209,6 +209,31 @@
       },
       "mutationLabel": "Restore project {name}"
     },
-    "isDeleted": "Show Deleted"
+    "enroll": {
+      "mutationLabel": "Enrolled {n} beneficiaries in project {name}"
+    },
+    "isDeleted": "Show Deleted",
+    "searcherResultsTitleHistory": "{projectsHistoryTotalCount} Historical Records Found",
+    "version": "Version",
+    "dateUpdated": "Date Updated",
+    "userUpdated": "User Updated"
+    },
+  "projectChangelog": {
+    "label": "Changelog"
+  },
+  "projectBeneficiaries": {
+    "label": "Beneficiaries",
+    "enroll": "Assign Beneficiaries",
+    "dialogTitle": "Assign Active Beneficiaries",
+    "dialogSubtitle": "Select active beneficiaries to assign to the project",
+    "save": "Save",
+    "filterPlaceholder": "Filter...",
+    "activeSelected": "{n} active beneficiaries selected",
+    "enrolled": "{n} Beneficiaries Assigned"
+  },
+  "common": {
+    "true": "Yes",
+    "false": "No",
+    "any": "Any"
   }
 }
