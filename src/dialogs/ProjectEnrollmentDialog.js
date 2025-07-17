@@ -27,6 +27,7 @@ import {
 } from '../actions';
 import {
   MODULE_NAME,
+  DEFAULT_PAGE_SIZE,
 } from '../constants';
 import BeneficiaryTable from '../components/BeneficiaryTable';
 import { REQUEST } from '../util/action-type';
@@ -80,6 +81,7 @@ function ProjectEnrollmentDialog({
   const modulesManager = useModulesManager();
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [pageData, setPageData] = useState([]);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const translate = (key) => formatMessage(intl, MODULE_NAME, key);
   const tableTitle = formatMessageWithValues(
     intl,
@@ -92,15 +94,19 @@ function ProjectEnrollmentDialog({
   const payloadField = isGroup ? 'groupBeneficiary' : 'beneficiary';
 
   const handleQueryChange = async ({
-    page, pageSize, filters, search, orderBy, orderDirection,
+    page, pageSize: newPageSize, filters, search, orderBy, orderDirection,
   }) => {
+    if (newPageSize !== pageSize) {
+      setPageSize(newPageSize);
+    }
+
     const offset = page * pageSize;
     const gqlFilters = [
       `benefitPlan_Id: "${project.benefitPlan.id}"`,
       'isDeleted: false',
       'status: ACTIVE',
       `villageOrChildOf: ${decodeId(project.location.id)}`,
-      `first: ${pageSize}`,
+      `first: ${newPageSize}`,
       `offset: ${offset}`,
     ];
 
@@ -216,7 +222,7 @@ function ProjectEnrollmentDialog({
     return {
       data: rows,
       page,
-      pageSize,
+      newPageSize,
       totalCount: payload.totalCount || 0,
     };
   };
@@ -339,6 +345,7 @@ function ProjectEnrollmentDialog({
           tableTitle={tableTitle}
           isGroup={isGroup}
           appliedFilters={filters}
+          appliedPageSize={pageSize}
         />
       </DialogContent>
 
