@@ -37,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
 function ProjectTabPanel({
   intl,
   rights,
-  project,
+  edited,
   setConfirmedAction,
   onActiveTabChange,
 }) {
@@ -54,7 +54,7 @@ function ProjectTabPanel({
   };
 
   return (
-    !!project?.id && (
+    !!edited?.id && (
     <Paper className={classes.paper}>
       <Grid container className={`${classes.tableTitle} ${classes.tabs}`}>
         <Contributions
@@ -72,7 +72,7 @@ function ProjectTabPanel({
         intl={intl}
         rights={rights}
         value={activeTab}
-        project={project}
+        project={edited}
         setConfirmedAction={setConfirmedAction}
         classes={classes}
       />

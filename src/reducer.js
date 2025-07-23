@@ -228,6 +228,13 @@ function reducer(
         projectsTotalCount: 0,
         errorProjects: null,
       };
+    case REQUEST(ACTION_TYPE.GET_PROJECT):
+      return {
+        ...state,
+        fetchingProject: true,
+        fetchedProject: false,
+        project: null,
+      };
     case REQUEST(ACTION_TYPE.SEARCH_PROJECTS_HISTORY):
       return {
         ...state,
@@ -294,13 +301,6 @@ function reducer(
         ...state,
         fetchingProjectBeneficiaries: false,
         errorProjectBeneficiaries: formatServerError(action.payload),
-      };
-    case REQUEST(ACTION_TYPE.GET_PROJECT):
-      return {
-        ...state,
-        fetchingProject: true,
-        fetchedProject: false,
-        project: null,
       };
     case SUCCESS(ACTION_TYPE.SEARCH_BENEFIT_PLANS):
       return {
@@ -703,6 +703,15 @@ function reducer(
         errorBenefitPlan: null,
         fetchedBenefitPlan: false,
         benefitPlan: null,
+        mutation: null,
+      };
+    case CLEAR(ACTION_TYPE.GET_PROJECT):
+      return {
+        ...state,
+        fetchingProject: false,
+        errorProject: null,
+        fetchedProject: false,
+        project: null,
         mutation: null,
       };
     case CLEAR(ACTION_TYPE.BENEFICIARY_EXPORT):

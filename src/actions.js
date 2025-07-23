@@ -591,6 +591,12 @@ export const clearGroupBeneficiaryExport = () => (dispatch) => {
   });
 };
 
+export const clearProject = () => (dispatch) => {
+  dispatch({
+    type: CLEAR(ACTION_TYPE.GET_PROJECT),
+  });
+};
+
 // formatTaskResolveGQL and  resolveTask are exact copy of one from tasksManagement.
 // However, import from other @openimis/fe-{modue} than fe-core is not possible.
 export const formatTaskResolveGQL = (task, user, approveOrFail, additionalData) => `
