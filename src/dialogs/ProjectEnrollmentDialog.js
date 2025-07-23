@@ -316,6 +316,19 @@ function ProjectEnrollmentDialog({
         }));
         setPageData(updatedData);
       }
+    } else {
+      setSelectedIds(new Set());
+
+      if (pageData.length) {
+        const clearedData = pageData.map((row) => ({
+          ...row,
+          tableData: {
+            ...row.tableData,
+            checked: false,
+          },
+        }));
+        setPageData(clearedData);
+      }
     }
   }, [enrolledBeneficiaries]);
 
