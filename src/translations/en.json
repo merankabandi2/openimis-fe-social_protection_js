@@ -213,6 +213,7 @@
       "mutationLabel": "Enrolled {n} beneficiaries in project {name}"
     },
     "isDeleted": "Show Deleted",
+    "allowsMultipleEnrollments": "Allow beneficiaries to enroll in multiple projects",
     "searcherResultsTitleHistory": "{projectsHistoryTotalCount} Historical Records Found",
     "version": "Version",
     "dateUpdated": "Date Updated",

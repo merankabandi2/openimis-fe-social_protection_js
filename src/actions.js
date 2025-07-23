@@ -78,6 +78,7 @@ const PROJECT_FULL_PROJECTION = (modulesManager) => [
   'workingDays',
   'activity {id, name}',
   'location' + modulesManager.getProjection('location.Location.FlatProjection'),
+  'allowsMultipleEnrollments',
   'isDeleted',
   'userUpdated {username}',
   'version',
@@ -330,6 +331,8 @@ function formatProjectGQL(project) {
     ${project?.name ? `name: "${formatGQLString(project.name)}"` : ''}
     ${project?.targetBeneficiaries ? `targetBeneficiaries: ${project.targetBeneficiaries}` : ''}
     ${project?.workingDays ? `workingDays: ${project.workingDays}` : ''}
+    ${(project?.allowsMultipleEnrollments !== undefined && project.allowsMultipleEnrollments !== null)
+    ? `allowsMultipleEnrollments: ${project.allowsMultipleEnrollments}` : ''}
     ${project?.status ? `status: "${project.status}"` : ''}
     ${project?.activity?.id ? `activityId: "${project.activity.id}"` : ''}
     ${project?.location?.uuid ? `locationId: "${project.location.uuid}"` : ''}
