@@ -27,7 +27,6 @@ import {
 import BenefitPlanHeadPanel from '../components/BenefitPlanHeadPanel';
 import BenefitPlanTabPanel from '../components/BenefitPlanTabPanel';
 import { ACTION_TYPE } from '../reducer';
-import BenefitPlanEligibilityCriteriaPanel from '../components/BenefitPlanEligibilityCriteriaPanel';
 
 const styles = (theme) => ({
   page: theme.page,
@@ -186,9 +185,6 @@ function BenefitPlanPage({
 
   const getBenefitPlanPanels = () => {
     const panels = [];
-    if (benefitPlan?.id && benefitPlan?.beneficiaryDataSchema) {
-      panels.push(BenefitPlanEligibilityCriteriaPanel);
-    }
     if (rights.includes(RIGHT_BENEFICIARY_SEARCH)) {
       panels.push(BenefitPlanTabPanel);
     }

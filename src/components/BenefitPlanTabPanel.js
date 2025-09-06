@@ -35,7 +35,8 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function BenefitPlanTabPanel({
-  intl, rights, benefitPlan, setConfirmedAction, onActiveTabChange,
+  intl, rights, benefitPlan, setConfirmedAction, onActiveTabChange, confirmed,
+  edited, onEditedChanged,
 }) {
   const classes = useStyles();
   const [activeTab, setActiveTab] = useState(BENEFIT_PLAN_BENEFICIARIES_TAB_WRAPPER_VALUE);
@@ -70,6 +71,9 @@ function BenefitPlanTabPanel({
         benefitPlan={benefitPlan}
         setConfirmedAction={setConfirmedAction}
         classes={classes}
+        confirmed={confirmed}
+        edited={edited}
+        onEditedChanged={onEditedChanged}
       />
     </Paper>
   );
