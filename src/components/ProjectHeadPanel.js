@@ -18,6 +18,7 @@ import {
 } from '../actions';
 import ProjectStatusPicker from '../pickers/ProjectStatusPicker';
 import ActivityPicker from '../pickers/ActivityPicker';
+import ProjectAllowsMultiEnrollmentPicker from '../pickers/ProjectAllowsMultiEnrollmentPicker';
 
 const styles = (theme) => ({
   item: theme.paper.item,
@@ -113,6 +114,16 @@ class ProjectHeadPanel extends FormPanel {
             min={1}
             value={project?.workingDays}
             onChange={(v) => this.updateAttribute('workingDays', v)}
+          />
+        </Grid>
+
+        <Grid item xs={4} className={classes.item}>
+          <ProjectAllowsMultiEnrollmentPicker
+            label="project.allowsMultipleEnrollments"
+            value={project?.allowsMultipleEnrollments ?? false}
+            onChange={(v) => this.updateAttribute('allowsMultipleEnrollments', v)}
+            readOnly={readOnly}
+            required={false}
           />
         </Grid>
 

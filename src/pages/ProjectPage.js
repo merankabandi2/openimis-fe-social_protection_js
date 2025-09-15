@@ -21,6 +21,7 @@ import {
   fetchBenefitPlan,
   fetchProject,
   createProject,
+  clearProject,
   updateProject,
   deleteProject,
   undoDeleteProject,
@@ -49,6 +50,7 @@ function ProjectPage({
   project,
   fetchProject,
   createProject,
+  clearProject,
   updateProject,
   deleteProject,
   undoDeleteProject,
@@ -120,8 +122,7 @@ function ProjectPage({
       setEditedProject(project);
     }
     if (!projectUuid && project?.id) {
-      const projectRouteRef = modulesManager.getRef('socialProtection.route.project');
-      history.replace(`/${projectRouteRef}/${project.id}`);
+      history.replace(`project/${project.id}`);
       setReset(true);
     }
   }, [project]);
@@ -142,15 +143,18 @@ function ProjectPage({
       ].includes(mutation?.actionType)) {
         back();
       }
-    }
-    if (mutation?.clientMutationId && !projectUuid) {
-      fetchProject(modulesManager, [`clientMutationId: "${mutation.clientMutationId}"`]);
+
+      if (mutation?.clientMutationId && !projectUuid) {
+        fetchProject(modulesManager, [`clientMutationId: "${mutation.clientMutationId}"`]);
+      }
     }
   }, [submittingMutation]);
 
   useEffect(() => {
     prevSubmittingMutationRef.current = submittingMutation;
   });
+
+  useEffect(() => () => clearProject(), []);
 
   const isMandatoryFieldsEmpty = () => (
     !editedProject?.name
@@ -160,7 +164,7 @@ function ProjectPage({
     || !editedProject?.workingDays
   );
 
-  const isValid = () => (project?.name ? isProjectNameValid : true);
+  const isValid = () => (editedProject?.name ? isProjectNameValid : true);
 
   const doesProjectChange = () => {
     if (_.isEqual(project, editedProject)) return false;
@@ -239,11 +243,11 @@ function ProjectPage({
   return rights.includes(RIGHT_BENEFIT_PLAN_UPDATE) && (
     <div className={classes.page}>
       <Form
+        key={project?.id || 'new-project'}
         module="socialProtection"
         className={classes.form}
         title="project.pageTitle"
         openDirty
-        project={project}
         edited={editedProject}
         onEditedChanged={setEditedProject}
         back={back}
@@ -280,6 +284,7 @@ const mapDispatchToProps = (dispatch) => bindActionCreators(
   {
     fetchProject,
     createProject,
+    clearProject,
     updateProject,
     deleteProject,
     undoDeleteProject,

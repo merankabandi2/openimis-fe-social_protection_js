@@ -23,6 +23,7 @@ import {
 } from '../util/searcher-utils';
 import {
   MODULE_NAME,
+  DEFAULT_PAGE_SIZE,
 } from '../constants';
 import NumberFilter from './MaterialTableNumberFilter';
 
@@ -146,6 +147,7 @@ function BeneficiaryTable({
   actions,
   isGroup,
   appliedFilters,
+  appliedPageSize,
 }) {
   const nameDoBFieldPrefix = isGroup ? 'group.head' : 'individual';
   const locationFieldPrefix = isGroup ? 'group' : 'individual';
@@ -300,7 +302,7 @@ function BeneficiaryTable({
           search: true,
           filtering: true,
           paging: true,
-          pageSize: 10,
+          pageSize: appliedPageSize || DEFAULT_PAGE_SIZE,
           pageSizeOptions: [10, 50, 100],
           showSelectAllCheckbox: isSelectable,
           headerStyle: {
