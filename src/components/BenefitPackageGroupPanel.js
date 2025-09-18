@@ -63,27 +63,43 @@ class BenefitPackageGroupPanel extends FormPanel {
 
     const jsonExtFields = createFieldsBasedOnJSON(jsonExt);
 
+    const renderStatusField = () => (
+      <Grid item xs={3} className={classes.item}>
+        <TextInput
+          module={SOCIAL_PROTECTION_MODULE}
+          label="beneficiary.status"
+          value={status ?? EMPTY_STRING}
+          readOnly={readOnly}
+        />
+      </Grid>
+    );
+
+    const renderJsonExtField = (jsonExtField, index) => {
+      const fieldValue = Object.values(jsonExtField.field)[0];
+      const fieldKey = Object.keys(jsonExtField.field)[0];
+      const fieldConfig = typeof fieldValue === 'object'
+        ? {
+          fieldType: 'string',
+          field: { [fieldKey]: JSON.stringify(fieldValue) },
+        }
+        : jsonExtField;
+
+      return (
+        <Grid key={index} item xs={3} className={classes.item}>
+          {renderInputComponent(SOCIAL_PROTECTION_MODULE, fieldConfig)}
+        </Grid>
+      );
+    };
+
     return (
       <>
         <Grid container className={classes.tableTitle}>
           {renderHeadPanelSubtitle(rights, intl, history, modulesManager, classes, uuid)}
         </Grid>
         <Grid container className={classes.item}>
-          <Grid item xs={3} className={classes.item}>
-            <TextInput
-              module={SOCIAL_PROTECTION_MODULE}
-              label="beneficiary.status"
-              value={status ?? EMPTY_STRING}
-              readOnly={readOnly}
-            />
-          </Grid>
-          {jsonExtFields?.map((jsonExtField) => (
-            <Grid item xs={3} className={classes.item}>
-              {renderInputComponent(SOCIAL_PROTECTION_MODULE, typeof jsonExtField === 'object' ? JSON.stringify(jsonExtField) : jsonExtField)}
-            </Grid>
-          ))}
+          {renderStatusField()}
+          {jsonExtFields?.map(renderJsonExtField)}
         </Grid>
-
       </>
     );
   }
