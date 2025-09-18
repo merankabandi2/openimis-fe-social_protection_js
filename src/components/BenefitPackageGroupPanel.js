@@ -79,7 +79,7 @@ class BenefitPackageGroupPanel extends FormPanel {
           </Grid>
           {jsonExtFields?.map((jsonExtField) => (
             <Grid item xs={3} className={classes.item}>
-              {renderInputComponent(SOCIAL_PROTECTION_MODULE, jsonExtField)}
+              {renderInputComponent(SOCIAL_PROTECTION_MODULE, typeof jsonExtField === 'object' ? JSON.stringify(jsonExtField) : jsonExtField)}
             </Grid>
           ))}
         </Grid>
