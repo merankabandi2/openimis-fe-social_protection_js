@@ -130,6 +130,8 @@ const ROUTE_MONETARY_TRANSFERS_DASHBOARD = `${ROUTE_ME}/monetary-transfers-dashb
 const ROUTE_MONETARY_TRANSFER = `${ROUTE_ME}/monetary-transfers/monetary-transfer`;
 const ROUTE_ME_DASHBOARD = `${ROUTE_ME}/dashboard`;
 const ROUTE_RESULTS_FRAMEWORK_DASHBOARD = `${ROUTE_ME}/results-framework-dashboard`;
+const ROUTE_RESULTS_FRAMEWORK_INDICATORS_LIST = `${ROUTE_ME}/rf/indicators`;
+const ROUTE_RESULT_FRAMEWORK_INDICATOR = `${ROUTE_ME}/rf/indicators/indicator/:indicator_id?`;
 const ROUTE_ACTIVITIES_DASHBOARD = `${ROUTE_ME}/activities-dashboard`;
 const ROUTE_ACTIVITIES = `${ROUTE_ME}/activities`;
 const ROUTE_KOBO_ETL_ADMIN = 'socialProtection/koboETLAdmin';
@@ -157,19 +159,19 @@ const DEFAULT_CONFIG = {
       component: BenefitPackagePage,
     },
     {
-      path: `${ROUTE_ME}/rf/indicators`,
+      path: ROUTE_RESULTS_FRAMEWORK_INDICATORS_LIST,
       component: IndicatorsPage,
     },
     {
-      path: `${ROUTE_ME}/rf/indicators/indicator/:indicator_id?`,
+      path: ROUTE_RESULTS_FRAMEWORK_INDICATOR,
       component: IndicatorPage,
     },
     {
-      path: `${ROUTE_ME}/rf/sections`,
+      path: ROUTE_RESULTS_FRAMEWORK_SECTIONS_LIST,
       component: SectionsPage,
     },
     {
-      path: `${ROUTE_ME}/rf/sections/section/:section_id?`,
+      path: ROUTE_RESULTS_FRAMEWORK_SECTION,
       component: SectionPage,
     },
     { path: ROUTE_MONETARY_TRANSFERS, component: MonetaryTransfersPage },
@@ -201,13 +203,13 @@ const DEFAULT_CONFIG = {
     { key: 'socialProtection.BeneficiaryPicker', ref: BeneficiaryPicker },
     { key: 'socialProtection.SectionPicker', ref: SectionPicker },
     { key: 'socialProtection.route.monetaryTransfers', ref: ROUTE_MONETARY_TRANSFERS },
-    { key: 'socialProtection.monetaryTransfers', ref: 'socialProtection/monetaryTransfers' },
+    { key: 'socialProtection.monetaryTransfers', ref: ROUTE_MONETARY_TRANSFERS_LIST },
     { key: 'socialProtection.route.monetaryTransfer', ref: ROUTE_MONETARY_TRANSFER },
-    { key: 'socialProtection.route.resultFramework"', ref: ROUTE_RESULT_FRAMEWORK },
-    { key: 'socialProtection.route.indicators', ref: 'socialProtection/indicators' },
-    { key: 'socialProtection.route.indicator', ref: 'socialProtection/indicators/indicator' },
-    { key: 'socialProtection.route.sections', ref: 'socialProtection/sections' },
-    { key: 'socialProtection.route.section', ref: 'socialProtection/sections/section' },
+    { key: 'socialProtection.route.resultFramework', ref: ROUTE_RESULT_FRAMEWORK },
+    { key: 'socialProtection.route.indicators', ref: ROUTE_RESULTS_FRAMEWORK_INDICATORS_LIST },
+    { key: 'socialProtection.route.indicator', ref: ROUTE_RESULTS_FRAMEWORK_INDICATOR },
+    { key: 'socialProtection.route.sections', ref: ROUTE_RESULTS_FRAMEWORK_SECTIONS_LIST },
+    { key: 'socialProtection.route.section', ref: ROUTE_RESULTS_FRAMEWORK_SECTION },
     { key: 'socialProtection.route.meDashboard', ref: ROUTE_ME_DASHBOARD },
     { key: 'socialProtection.MEDashboard', ref: MEDashboard },
     { key: 'socialProtection.route.resultsFrameworkDashboard', ref: ROUTE_RESULTS_FRAMEWORK_DASHBOARD },
