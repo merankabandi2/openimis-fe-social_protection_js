@@ -64,7 +64,7 @@ function SectionPage({
 
   useEffect(() => {
     if (sectionId) {
-      fetchSection(modulesManager, [`id: "${sectionId}"`]);
+      fetchSection([`id: "${sectionId}"`]);
     }
   }, [sectionId]);
 

@@ -65,7 +65,7 @@ function IndicatorPage({
 
   useEffect(() => {
     if (indicatorId) {
-      fetchIndicator(modulesManager, [`id: "${indicatorId}"`]);
+      fetchIndicator([`id: "${indicatorId}"`]);
     }
   }, [indicatorId]);
 
@@ -171,9 +171,6 @@ function IndicatorPage({
           setConfirmedAction={setConfirmedAction}
           saveTooltip={formatMessage('tooltip.save')}
         />
-        {indicator?.id && (
-          <IndicatorAchievementsPanel indicator={indicator} />
-        )}
       </div>
     </div>
   );

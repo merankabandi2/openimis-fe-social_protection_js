@@ -131,9 +131,10 @@ const ROUTE_MONETARY_TRANSFER = `${ROUTE_ME}/monetary-transfers/monetary-transfe
 const ROUTE_ME_DASHBOARD = `${ROUTE_ME}/dashboard`;
 const ROUTE_RESULTS_FRAMEWORK_DASHBOARD = `${ROUTE_ME}/results-framework-dashboard`;
 const ROUTE_RESULTS_FRAMEWORK_INDICATORS_LIST = `${ROUTE_ME}/rf/indicators`;
-const ROUTE_RESULTS_FRAMEWORK_INDICATOR = `${ROUTE_ME}/rf/indicators/indicator/:indicator_id?`;
+const ROUTE_RESULTS_FRAMEWORK_INDICATOR = `${ROUTE_ME}/rf/indicators/indicator`;
 const ROUTE_RESULTS_FRAMEWORK_SECTIONS_LIST = `${ROUTE_ME}/rf/sections`;
-const ROUTE_RESULTS_FRAMEWORK_SECTION = `${ROUTE_ME}/rf/sections/section/:section_id?`;
+const ROUTE_RESULTS_FRAMEWORK_SECTION = `${ROUTE_ME}/rf/sections/section`;
+const ROUTE_ENHANCED_RESULTS_FRAMEWORK = `${ROUTE_ME}/enhanced-results-framework`;
 const ROUTE_ACTIVITIES_DASHBOARD = `${ROUTE_ME}/activities-dashboard`;
 const ROUTE_ACTIVITIES = `${ROUTE_ME}/activities`;
 const ROUTE_KOBO_ETL_ADMIN = 'socialProtection/koboETLAdmin';
@@ -165,7 +166,7 @@ const DEFAULT_CONFIG = {
       component: IndicatorsPage,
     },
     {
-      path: ROUTE_RESULTS_FRAMEWORK_INDICATOR,
+      path: `${ROUTE_RESULTS_FRAMEWORK_INDICATOR}/:indicator_id?`,
       component: IndicatorPage,
     },
     {
@@ -173,7 +174,7 @@ const DEFAULT_CONFIG = {
       component: SectionsPage,
     },
     {
-      path: ROUTE_RESULTS_FRAMEWORK_SECTION,
+      path: `${ROUTE_RESULTS_FRAMEWORK_SECTION}/:section_id?`,
       component: SectionPage,
     },
     { path: ROUTE_MONETARY_TRANSFERS, component: MonetaryTransfersPage },

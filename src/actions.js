@@ -53,7 +53,7 @@ const BENEFICIARY_FULL_PROJECTION = (modulesManager) => [
   'isEligible',
 ];
 
-const INDICATOR_FULL_PROJECTION = (modulesManager) => [
+const INDICATOR_FULL_PROJECTION = () => [
   'id',
   'section {id, name}',
   'name',
@@ -176,13 +176,13 @@ const INDICATOR_ACHIEVEMENT_FULL_PROJECTION = () => [
   'comment',
 ];
 
-export function fetchIndicators(modulesManager, params) {
-  const payload = formatPageQueryWithCount('indicator', params, INDICATOR_FULL_PROJECTION(modulesManager));
+export function fetchIndicators(params) {
+  const payload = formatPageQueryWithCount('indicator', params, INDICATOR_FULL_PROJECTION());
   return graphql(payload, ACTION_TYPE.SEARCH_INDICATORS);
 }
 
-export function fetchIndicator(modulesManager, filters) {
-  const payload = formatPageQuery('indicator', filters, INDICATOR_FULL_PROJECTION(modulesManager));
+export function fetchIndicator(params) {
+  const payload = formatPageQuery('indicator', params, INDICATOR_FULL_PROJECTION());
   return graphql(payload, ACTION_TYPE.GET_INDICATOR);
 }
 
@@ -197,8 +197,8 @@ export function fetchSections(params) {
   return graphql(payload, ACTION_TYPE.SEARCH_SECTIONS);
 }
 
-export function fetchSection(modulesManager, filters) {
-  const payload = formatQuery('section', filters, SECTION_FULL_PROJECTION());
+export function fetchSection(params) {
+  const payload = formatPageQuery('section', params, SECTION_FULL_PROJECTION());
   return graphql(payload, ACTION_TYPE.GET_SECTION);
 }
 
@@ -527,9 +527,11 @@ const formatProvincePayrollGQL = (params) => `
 `;
 
 const formatProvincePaymentPointGQL = (params) => `
+  ${params?.id ? `id: "${params.id}"` : ''}
   ${params?.provinceId ? `provinceId: "${params.provinceId}"` : ''}
   ${params?.paymentPointId ? `paymentPointId: "${decodeId(params.paymentPointId)}"` : ''}
   ${params?.paymentPlanId ? `paymentPlanId: "${decodeId(params.paymentPlanId)}"` : ''}
+  ${params?.isActive !== undefined ? `isActive: ${params.isActive}` : ''}
 `;
 function formatProjectGQL(project) {
   return `
@@ -1001,7 +1003,7 @@ export function addProvincePaymentPoint(params, clientMutationLabel) {
 
 // Section CRUD operations
 const formatSectionGQL = (section) => `
-  ${section?.id ? `id: "${section.id}"` : ''}
+  ${section?.id ? `id: ${section.id}` : ''}
   ${section?.name ? `name: "${formatGQLString(section.name)}"` : ''}
 `;
 
@@ -1035,9 +1037,9 @@ export function deleteSection(section, clientMutationLabel) {
 
 // Indicator CRUD operations
 const formatIndicatorGQL = (indicator) => `
-  ${indicator?.id ? `id: "${indicator.id}"` : ''}
+  ${indicator?.id ? `id: ${indicator.id}` : ''}
   ${indicator?.name ? `name: "${formatGQLString(indicator.name)}"` : ''}
-  ${indicator?.section?.id ? `sectionId: ${indicator.section.id}` : ''}
+  ${indicator?.section?.id ? `sectionId: ${decodeId(indicator.section.id)}` : ''}
   ${indicator?.pbc ? `pbc: "${formatGQLString(indicator.pbc)}"` : ''}
   ${indicator?.baseline !== undefined ? `baseline: "${indicator.baseline}"` : ''}
   ${indicator?.target !== undefined ? `target: "${indicator.target}"` : ''}
@@ -1076,7 +1078,7 @@ export function deleteIndicator(indicator, clientMutationLabel) {
 const formatIndicatorAchievementGQL = (achievement) => `
   ${achievement?.id ? `id: "${achievement.id}"` : ''}
   ${achievement?.indicator?.id ? `indicatorId: ${achievement.indicator.id}` : ''}
-  ${achievement?.achieved !== undefined ? `achieved: "${achievement.achieved}"` : ''}
+  ${achievement?.achieved !== undefined && achievement?.achieved !== null ? `achieved: ${achievement.achieved}` : ''}
   ${achievement?.date ? `date: "${achievement.date}"` : ''}
   ${achievement?.comment ? `comment: "${formatGQLString(achievement.comment)}"` : ''}
 `;

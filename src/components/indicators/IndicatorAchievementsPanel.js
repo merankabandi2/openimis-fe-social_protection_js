@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { connect } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { injectIntl } from 'react-intl';
-import { Grid, Paper, Typography, Divider, Button } from '@material-ui/core';
+import {
+  Grid, Paper, Typography, Divider, Button, IconButton, Tooltip
+} from '@material-ui/core';
 import { withTheme, withStyles } from '@material-ui/core/styles';
 import AddIcon from '@material-ui/icons/Add';
 import EditIcon from '@material-ui/icons/Edit';
@@ -22,7 +24,6 @@ import {
   deleteIndicatorAchievement,
 } from '../../actions';
 import IndicatorAchievementDialog from './IndicatorAchievementDialog';
-import { MODULE_NAME, RIGHT_INDICATOR_ACHIEVEMENT_SEARCH } from '../../constants';
 import { ACTION_TYPE } from '../../reducer';
 
 const styles = (theme) => ({
@@ -33,51 +34,65 @@ const styles = (theme) => ({
 });
 
 class IndicatorAchievementsPanel extends React.Component {
-  state = {
-    dialogOpen: false,
-    editedAchievement: null,
-  };
+  constructor(props) {
+    super(props);
+    this.state = {
+      dialogOpen: false,
+      editedAchievement: null,
+    };
+  }
 
   componentDidMount() {
-    const { indicator, fetchIndicatorAchievements, modulesManager } = this.props;
+    const { indicator, fetchIndicatorAchievements } = this.props;
     if (indicator?.id) {
-      fetchIndicatorAchievements(modulesManager, `indicator_Id: "${indicator.id}"`);
+      fetchIndicatorAchievements(`indicator_Id: "${indicator.id}"`);
     }
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.confirmed !== this.props.confirmed && this.props.confirmed) {
+    const {
+      confirmed, submittingMutation, mutation, indicator, journalize,
+    } = this.props;
+
+    if (prevProps.confirmed !== confirmed && confirmed) {
       this.confirmedAction();
     }
 
-    if (prevProps.submittingMutation && !this.props.submittingMutation) {
-      this.props.journalize(this.props.mutation);
-      if (this.props.mutation?.actionType === ACTION_TYPE.CREATE_INDICATOR_ACHIEVEMENT ||
-          this.props.mutation?.actionType === ACTION_TYPE.UPDATE_INDICATOR_ACHIEVEMENT ||
-          this.props.mutation?.actionType === ACTION_TYPE.DELETE_INDICATOR_ACHIEVEMENT) {
+    if (prevProps.submittingMutation && !submittingMutation) {
+      journalize(mutation);
+      if (mutation?.actionType === ACTION_TYPE.CREATE_INDICATOR_ACHIEVEMENT
+          || mutation?.actionType === ACTION_TYPE.UPDATE_INDICATOR_ACHIEVEMENT
+          || mutation?.actionType === ACTION_TYPE.DELETE_INDICATOR_ACHIEVEMENT) {
         this.refreshData();
       }
+    }
+
+    if (prevProps.indicator?.id !== indicator?.id && indicator?.id) {
+      this.refreshData();
     }
   }
 
   refreshData = () => {
-    const { indicator, fetchIndicatorAchievements, modulesManager } = this.props;
-    fetchIndicatorAchievements(modulesManager, `indicator_Id: "${indicator.id}"`);
-  }
+    const { indicator, fetchIndicatorAchievements } = this.props;
+    if (indicator?.id) {
+      fetchIndicatorAchievements(`indicator_Id: "${indicator.id}"`);
+    }
+  };
 
   handleAdd = () => {
+    const { indicator } = this.props;
     this.setState({
       dialogOpen: true,
-      editedAchievement: { indicator: this.props.indicator },
+      editedAchievement: { indicator },
     });
-  }
+  };
 
   handleEdit = (achievement) => {
     this.setState({
       dialogOpen: true,
       editedAchievement: achievement,
     });
-  }
+  };
 
   handleDelete = (achievement) => {
     const { intl, coreConfirm } = this.props;
@@ -85,67 +100,81 @@ class IndicatorAchievementsPanel extends React.Component {
     this.confirmedAction = this.confirmDelete;
     coreConfirm(
       formatMessage(intl, 'socialProtection', 'indicatorAchievement.delete.confirm.title'),
-      formatMessageWithValues(intl, 'socialProtection', 'indicatorAchievement.delete.confirm.message', { date: achievement.date }),
+      formatMessageWithValues(
+        intl,
+        'socialProtection',
+        'indicatorAchievement.delete.confirm.message',
+        { date: achievement.date },
+      ),
     );
-  }
+  };
 
   confirmDelete = () => {
-    const { deleteIndicatorAchievement, intl } = this.props;
+    const { deleteIndicatorAchievement, intl, clearConfirm } = this.props;
+    const { toDelete } = this.state;
     deleteIndicatorAchievement(
-      this.state.toDelete,
+      toDelete,
       formatMessage(intl, 'socialProtection', 'indicatorAchievement.delete.mutationLabel'),
     );
-    this.props.clearConfirm();
-  }
+    clearConfirm();
+  };
 
   handleDialogClose = (refreshData = false) => {
     this.setState({ dialogOpen: false, editedAchievement: null });
     if (refreshData) {
       this.refreshData();
     }
-  }
+  };
 
-  formatAchievement = (achievement) => ({
-    id: achievement.id,
-    date: achievement.date,
-    achieved: achievement.achieved,
-    comment: achievement.comment || '',
-    actions: [
-      {
-        icon: <EditIcon />,
-        tooltip: formatMessage(this.props.intl, 'socialProtection', 'tooltip.edit'),
-        onClick: () => this.handleEdit(achievement),
-      },
-      {
-        icon: <DeleteIcon />,
-        tooltip: formatMessage(this.props.intl, 'socialProtection', 'tooltip.delete'),
-        onClick: () => this.handleDelete(achievement),
-      },
-    ],
-  });
-
-  headers = () => [
-    {
-      id: 'date',
-      label: formatMessage(this.props.intl, 'socialProtection', 'indicatorAchievement.date'),
-      sortable: true,
-    },
-    {
-      id: 'achieved',
-      label: formatMessage(this.props.intl, 'socialProtection', 'indicatorAchievement.achieved'),
-      sortable: true,
-    },
-    {
-      id: 'comment',
-      label: formatMessage(this.props.intl, 'socialProtection', 'indicatorAchievement.comment'),
-      sortable: false,
-    },
-    {
-      id: 'actions',
-      label: formatMessage(this.props.intl, 'socialProtection', 'indicators.actions'),
-      sortable: false,
-    },
+  itemFormatters = () => [
+    (achievement) => achievement.date,
+    (achievement) => achievement.achieved,
+    (achievement) => achievement.comment,
+    (achievement) => (
+      <div style={{ display: 'flex', flexDirection: 'row' }}>
+        <Tooltip title={formatMessage('tooltip.edit')}>
+          <IconButton
+            onClick={() => this.handleEdit(achievement)}
+          >
+            <EditIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title={formatMessage('tooltip.delete')}>
+          <IconButton
+            onClick={() => this.handleDelete(achievement)}
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Tooltip>
+      </div>
+    ),
   ];
+
+  headers = () => {
+    const { intl } = this.props;
+    return [
+      {
+        id: 'date',
+        label: formatMessage(intl, 'socialProtection', 'indicatorAchievement.date'),
+        sortable: true,
+      },
+      {
+        id: 'achieved',
+        label: formatMessage(intl, 'socialProtection', 'indicatorAchievement.achieved'),
+        sortable: true,
+      },
+      {
+        id: 'comment',
+        label: formatMessage(intl, 'socialProtection', 'indicatorAchievement.comment'),
+        sortable: false,
+      },
+      {
+        id: 'actions',
+        label: formatMessage(intl, 'socialProtection', 'indicators.actions'),
+        sortable: false,
+      },
+    ];
+  };
 
   render() {
     const {
@@ -162,9 +191,9 @@ class IndicatorAchievementsPanel extends React.Component {
             <Typography variant="h6" className={classes.tableTitle}>
               {formatMessage(intl, 'socialProtection', 'indicatorAchievementsPanel.title')}
             </Typography>
-            <Button 
-              variant="contained" 
-              color="primary" 
+            <Button
+              variant="contained"
+              color="primary"
               startIcon={<AddIcon />}
               onClick={this.handleAdd}
             >
@@ -180,7 +209,7 @@ class IndicatorAchievementsPanel extends React.Component {
               tableTitle={formatMessage(intl, 'socialProtection', 'indicatorAchievementsPanel.searcher.title')}
               items={indicatorAchievements || []}
               fetchingItems={fetchingIndicatorAchievements}
-              itemsFormatter={this.formatAchievement}
+              itemFormatters={this.itemFormatters}
               headers={this.headers}
               rights={rights}
               defaultOrderBy="date"
@@ -198,6 +227,16 @@ class IndicatorAchievementsPanel extends React.Component {
     );
   }
 }
+
+IndicatorAchievementsPanel.defaultProps = {
+  indicator: null,
+  rights: [],
+  confirmed: false,
+  submittingMutation: false,
+  mutation: null,
+  indicatorAchievements: [],
+  fetchingIndicatorAchievements: false,
+};
 
 const mapStateToProps = (state) => ({
   rights: state.core?.user?.i_user?.rights ?? [],
@@ -219,7 +258,7 @@ const mapDispatchToProps = (dispatch) => bindActionCreators({
 export default injectIntl(
   withModulesManager(
     connect(mapStateToProps, mapDispatchToProps)(
-      withTheme(withStyles(styles)(IndicatorAchievementsPanel))
-    )
-  )
+      withTheme(withStyles(styles)(IndicatorAchievementsPanel)),
+    ),
+  ),
 );

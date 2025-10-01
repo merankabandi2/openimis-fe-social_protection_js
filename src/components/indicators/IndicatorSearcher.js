@@ -94,7 +94,7 @@ function IndicatorSearcher({
     ['section', true],
   ];
 
-  const fetchData = (params) => fetchIndicators(modulesManager, params);
+  const fetchData = (params) => fetchIndicators(params);
 
   const rowIdentifier = (indicator) => indicator.id;
 
