@@ -171,15 +171,16 @@ function Dashboard() {
   const twaCount = genderData.twa || 0;
 
   // Gender percentages for individuals (from breakdown data)
-  const malePercentage = genderData.malePercentage || 0;
-  const femalePercentage = genderData.femalePercentage || 0;
-  const genderSubtitle = totalIndividuals > 0 
-    ? `♂ ${Math.round(malePercentage)}% | ♀ ${Math.round(femalePercentage)}%`
+  const femaleBeneficiaries = genderData.femaleBeneficiaries || 0;
+  const femaleBeneficiariesPercentage = genderData.femaleBeneficiariesPercentage || 0;
+
+  const genderSubtitle = totalBeneficiaries > 0
+    ? `♀ ${formatNumber(femaleBeneficiaries)} (${Math.round(femaleBeneficiariesPercentage)}%)`
     : '';
 
   // Twa minority group subtitle (separate from gender)
   const twaSubtitle = twaCount > 0
-    ? `Mutwa: ${genderData.twaPercentage || 0}% (${formatNumber(twaCount)})`
+    ? `Mutwa: ${formatNumber(twaCount)} (${Math.round(genderData.twaPercentage) || 0}%)`
     : '';
 
   // Get correct data from appropriate sources

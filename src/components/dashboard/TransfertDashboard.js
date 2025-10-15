@@ -219,7 +219,6 @@ function TransfertDashboard() {
       benefitPlanId: filters.benefitPlan || '',
       year: filters.year || '',
     };
-    console.log('Legacy filters conversion:', { originalFilters: filters, converted });
     return converted;
   }, [filters]);
 
@@ -258,20 +257,6 @@ function TransfertDashboard() {
     return `${formatNumber(amount)} BIF`;
   };
 
-  // Debug logging to see what data is available
-  console.log('TransfertDashboard data:', {
-    optimizedFilters,
-    performance,
-    legacyData: {
-      totalBeneficiaries,
-      totalPayments,
-      totalAmount,
-      totalAmountReceived,
-      totalHouseholds,
-      totalIndividuals,
-    },
-    error
-  });
 
   // Use optimized data as primary source, fallback to legacy data
   const optimizedMetrics = performance?.overallMetrics || {};
@@ -280,7 +265,7 @@ function TransfertDashboard() {
   const displayData = {
     totalBeneficiaries: optimizedMetrics.totalBeneficiaries || summaryData.totalBeneficiaries || totalBeneficiaries || 0,
     totalPayments: optimizedMetrics.totalPaymentCycles || totalPayments || 0,
-    totalAmount: optimizedMetrics.totalAmountDue || summaryData.totalAmount || totalAmount || 0,
+    totalAmount: optimizedMetrics.totalAmount || summaryData.totalAmount || totalAmount || 0,
     totalAmountReceived: optimizedMetrics.totalAmountPaid || summaryData.totalAmountReceived || totalAmountReceived || 0,
     totalHouseholds: optimizedMetrics.totalHouseholds || totalHouseholds || 0,
     totalIndividuals: optimizedMetrics.totalIndividuals || totalIndividuals || 0,

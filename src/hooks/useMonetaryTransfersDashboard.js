@@ -94,10 +94,12 @@ export const useMonetaryTransfersDashboard = (filters = {}) => {
   }), [filters]);
 
   // Execute query
-  const { data, isLoading, error, refetch } = useGraphqlQuery(
+  const {
+    data, isLoading, error, refetch,
+  } = useGraphqlQuery(
     MONETARY_TRANSFERS_SUMMARY,
     variables,
-    { skip: false }
+    { skip: false },
   );
 
   // Debug logging
@@ -105,7 +107,7 @@ export const useMonetaryTransfersDashboard = (filters = {}) => {
     variables,
     data,
     error,
-    isLoading
+    isLoading,
   });
 
   // Process the data
@@ -128,7 +130,7 @@ export const useMonetaryTransfersDashboard = (filters = {}) => {
     let externalBeneficiaries = 0;
     let externalPlannedAmount = 0;
     let externalTransferredAmount = 0;
-    
+
     // Filter monetary transfers based on filters
     const filteredTransfers = monetaryTransferEdges.filter(({ node }) => {
       if (filters.year) {
@@ -143,40 +145,41 @@ export const useMonetaryTransfersDashboard = (filters = {}) => {
       }
       return true;
     });
-    
+
     // Calculate totals from filtered external transfers
     filteredTransfers.forEach(({ node }) => {
       const totalPaid = (node.paidWomen || 0) + (node.paidMen || 0) + (node.paidTwa || 0);
       const totalPlanned = (node.plannedWomen || 0) + (node.plannedMen || 0) + (node.plannedTwa || 0);
-      
+
       externalPayments += totalPaid;
       externalBeneficiaries += totalPlanned; // Use planned beneficiaries for total count
-      
+
       // Use actual amount fields
       externalPlannedAmount += parseFloat(node.plannedAmount || 0);
       externalTransferredAmount += parseFloat(node.transferredAmount || 0);
     });
-    
+
     // Get internal payments from BenefitConsumption
     const benefitsSummary = data.benefitsSummaryFiltered || {};
-    const internalAmountReceived = benefitsSummary.totalAmountReceived || 0;
-    const totalAmountDue = benefitsSummary.totalAmountDue || 0;
-    
+    const internalAmountReceived = parseFloat(benefitsSummary.totalAmountReceived || 0);
+    const totalAmountInternalDue = parseFloat(benefitsSummary.totalAmountDue || 0);
+
     // Total beneficiaries from internal system (group beneficiaries)
     const internalBeneficiaries = data.groupBeneficiaryFiltered?.totalCount || 0;
-    
+
     // Total beneficiaries combines external planned beneficiaries and internal beneficiaries
     const totalBeneficiaries = Math.max(externalBeneficiaries, internalBeneficiaries);
-    
+
     // Total payments (actual paid count from external + internal payment cycles)
     const totalPayments = externalPayments + (data.paymentCycleFiltered?.totalCount || 0);
-    
+
     // Total amount combines external planned amount and internal due amount
-    const totalAmount = externalPlannedAmount + totalAmountDue;
-    
+    const totalAmountDue = externalPlannedAmount + totalAmountInternalDue;
     // Total amount received combines both external transferred amount and internal received amount
     const totalAmountReceived = externalTransferredAmount + internalAmountReceived;
-    
+
+    const totalAmount = totalAmountDue + totalAmountReceived;
+
     // Get household and individual counts
     const totalHouseholds = data.groupFiltered?.totalCount || 0;
     const totalIndividuals = data.individualFiltered?.totalCount || 0;
@@ -195,18 +198,7 @@ export const useMonetaryTransfersDashboard = (filters = {}) => {
       externalTransferredAmount,
       internalAmount: internalAmountReceived,
     };
-    
-    // Debug logging
-    console.log('MonetaryTransfersDashboard processedData:', {
-      externalPlannedAmount,
-      externalTransferredAmount,
-      internalAmountReceived,
-      totalAmountDue,
-      totalAmount,
-      totalAmountReceived,
-      monetaryTransfers: filteredTransfers.length,
-    });
-    
+
     return result;
   }, [data, filters]);
 

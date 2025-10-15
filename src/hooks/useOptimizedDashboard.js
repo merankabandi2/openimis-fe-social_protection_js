@@ -58,10 +58,16 @@ const OPTIMIZED_BENEFICIARY_BREAKDOWN = `
         male
         female
         twa
+        maleBeneficiaries
+        femaleBeneficiaries
+        twaBeneficiaries
         total
         malePercentage
         femalePercentage
         twaPercentage
+        maleBeneficiariesPercentage
+        femaleBeneficiariesPercentage
+        twaBeneficiariesPercentage
       }
       statusBreakdown {
         status
