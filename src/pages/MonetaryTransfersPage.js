@@ -31,12 +31,13 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(3),
   },
   searcherSection: {
+    position: 'relative',
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
   },
   fabContainer: {
-    position: 'fixed',
+    position: 'absolute',
     bottom: theme.spacing(2),
     right: theme.spacing(2),
     zIndex: theme.zIndex.fab,
@@ -75,16 +76,7 @@ function MonetaryTransfersPage() {
       {canSearch && (
         <Box className={classes.searcherSection} data-testid="searcher-section">
           <MonetaryTransferSearcher />
-        </Box>
-      )}
-
-      {/* No Access Message */}
-      {!canSearch && (
-        <Box className={classes.noAccessMessage} data-testid="no-access-message">
-          {formatMessage('monetaryTransfer.noSearchRights')}
-        </Box>
-      )}
-
+          
       {/* Create Button */}
       {canCreate && (
         <Box className={classes.fabContainer} data-testid="create-button-container">
@@ -101,6 +93,16 @@ function MonetaryTransfersPage() {
           )}
         </Box>
       )}
+        </Box>
+      )}
+
+      {/* No Access Message */}
+      {!canSearch && (
+        <Box className={classes.noAccessMessage} data-testid="no-access-message">
+          {formatMessage('monetaryTransfer.noSearchRights')}
+        </Box>
+      )}
+
     </div>
   );
 }

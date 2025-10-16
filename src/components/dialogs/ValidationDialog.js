@@ -445,7 +445,7 @@ function ValidationDialog({
           {formatMessage(intl, 'socialProtection', 'validation.dialog.title')}
           {data?.validationStatus && (
             <Chip
-              label={data.validationStatusDisplay || data.validationStatus}
+              label={formatMessage(intl, 'socialProtection', `validation.status.${data.validationStatus.toLowerCase()}`)}
               color={data.validationStatus === 'VALIDATED' ? 'primary' : 'default'}
               size="small"
               className={classes.statusChip}

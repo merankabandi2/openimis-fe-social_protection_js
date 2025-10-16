@@ -15,13 +15,13 @@ function ActivitiesBarChart({ filters = {}, compact = false }) {
     // Handle location filters - use the most specific location available
     if (filters.collines && filters.collines.length > 0) {
       const collineId = parseInt(decodeId(filters.collines[0]));
-      filterParts.push(`location: ${collineId}`);
+      filterParts.push(`location_Id: ${collineId}`);
     } else if (filters.communes && filters.communes.length > 0) {
       const communeId = parseInt(decodeId(filters.communes[0]));
-      filterParts.push(`location_Commune: ${communeId}`);
+      filterParts.push(`location_Parent_Id: ${communeId}`);
     } else if (filters.provinces && filters.provinces.length > 0) {
       const provinceId = parseInt(decodeId(filters.provinces[0]));
-      filterParts.push(`location_Province: ${provinceId}`);
+      filterParts.push(`location_Parent_Parent_Id: ${provinceId}`);
     }
     
     // Handle year filter

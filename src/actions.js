@@ -139,6 +139,10 @@ export const MONETARY_TRANSFER_PROJECTION = (modulesManager) => [
   'paidWomen',
   'paidMen',
   'paidTwa',
+  'plannedAmount',
+  'transferredAmount',
+];
+
 ];
 
 const PROJECT_FULL_PROJECTION = (modulesManager) => [
@@ -494,6 +498,8 @@ const formatMonetaryTransferGQL = (monetaryTransfer) => `
   ${monetaryTransfer?.paidWomen ? `paidWomen: ${monetaryTransfer.paidWomen}` : ''}
   ${monetaryTransfer?.paidMen ? `paidMen: ${monetaryTransfer.paidMen}` : ''}
   ${monetaryTransfer?.paidTwa ? `paidTwa: ${monetaryTransfer.paidTwa}` : ''}
+  ${monetaryTransfer?.plannedAmount ? `plannedAmount: "${monetaryTransfer.plannedAmount}"` : ''}
+  ${monetaryTransfer?.transferredAmount ? `transferredAmount: "${monetaryTransfer.transferredAmount}"` : ''}
 `;
 
 function formatBenefitPlanGQL(benefitPlan) {
@@ -1065,7 +1071,7 @@ export function updateIndicator(indicator, clientMutationLabel) {
 }
 
 export function deleteIndicator(indicator, clientMutationLabel) {
-  const indicatorUuids = `ids: ["${indicator?.id}"]`;
+  const indicatorUuids = `ids: [${indicator?.id}]`;
   return PERFORM_MUTATION(
     MUTATION_SERVICE.INDICATOR.DELETE,
     indicatorUuids,
@@ -1078,7 +1084,7 @@ export function deleteIndicator(indicator, clientMutationLabel) {
 const formatIndicatorAchievementGQL = (achievement) => `
   ${achievement?.id ? `id: "${achievement.id}"` : ''}
   ${achievement?.indicator?.id ? `indicatorId: ${achievement.indicator.id}` : ''}
-  ${achievement?.achieved !== undefined && achievement?.achieved !== null ? `achieved: ${achievement.achieved}` : ''}
+  ${achievement?.achieved !== undefined && achievement?.achieved !== null ? `achieved: "${achievement.achieved}"` : ''}
   ${achievement?.date ? `date: "${achievement.date}"` : ''}
   ${achievement?.comment ? `comment: "${formatGQLString(achievement.comment)}"` : ''}
 `;

@@ -982,7 +982,7 @@ function ActivitiesDashboard() {
               </TableCell>
               <TableCell align="center">
                 <Chip 
-                  label={training.validationStatusDisplay}
+                  label={formatMessage(intl, MODULE_NAME, `activities.status.${training.validationStatus.toLowerCase()}`)}
                   color={getStatusColor(training.validationStatus)}
                   size="small"
                   icon={getStatusIcon(training.validationStatus)}
@@ -1038,8 +1038,8 @@ function ActivitiesDashboard() {
               </TableCell>
               <TableCell>{behavior.comments || '-'}</TableCell>
               <TableCell align="center">
-                <Chip 
-                  label={behavior.validationStatusDisplay}
+                <Chip
+                  label={formatMessage(intl, MODULE_NAME, `activities.status.${behavior.validationStatus.toLowerCase()}`)}
                   color={getStatusColor(behavior.validationStatus)}
                   size="small"
                   icon={getStatusIcon(behavior.validationStatus)}
@@ -1113,8 +1113,8 @@ function ActivitiesDashboard() {
                 </Box>
               </TableCell>
               <TableCell align="center">
-                <Chip 
-                  label={project.validationStatusDisplay}
+                <Chip
+                  label={formatMessage(intl, MODULE_NAME, `activities.status.${project.validationStatus.toLowerCase()}`)}
                   color={getStatusColor(project.validationStatus)}
                   size="small"
                   icon={getStatusIcon(project.validationStatus)}
