@@ -141,7 +141,6 @@ export const MONETARY_TRANSFER_PROJECTION = (modulesManager) => [
   'paidTwa',
   'plannedAmount',
   'transferredAmount',
-];
 
 ];
 
