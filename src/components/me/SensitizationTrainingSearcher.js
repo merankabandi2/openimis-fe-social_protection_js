@@ -158,7 +158,7 @@ function SensitizationTrainingSearcher({
     'location.locationType.0',
     'location.locationType.1',
     'location.locationType.2',
-    'sensitizationTraining.category',
+    'category.label',
     'participants.label',
     'validation.status',
   ];
@@ -267,7 +267,7 @@ function SensitizationTrainingSearcher({
   const exportFieldsColumns = {
     sensitization_date: 'sensitization_date',
     location: formatMessage('location'),
-    category: formatMessage('sensitizationTraining.category'),
+    category: formatMessage('category'),
     male_participants: formatMessage('me.male_participants'),
     female_participants: formatMessage('me.female_participants'),
     twa_participants: formatMessage('me.twa_participants'),
@@ -338,7 +338,7 @@ function SensitizationTrainingSearcher({
           data={selectedTraining}
           detailFields={[
             { key: 'sensitizationDate', label: 'sensitizationTraining.sensitization_date' },
-            { key: 'category', label: 'sensitizationTraining.category' },
+            { key: 'category', label: 'category.label' },
             { key: 'location.name', label: 'location' },
             { key: 'maleParticipants', label: 'me.male_participants' },
             { key: 'femaleParticipants', label: 'me.female_participants' },

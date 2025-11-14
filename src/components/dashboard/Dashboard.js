@@ -180,7 +180,7 @@ function Dashboard() {
 
   // Twa minority group subtitle (separate from gender)
   const twaSubtitle = twaCount > 0
-    ? `Mutwa: ${formatNumber(twaCount)} (${Math.round(genderData.twaPercentage) || 0}%)`
+    ? `Batwa: ${formatNumber(twaCount)} (${Math.round(genderData.twaPercentage) || 0}%)`
     : '';
 
   // Get correct data from appropriate sources
