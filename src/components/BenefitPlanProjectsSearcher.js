@@ -36,8 +36,8 @@ import {
 } from '../actions';
 import ProjectFilter from './BenefitPlanProjectsFilter';
 import {
-  LOC_LEVELS,
-  locationFormatter,
+  getLocLevels,
+  locationAtLevel,
 } from '../util/searcher-utils';
 
 function BenefitPlanProjectsSearcher({
@@ -63,6 +63,7 @@ function BenefitPlanProjectsSearcher({
 }) {
   const history = useHistory();
   const modulesManager = useModulesManager();
+  const locLevels = getLocLevels(modulesManager);
   const fetch = (params) => fetchBenefitPlanProjects(modulesManager, params);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [projectToUndo, setProjectToUndo] = useState(null);
@@ -142,7 +143,7 @@ function BenefitPlanProjectsSearcher({
       'project.targetBeneficiaries',
       'project.workingDays',
     ];
-    baseHeaders.push(...Array.from({ length: LOC_LEVELS }, (_, i) => `location.locationType.${i}`));
+    baseHeaders.push(...Array.from({ length: locLevels }, (_, i) => `location.locationType.${i}`));
 
     if (rights.includes(RIGHT_PROJECT_UPDATE)) {
       baseHeaders.push('emptyLabel');
@@ -165,7 +166,7 @@ function BenefitPlanProjectsSearcher({
 
     const formatters = [
       ...baseFormatters,
-      ...Array.from({ length: LOC_LEVELS }, (_, i) => (project) => locationFormatter(project?.location)[i]),
+      ...Array.from({ length: locLevels }, (_, i) => (project) => locationAtLevel(project?.location, locLevels - i - 1)),
     ];
 
     if (rights.includes(RIGHT_PROJECT_UPDATE)) {

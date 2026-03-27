@@ -34,3 +34,28 @@ export const locationFormatter = (location) => (
     return levels[i] || '';
   })
 );
+
+/**
+ * Walk up the location hierarchy from the leaf by `level` steps.
+ * locationAtLevel(colline, 0) = colline.name
+ * locationAtLevel(colline, 1) = commune.name
+ * locationAtLevel(colline, 2) = province.name
+ */
+export const locationAtLevel = (lowestLevelLoc, level) => {
+  let location = lowestLevelLoc;
+  let levelDiff = level;
+  while (levelDiff > 0 && location) {
+    location = location.parent;
+    levelDiff -= 1;
+  }
+  return location ? location.name : '';
+};
+
+/**
+ * Read configurable location levels from the location.Location.MaxLevels ref.
+ * Defaults to LOC_LEVELS (4) if the ref is not set.
+ */
+export const getLocLevels = (modulesManager) => {
+  const ref = modulesManager.getRef('location.Location.MaxLevels');
+  return ref ? parseInt(ref, 10) : LOC_LEVELS;
+};

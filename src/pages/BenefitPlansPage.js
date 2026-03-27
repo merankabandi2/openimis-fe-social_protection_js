@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Helmet, withModulesManager, formatMessage, withTooltip, historyPush,
+  Helmet, withModulesManager, formatMessage, withTooltip, historyPush, PublishedComponent,
 } from '@openimis/fe-core';
 import { injectIntl } from 'react-intl';
 import { withTheme, withStyles } from '@material-ui/core/styles';
@@ -11,7 +11,6 @@ import {
   RIGHT_BENEFIT_PLAN_CREATE,
   RIGHT_BENEFIT_PLAN_SEARCH, SOCIAL_PROTECTION_ROUTE_BENEFIT_PLAN,
 } from '../constants';
-import BenefitPlanSearcher from '../components/BenefitPlanSearcher';
 
 const styles = (theme) => ({
   page: theme.page,
@@ -33,7 +32,7 @@ function BenefitPlansPage(props) {
     rights.includes(RIGHT_BENEFIT_PLAN_SEARCH) && (
     <div className={classes.page}>
       <Helmet title={formatMessage(intl, 'socialProtection', 'benefitPlan.benefitPlanHelmet')} />
-      <BenefitPlanSearcher rights={rights} />
+      <PublishedComponent pubRef="socialProtection.BenefitPlanSearcher" rights={rights} />
       {rights.includes(RIGHT_BENEFIT_PLAN_CREATE)
         && withTooltip(
           <div className={classes.fab}>

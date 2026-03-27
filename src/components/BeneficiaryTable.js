@@ -16,10 +16,11 @@ import { useDispatch } from 'react-redux';
 import {
   formatMessage,
   fetchCustomFilter,
+  useModulesManager,
 } from '@openimis/fe-core';
 import {
-  LOC_LEVELS,
-  locationFormatter,
+  getLocLevels,
+  locationAtLevel,
 } from '../util/searcher-utils';
 import {
   MODULE_NAME,
@@ -149,6 +150,8 @@ function BeneficiaryTable({
   appliedFilters,
   appliedPageSize,
 }) {
+  const modulesManager = useModulesManager();
+  const locLevels = getLocLevels(modulesManager);
   const nameDoBFieldPrefix = isGroup ? 'group.head' : 'individual';
   const locationFieldPrefix = isGroup ? 'group' : 'individual';
 
@@ -263,13 +266,19 @@ function BeneficiaryTable({
         title: translate('socialProtection.beneficiary.dob'),
         field: `${nameDoBFieldPrefix}.dob`,
       },
-      ...Array.from({ length: LOC_LEVELS }, (_, i) => ({
+      ...Array.from({ length: locLevels }, (_, i) => ({
         title: translate(`location.locationType.${i}`),
         type: 'location',
         level: i,
-        render: (rowData) => locationFormatter(rowData?.[locationFieldPrefix]?.location)[i] || '',
+        render: (rowData) => locationAtLevel(
+          rowData?.[locationFieldPrefix]?.location,
+          locLevels - i - 1,
+        ) || '',
         customFilterAndSearch: (term, rowData) => {
-          const locName = locationFormatter(rowData?.[locationFieldPrefix]?.location)[i].toLowerCase() || '';
+          const locName = (locationAtLevel(
+            rowData?.[locationFieldPrefix]?.location,
+            locLevels - i - 1,
+          ) || '').toLowerCase();
           return locName.includes(term.toLowerCase());
         },
       })),
