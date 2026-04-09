@@ -263,7 +263,6 @@ function BeneficiaryTable({
   const [jsonExtFilters, setJsonExtFilters] = React.useState({});
 
   const dispatch = useDispatch();
-  const modulesManager = useModulesManager();
   const maxWorkingDays = modulesManager.getConf('fe-social_protection', 'maxWorkingDays', DEFAULT_MAX_WORKING_DAYS);
 
   const dynamicColumns = React.useMemo(() => (
