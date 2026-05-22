@@ -33,6 +33,7 @@ import {
   RIGHT_BENEFICIARY_UPDATE,
   ROWS_PER_PAGE_OPTIONS,
   CLEARED_STATE_FILTER,
+  BENEFIT_PLAN_GROUP_BENEFICIARIES_SEARCHER_COLUMNS_CONTRIBUTION_KEY,
 } from '../constants';
 import BenefitPlanGroupBeneficiariesFilter from './BenefitPlanGroupBeneficiariesFilter';
 import BeneficiaryStatusPicker from '../pickers/BeneficiaryStatusPicker';
@@ -265,6 +266,7 @@ function BenefitPlanGroupBeneficiariesSearcher({
           group__id: formatMessage(intl, 'socialProtection', 'export.group.id'),
         }}
         exportFieldLabel={formatMessage(intl, 'socialProtection', 'export.label')}
+        columnsContributionKey={BENEFIT_PLAN_GROUP_BENEFICIARIES_SEARCHER_COLUMNS_CONTRIBUTION_KEY}
         headers={headers}
         itemFormatters={itemFormatters}
         sorts={sorts}

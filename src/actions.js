@@ -550,9 +550,15 @@ export function downloadBeneficiaries(params) {
 }
 
 export function downloadGroupBeneficiaries(params) {
+  // Default to XLSX so the BE export-handler registry dispatches to the
+  // merankabandi GroupBeneficiary photo-URL workbook (see
+  // social_protection.export_mixin.EXPORT_HANDLERS). If no handler is
+  // registered for ('xlsx', 'group_beneficiary'), the BE falls through to
+  // the default CSV export — no regression in stock deployments.
+  const allParams = [...(params || []), 'file_format: "xlsx"'];
   const payload = `
     {
-      groupBeneficiaryExport${!!params && params.length ? `(${params.join(',')})` : ''}
+      groupBeneficiaryExport(${allParams.join(',')})
     }`;
   return graphql(payload, ACTION_TYPE.GROUP_BENEFICIARY_EXPORT);
 }
