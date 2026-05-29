@@ -555,7 +555,9 @@ export function downloadGroupBeneficiaries(params) {
   // social_protection.export_mixin.EXPORT_HANDLERS). If no handler is
   // registered for ('xlsx', 'group_beneficiary'), the BE falls through to
   // the default CSV export — no regression in stock deployments.
-  const allParams = [...(params || []), 'file_format: "xlsx"'];
+  // NB: GraphQL arg is camelCase (graphene converts the resolver's
+  // file_format kwarg to a fileFormat schema argument).
+  const allParams = [...(params || []), 'fileFormat: "xlsx"'];
   const payload = `
     {
       groupBeneficiaryExport(${allParams.join(',')})
