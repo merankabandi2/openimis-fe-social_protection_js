@@ -557,14 +557,14 @@ export function downloadGroupBeneficiaries(params) {
   // the default CSV export — no regression in stock deployments.
   // NB: GraphQL arg is camelCase (graphene converts the resolver's
   // file_format kwarg to a fileFormat schema argument).
-  // The fe-core Searcher's export path may ALREADY include a fileFormat in
-  // params (from its format selector); only add our default when absent, or
-  // GraphQL rejects the query with "There can only be one argument named
-  // fileFormat" and the download fails entirely.
-  const hasFileFormat = (params || []).some((p) => /(^|[^\w])fileFormat\s*:/.test(String(p)));
-  const allParams = hasFileFormat
-    ? [...(params || [])]
-    : [...(params || []), 'fileFormat: "xlsx"'];
+  // The fe-core SearcherExport ALWAYS pushes a `fileFormat` (defaulting to csv,
+  // SearcherExport.js:38/65). We must FORCE xlsx so the BE registry dispatches to
+  // the photo-URL workbook — but we cannot simply append (that yields TWO
+  // fileFormat args -> "There can only be one argument named fileFormat" -> the
+  // download 400s for everyone). So strip any fileFormat the Searcher added, then
+  // set exactly one: xlsx.
+  const cleaned = (params || []).filter((p) => !/(^|[^\w])fileFormat\s*:/.test(String(p)));
+  const allParams = [...cleaned, 'fileFormat: "xlsx"'];
   const payload = `
     {
       groupBeneficiaryExport(${allParams.join(',')})
