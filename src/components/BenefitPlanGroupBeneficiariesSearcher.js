@@ -221,7 +221,8 @@ function BenefitPlanGroupBeneficiariesSearcher({
     if (groupBeneficiaryExport) {
       downloadExport(
         groupBeneficiaryExport,
-        `${formatMessage(intl, 'socialProtection', 'export.filename.groupBeneficiaries')}.csv`,
+        `${formatMessage(intl, 'socialProtection', 'export.filename.groupBeneficiaries')}.${exportFileFormat}`,
+        exportFileFormat,
       )();
       clearGroupBeneficiaryExport();
     }
