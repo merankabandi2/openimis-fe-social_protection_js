@@ -550,24 +550,14 @@ export function downloadBeneficiaries(params) {
 }
 
 export function downloadGroupBeneficiaries(params) {
-  // Default to XLSX so the BE export-handler registry dispatches to the
-  // merankabandi GroupBeneficiary photo-URL workbook (see
-  // social_protection.export_mixin.EXPORT_HANDLERS). If no handler is
-  // registered for ('xlsx', 'group_beneficiary'), the BE falls through to
-  // the default CSV export — no regression in stock deployments.
-  // NB: GraphQL arg is camelCase (graphene converts the resolver's
-  // file_format kwarg to a fileFormat schema argument).
-  // The fe-core SearcherExport ALWAYS pushes a `fileFormat` (defaulting to csv,
-  // SearcherExport.js:38/65). We must FORCE xlsx so the BE registry dispatches to
-  // the photo-URL workbook — but we cannot simply append (that yields TWO
-  // fileFormat args -> "There can only be one argument named fileFormat" -> the
-  // download 400s for everyone). So strip any fileFormat the Searcher added, then
-  // set exactly one: xlsx.
-  const cleaned = (params || []).filter((p) => !/(^|[^\w])fileFormat\s*:/.test(String(p)));
-  const allParams = [...cleaned, 'fileFormat: "xlsx"'];
+  // Stock: fe-core's SearcherExport already supplies fileFormat/fields/fieldsColumns
+  // in params. The Merankabandi "always export the photo-URL workbook" behaviour is
+  // NOT forced here — it lives in the merankabandi module (its BE registers an
+  // export handler for group_beneficiary), keeping this fork free of Mera-specific
+  // divergence.
   const payload = `
     {
-      groupBeneficiaryExport(${allParams.join(',')})
+      groupBeneficiaryExport(${(params || []).join(',')})
     }`;
   return graphql(payload, ACTION_TYPE.GROUP_BENEFICIARY_EXPORT);
 }
