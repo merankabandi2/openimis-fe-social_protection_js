@@ -9,6 +9,7 @@ import {
   downloadExport,
   useModulesManager,
   useHistory,
+  EXPORT_FILE_FORMATS,
 } from '@openimis/fe-core';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
@@ -65,6 +66,12 @@ function BenefitPlanGroupBeneficiariesSearcher({
   const modulesManager = useModulesManager();
   const history = useHistory();
   const locLevels = getLocLevels(modulesManager);
+  // Generic, config-driven export format (default csv = stock). A deployment can
+  // override it (e.g. Merankabandi sets xlsx so the BE dispatches to its photo
+  // workbook) without any deployment-specific code in this module.
+  const exportFileFormat = modulesManager.getConf(
+    'fe-social_protection', 'groupBeneficiaryExportFileFormat', EXPORT_FILE_FORMATS.csv,
+  );
   const [updatedGroupBeneficiaries, setUpdatedGroupBeneficiaries] = useState([]);
 
   const fetch = (params) => fetchGroupBeneficiaries(modulesManager, params);
@@ -256,6 +263,7 @@ function BenefitPlanGroupBeneficiariesSearcher({
         })}
         exportable
         exportFetch={downloadGroupBeneficiaries}
+        exportFileFormat={exportFileFormat}
         exportFields={[
           'id',
           'group.id',
