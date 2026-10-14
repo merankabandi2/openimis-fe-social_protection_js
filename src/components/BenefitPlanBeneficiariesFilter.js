@@ -85,7 +85,7 @@ function BenefitPlanBeneficiariesFilter({
             {
               id: 'status',
               value,
-              filter: `status: ${value}`,
+              filter: value ? `status: ${value}` : null,
             },
           ])}
         />

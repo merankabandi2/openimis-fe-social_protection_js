@@ -188,7 +188,7 @@ function BenefitPlanGroupBeneficiariesSearcher({
         filter: 'isDeleted: false',
       },
     };
-    if (status !== null && status !== undefined) {
+    if (status) {
       filters.status = {
         value: status,
         filter: `status: ${status}`,
